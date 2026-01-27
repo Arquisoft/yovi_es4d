@@ -1,8 +1,8 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-introduction-and-goals]]
-== Introduction and Goals
-
+== Introducción y Objetivos
+Este proyecto consiste en el desarrollo de YOVI, un sistema que permite jugar partidas del juego Y a través de una aplicación web y un módulo de lógica en Rust. La aplicación web permite a los usuarios jugar, consultar estadísticas y usar un API para interacción con bots. El módulo de Rust verifica partidas y sugiere movimientos. El sistema soporta diferentes estrategias, tamaños de tablero y modalidades de juego.
 ifdef::arc42help[]
 [role="arc42help"]
 ****
@@ -18,6 +18,39 @@ These include
 endif::arc42help[]
 
 === Requirements Overview
+**Registro de usuarios**
+* RU1. El sistema debe permitir registrarse a un usuario no identificado. 
+  * RU1.1. El sistema solicitará los datos necesarios al usuario no identificado para registrarse. 
+    * RU1.1.1. Solicitará un nombre de usuario. El cual es un dato obligatorio.
+    * RU1.1.2. Solicitará una contraseña. La cual es un dato obligatorio.
+* RU2. El sistema registrará al usuario no registrado. 
+  * RU2.1. El sistema guardará en la BBDD al usuario nuevo y 
+todos sus datos asociados. 
+  * RU2.2. El sistema enviará una confirmación de que el registro del usuario no registrado se ha realizado correctamente. 
+**Identificación de usuarios.**
+*IU1. El sistema debe permitir autenticarse a un usuario registrado no identificado. 
+  * IU1.1. El sistema solicitará los siguientes datos para su 
+identificación. 
+    * IU1.1.1. Solicitará un nombre de usuario. El cual es un dato obligatorio.
+    * IU1.1.2. Solicitará una contraseña. La cual es un dato obligatorio.
+* IU2. El sistema permitirá al usuario registrado poder cerrar sesión de forma segura, devolviendo la aplicación a la pantalla de inicio de sesión.
+**Gestión de partidas.**
+* GP1. El sistema debe permitir a un usuario registrado iniciar una nueva partida.
+  * GP1.1. El sistema solicitará los siguientes datos para iniciar una nueva partida.
+    * GP1.1.1. Solicitará el tamaño del tablero. El cual es un dato obligatorio.
+    * GP1.1.2. Solicitará la estrategia del bot. El cual es un dato obligatorio.
+  * GP1.2. El sistema deberá de registrar y actualizar el estado de la partida durante el juego.
+    * GP1.2.1. El usuario deberá de poder realizar movimientos en la partida.
+    * GP1.2.2. El usuario deberá de poder consultar el estado actual de la partida.
+    * GP1.2.3. El sistema deberá de verificar la validez de los movimientos realizados por el usuario.
+    * GP1.2.4. El sistema y el jugador deberá de realizar movimientos en la partida. 
+    * GP1.2.5. El sistema deberá de detectar el final de la partida y declarar un ganador.
+    * GP1.2.6. El sistema deberá de permitir al usuario deshacer el último movimiento realizado.
+**Gestión del historial de partidas.**
+* HP1. El sistema debe permitir a un usuario registrado consultar su historial de partidas.
+  * HP1.1. El sistema deberá de mostrar una lista con las partidas jugadas por el usuario.
+  * HP1.2. El sistema deberá de permitir al usuario consultar los detalles de una partida específica.
+
 
 ifdef::arc42help[]
 [role="arc42help"]
