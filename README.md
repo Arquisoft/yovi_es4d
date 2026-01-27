@@ -5,13 +5,13 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 
 This project is a template with some basic functionality for the ASW labs.
-
-Contributors
-    -	Sara Lamuño García. 🐦‍🔥
-    -	Andrea Acero Suárez. 🫡
-    -	Jorge Suárez Álvarez. 🧊
-    -	Sergio Blanco García. ◻️
-
+## Contributors
+| Name | GitHub Profile |
+|--------------|--------|
+| Sara Lamuño García 🐦‍🔥| <a href="https://github.com/Etihw32"><img src="https://img.shields.io/badge/UO283706-Sara%20Lamuño-blue"></a>|
+| Andrea Acero Suárez :saluting_face: | <a href="https://github.com/AndreaAcero"><img src="https://img.shields.io/badge/UO287876-Andrea%20Acero-pink"></a>|
+| Jorge Suárez Álvarez :ice_cube: | <a href="https://github.com/jorgesuar"><img src="https://img.shields.io/badge/UO296038-Jorge%20Suárez-orange">|
+| Sergio Blanco García :white_medium_square: |  <a href="https://github.com/Sat00rii"><img src="https://img.shields.io/badge/UO293686-Sergio%20Blanco-green">|
 
 ## Project Structure
 
