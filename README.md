@@ -163,3 +163,8 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 - `cargo test`: Runs the unit tests.
 - `cargo run`: Runs the gamey application.
 - `cargo doc`: Generates documentation for the GameY engine application
+- `cargo check`: Check that it compiles.
+- `cargo add <list_of_dependencies>`: Add dependencies in <list_of_dependencies>.
+
+### Rust
+- `rustup docs`: Opens the Rust documentation in local.
