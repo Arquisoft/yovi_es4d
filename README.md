@@ -6,6 +6,13 @@
 
 This project is a template with some basic functionality for the ASW labs.
 
+Contributors
+    -	Sara Lamuño García. 🐦‍🔥
+    -	Andrea Acero Suárez. 🫡
+    -	Jorge Suárez Álvarez. 🧊
+    -	Sergio Blanco García. ◻️
+
+
 ## Project Structure
 
 The project is divided into three main components, each in its own directory:
