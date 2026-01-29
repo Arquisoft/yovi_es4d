@@ -86,7 +86,34 @@ See https://docs.arc42.org/section-1/[Introduction and Goals] in the arc42 docum
 ****
 endif::arc42help[]
 
-=== Quality Goals
+=== Objetivos de calidad
+[cols="1,3", options="header"]
+|===
+| Objetivo de Calidad | Descripción
+
+| **Rendimiento**
+| El sistema debe responder rápidamente a las acciones del usuario y a las llamadas del API. El módulo Rust debe calcular el siguiente movimiento y validar partidas de manera eficiente.
+
+| **Escalabilidad**
+| El diseño del sistema debe permitir un crecimiento eficiente, asegurando que se puedan añadir nuevas variantes del juego, más usuarios, partidas simultáneas o bots sin afectar negativamente al rendimiento.
+
+| **Seguridad**
+| El sistema debe garantizar la protección de los datos de los usuarios, la autenticación segura, y controlar el acceso al API, evitando que bots o usuarios no autorizados manipulen partidas o estadísticas.
+
+| **Mantenibilidad**
+| El código debe ser modular, claro y bien documentado para facilitar nuevas modificaciones y mejoras. Se utilizarán buenas prácticas como reutilización de código, separación de responsabilidades y pruebas unitarias para garantizar la estabilidad del sistema.
+
+| **Usabilidad**
+| La interfaz web debe ser clara e intuitiva, permitiendo jugar, seleccionar estrategias, ver estadísticas y seguir el estado del tablero de forma sencilla. Se aplicarán principios de predictibilidad, coherencia visual y retroalimentación adecuada.
+
+| **Operatividad**
+| El sistema debe estar desplegado y accesible a través de la web, con integración y despliegue continuos, monitorización de servicios y disponibilidad garantizada para usuarios y bots.
+
+| **Pruebas y calidad del software**
+| Se deben implementar pruebas unitarias, de integración y end-to-end que garanticen que todas las funcionalidades, reglas del juego y estrategias funcionan correctamente, además de pruebas de carga para evaluar el rendimiento bajo uso intensivo.
+|===
+
+
 
 ifdef::arc42help[]
 [role="arc42help"]
@@ -137,6 +164,8 @@ endif::arc42help[]
 [options="header",cols="1,2,2"]
 |===
 |Role/Name|Contact|Expectations
-| _<Role-1>_ | _<Contact-1>_ | _<Expectation-1>_
-| _<Role-2>_ | _<Contact-2>_ | _<Expectation-2>_
+| _Cliente_ | _Usuario de la aplicación_ | _Seguridad, disponibilidad y cumplimiento de las normas_
+| _Bot_ | _Usuario no humano_ | _Eficiencia, rapidez, disponibilidad y compatibilidad_
+| _Compañía contratada_ | _Micrati_ | _Entrega a tiempo y alta claridad del proyecto_
+| _Equipo de desarrollo_ | _El equipo yovi_es4d_ | _Claridad de los requisitos, apoyo continuo del cliente y herramientas adecuadas_
 |===
