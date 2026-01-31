@@ -1,7 +1,7 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-architecture-constraints]]
-== Architecture Constraints
+== ** Restricciones de Arquitectura**
 
 
 ifdef::arc42help[]
@@ -27,3 +27,40 @@ See https://docs.arc42.org/section-2/[Architecture Constraints] in the arc42 doc
 
 ****
 endif::arc42help[]
+
+== ** Restricciones de Arquitectura**
+
+Esta sección se describen las restricciones técnicas, funcionales y de alcance que condicionan el diseño del sistema.
+
+=== **Restricciones técnicas **
+[cols="1,3", options="header"]
+|===
+|Restricción |Explicación
+
+|**División de subsistemas**
+|El sistema estará dividido en una Aplicación Web (frontend + API) y un módulo de lógica del juego.
+
+|**Implementación web**
+|La aplicación web debe estar implementada en TypeScript.
+
+|**Módulo lógico**
+|El módulo de lógica del juego debe estar implementado en Rust.
+
+|**Intercambio de información**
+|El intercambio de información entre la aplicación web y el módulo en Rust debe realizarse usando mensajes JSON, siguiendo la notación YEN.
+
+|===
+
+=== **Restricciones organizacionales **
+
+[cols="1,3", options="header"]
+|===
+|Restricción |Explicación
+|**Equipo**
+|El equipo de desarrollo está conformado por 4 personas.
+
+|**Reuniones**
+|Se organizará al menos una reunioón semanal durante las clases de laboratorio donde se discutirá el proyecto y posibles impedimentos. 
+
+|**Actas**
+|Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas
