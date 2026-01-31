@@ -28,8 +28,6 @@ See https://docs.arc42.org/section-2/[Architecture Constraints] in the arc42 doc
 ****
 endif::arc42help[]
 
-== ** Restricciones de Arquitectura**
-
 Esta sección se describen las restricciones técnicas, funcionales y de alcance que condicionan el diseño del sistema.
 
 === **Restricciones técnicas **
