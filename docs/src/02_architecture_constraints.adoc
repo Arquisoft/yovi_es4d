@@ -35,6 +35,9 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 |===
 |Restricción |Explicación
 
+|**Acceso web**
+|La aplicación deberá estar desplegada y ser accesible a través de la Web.
+
 |**División de subsistemas**
 |El sistema estará dividido en una Aplicación Web (frontend + API) y un módulo de lógica del juego.
 
