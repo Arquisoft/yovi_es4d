@@ -65,3 +65,59 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 
 |**Actas**
 |Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas
+
+=== **Restricciones Funcionales **
+
+[cols="1,3", options="header"]
+|===
+| **Restricción** | **Explicación**
+
+|**Versión clásica del juego Y**
+| El sistema debe implementar la versión clásica del juego Y, respetando sus reglas originales.
+
+|**Modo de juego: Humano vs Máquina**
+| El juego debe permitir partidas de un jugador humano contra la máquina.
+
+|**Tablero configurable**
+| El tamaño del tablero debe ser configurable por el usuario o mediante parámetros del sistema.
+
+|**Estrategias seleccionables**
+| El juego contra la máquina debe ofrecer más de una estrategia, que podrán ser seleccionadas por el usuario.
+
+|**Módulo Rust para lógica de juego**
+| El módulo desarrollado en Rust debe ser capaz de comprobar si una partida ha sido ganada, según las reglas del juego.
+|===
+
+=== **Restricciones de API **
+
+[cols="1,3", options="header"]
+|===
+| **Restricción** | **Explicación**
+
+|**API externa para bots**
+| El sistema debe exponer una API externa que permita a bots interactuar con el juego.
+
+|**Gestión de usuarios y partidas**
+| La API debe incluir endpoints para gestionar usuarios y partidas (crear, consultar, finalizar, etc.).
+
+|**Método `play`**
+| La API debe exponer un método `play` que:
+- Reciba al menos un parámetro `position` en notación YEN.
+- Devuelva el siguiente movimiento en notación YEN.
+|===
+
+=== **Restricciones de Usuario y Datos**
+
+[cols="1,3", options="header"]
+|===
+| **Restricción** | **Explicación**
+
+|**Registro de usuarios**
+| Los usuarios deben poder registrarse en el sistema con credenciales únicas.
+
+|**Histórico de participación**
+| El sistema debe almacenar el histórico de participación de cada usuario, incluyendo:
+- Número de partidas jugadas.
+- Partidas ganadas y perdidas.
+- Estadísticas asociadas (por ejemplo, porcentaje de victorias, movimientos promedio, etc.).
+|===
