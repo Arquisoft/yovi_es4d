@@ -1,4 +1,5 @@
 ifndef::imagesdir[:imagesdir: ../images]
+:arc42help:
 
 [[section-introduction-and-goals]]
 == Introducción y Objetivos
@@ -6,14 +7,15 @@ Este proyecto consiste en el desarrollo de YOVI, un sistema que permite jugar pa
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-Describes the relevant requirements and the driving forces that software architects and development team must consider. 
-These include
+Describe los requisitos relevantes y los factores impulsores que el equipo de arquitectura y desarrollo debe tener en cuenta.
 
-* underlying business goals, 
-* essential features, 
-* essential functional requirements, 
-* quality goals for the architecture and
-* relevant stakeholders and their expectations
+Estos incluyen:
+
+* los objetivos de negocio subyacentes,
+* las funcionalidades esenciales,
+* los requisitos funcionales clave,
+* los objetivos de calidad de la arquitectura y
+* los stakeholders relevantes y sus expectativas.
 ****
 endif::arc42help[]
 
@@ -63,26 +65,24 @@ endif::arc42help[]
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Short description of the functional requirements, driving forces, extract (or abstract)
-of requirements. Link to (hopefully existing) requirements documents
-(with version number and information where to find it).
+.Contenido
+Descripción breve de los requisitos funcionales, los factores impulsores y un extracto (o resumen)
+de los requisitos. Enlace a documentos de requisitos existentes
+(con número de versión e información sobre dónde encontrarlos).
 
-.Motivation
-From the point of view of the end users a system is created or modified to
-improve support of a business activity and/or improve the quality.
+.Motivación
+Desde el punto de vista de los usuarios finales, un sistema se crea o se modifica para
+mejorar el soporte de una actividad de negocio y/o mejorar la calidad.
 
-.Form
-Short textual description, probably in tabular use-case format.
-If requirements documents exist this overview should refer to these documents.
+.Forma
+Descripción textual breve, probablemente en formato tabular de casos de uso.
+Si existen documentos de requisitos, este resumen debería hacer referencia a ellos.
 
-Keep these excerpts as short as possible. Balance readability of this document with potential redundancy w.r.t to requirements documents.
+Mantén estos extractos lo más breves posible. Equilibra la legibilidad de este documento
+con la posible redundancia respecto a los documentos de requisitos.
 
-
-.Further Information
-
-See https://docs.arc42.org/section-1/[Introduction and Goals] in the arc42 documentation.
-
+.Información adicional
+Ver https://docs.arc42.org/section-1/[Introducción y Objetivos] en la documentación de arc42.
 ****
 endif::arc42help[]
 
@@ -91,22 +91,28 @@ endif::arc42help[]
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-The top three (max five) quality goals for the architecture whose fulfillment is of highest importance to the major stakeholders. 
-We really mean quality goals for the architecture. Don't confuse them with project goals.
-They are not necessarily identical.
+.Contenido
+Los tres principales (máximo cinco) objetivos de calidad de la arquitectura cuyo cumplimiento
+es de mayor importancia para los stakeholders principales.
 
-Consider this overview of potential topics (based upon the ISO 25010 standard):
+Nos referimos realmente a objetivos de calidad de la arquitectura.
+No deben confundirse con los objetivos del proyecto.
+No son necesariamente idénticos.
 
-image::01_2_iso-25010-topics-EN.drawio.png["Categories of Quality Requirements"]
+Considera esta visión general de posibles temas
+(basada en el estándar ISO 25010):
 
-.Motivation
-You should know the quality goals of your most important stakeholders, since they will influence fundamental architectural decisions. 
-Make sure to be very concrete about these qualities, avoid buzzwords.
-If you as an architect do not know how the quality of your work will be judged...
+image::01_2_iso-25010-topics-EN.drawio.png["Categorías de requisitos de calidad"]
 
-.Form
-A table with quality goals and concrete scenarios, ordered by priorities
+.Motivación
+Debes conocer los objetivos de calidad de tus stakeholders más importantes,
+ya que influirán en decisiones arquitectónicas fundamentales.
+Asegúrate de ser muy concreto con estas cualidades y evita palabras vacías.
+Si como arquitecto no sabes cómo se evaluará la calidad de tu trabajo…
+
+.Forma
+Una tabla con los objetivos de calidad y escenarios concretos,
+ordenados por prioridades.
 ****
 endif::arc42help[]
 
@@ -115,22 +121,27 @@ endif::arc42help[]
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Explicit overview of stakeholders of the system, i.e. all person, roles or organizations that
+.Contenido
+Visión general explícita de los stakeholders del sistema, es decir, todas las personas,
+roles u organizaciones que:
 
-* should know the architecture
-* have to be convinced of the architecture
-* have to work with the architecture or with code
-* need the documentation of the architecture for their work
-* have to come up with decisions about the system or its development
+* deben conocer la arquitectura,
+* deben ser convencidos por la arquitectura,
+* deben trabajar con la arquitectura o con el código,
+* necesitan la documentación de la arquitectura para su trabajo,
+* deben tomar decisiones sobre el sistema o su desarrollo.
 
-.Motivation
-You should know all parties involved in development of the system or affected by the system.
-Otherwise, you may get nasty surprises later in the development process.
-These stakeholders determine the extent and the level of detail of your work and its results.
+.Motivación
+Debes conocer a todas las partes involucradas en el desarrollo del sistema
+o afectadas por él. De lo contrario, podrías llevarte sorpresas desagradables
+más adelante en el desarrollo.
 
-.Form
-Table with role names, person names, and their expectations with respect to the architecture and its documentation.
+Estos stakeholders determinan el alcance y el nivel de detalle
+de tu trabajo y de sus resultados.
+
+.Forma
+Tabla con nombres de roles, nombres de personas y sus expectativas
+respecto a la arquitectura y su documentación.
 ****
 endif::arc42help[]
 
