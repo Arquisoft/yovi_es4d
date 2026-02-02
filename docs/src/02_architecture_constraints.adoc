@@ -65,6 +65,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 
 |**Actas**
 |Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas
+|===
 
 === **Restricciones Funcionales **
 
