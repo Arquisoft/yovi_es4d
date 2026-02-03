@@ -448,11 +448,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#section-introduction-and-goals">1. Introducción y Objetivos</a>
 <ul class="sectlevel2">
 <li><a href="#_descripción_de_los_requisitos">1.1. Descripción de los requisitos</a></li>
-<li><a href="#_quality_goals">1.2. Quality Goals</a></li>
+<li><a href="#_objetivos_de_calidad">1.2. Objetivos de calidad</a></li>
 <li><a href="#_stakeholders">1.3. Stakeholders</a></li>
 </ul>
 </li>
-<li><a href="#section-architecture-constraints">2. Architecture Constraints</a></li>
+<li><a href="#section-architecture-constraints">2. <strong> Restricciones de Arquitectura</strong></a>
+<ul class="sectlevel2">
+<li><a href="#_restricciones_técnicas">2.1. <strong>Restricciones técnicas </strong></a></li>
+<li><a href="#_restricciones_organizacionales">2.2. <strong>Restricciones organizacionales </strong></a></li>
+<li><a href="#_restricciones_funcionales">2.3. <strong>Restricciones Funcionales </strong></a></li>
+<li><a href="#_restricciones_de_api">2.4. <strong>Restricciones de API </strong></a></li>
+<li><a href="#_restricciones_de_usuario_y_datos">2.5. <strong>Restricciones de Usuario y Datos</strong></a></li>
+</ul>
+</li>
 <li><a href="#section-context-and-scope">3. Context and Scope</a>
 <ul class="sectlevel2">
 <li><a href="#_business_context">3.1. Business Context</a></li>
@@ -758,7 +766,49 @@ con la posible redundancia respecto a los documentos de requisitos.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_quality_goals">1.2. Quality Goals</h3>
+<h3 id="_objetivos_de_calidad">1.2. Objetivos de calidad</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Objetivo de Calidad</th>
+<th class="tableblock halign-left valign-top">Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Rendimiento</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe responder rápidamente a las acciones del usuario y a las llamadas del API. El módulo Rust debe calcular el siguiente movimiento y validar partidas de manera eficiente.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Escalabilidad</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El diseño del sistema debe permitir un crecimiento eficiente, asegurando que se puedan añadir nuevas variantes del juego, más usuarios, partidas simultáneas o bots sin afectar negativamente al rendimiento.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Seguridad</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe garantizar la protección de los datos de los usuarios, la autenticación segura, y controlar el acceso al API, evitando que bots o usuarios no autorizados manipulen partidas o estadísticas.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Mantenibilidad</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El código debe ser modular, claro y bien documentado para facilitar nuevas modificaciones y mejoras. Se utilizarán buenas prácticas como reutilización de código, separación de responsabilidades y pruebas unitarias para garantizar la estabilidad del sistema.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Usabilidad</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">La interfaz web debe ser clara e intuitiva, permitiendo jugar, seleccionar estrategias, ver estadísticas y seguir el estado del tablero de forma sencilla. Se aplicarán principios de predictibilidad, coherencia visual y retroalimentación adecuada.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Operatividad</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe estar desplegado y accesible a través de la web, con integración y despliegue continuos, monitorización de servicios y disponibilidad garantizada para usuarios y bots.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pruebas y calidad del software</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Se deben implementar pruebas unitarias, de integración y end-to-end que garanticen que todas las funcionalidades, reglas del juego y estrategias funcionan correctamente, además de pruebas de carga para evaluar el rendimiento bajo uso intensivo.</p></td>
+</tr>
+</tbody>
+</table>
 <div class="sidebarblock arc42help">
 <div class="content">
 <div class="paragraph">
@@ -855,14 +905,24 @@ respecto a la arquitectura y su documentación.</p>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Role-1&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Contact-1&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Expectation-1&gt;</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Cliente</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Usuario de la aplicación</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Seguridad, disponibilidad y cumplimiento de las normas</em></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Role-2&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Contact-2&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Expectation-2&gt;</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Bot</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Usuario no humano</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Eficiencia, rapidez, disponibilidad y compatibilidad</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Compañía contratada</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Micrati</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Entrega a tiempo y alta claridad del proyecto</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Equipo de desarrollo</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>El equipo yovi_es4d</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Claridad de los requisitos, apoyo continuo del cliente y herramientas adecuadas</em></p></td>
 </tr>
 </tbody>
 </table>
@@ -871,7 +931,7 @@ respecto a la arquitectura y su documentación.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="section-architecture-constraints">2. Architecture Constraints</h2>
+<h2 id="section-architecture-constraints">2. <strong> Restricciones de Arquitectura</strong></h2>
 <div class="sectionbody">
 <div class="sidebarblock arc42help">
 <div class="content">
@@ -897,7 +957,172 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>Esta sección se describen las restricciones técnicas, funcionales y de alcance que condicionan el diseño del sistema.</p>
+</div>
+<div class="sect2">
+<h3 id="_restricciones_técnicas">2.1. <strong>Restricciones técnicas </strong></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Restricción</th>
+<th class="tableblock halign-left valign-top">Explicación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Acceso web</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">La aplicación deberá estar desplegada y ser accesible a través de la Web.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>División de subsistemas</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema estará dividido en una Aplicación Web (frontend + API) y un módulo de lógica del juego.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Implementación web</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">La aplicación web debe estar implementada en TypeScript.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Módulo lógico</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El módulo de lógica del juego debe estar implementado en Rust.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Intercambio de información</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El intercambio de información entre la aplicación web y el módulo en Rust debe realizarse usando mensajes JSON, siguiendo la notación YEN.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_restricciones_organizacionales">2.2. <strong>Restricciones organizacionales </strong></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Restricción</th>
+<th class="tableblock halign-left valign-top">Explicación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Equipo</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El equipo de desarrollo está conformado por 4 personas.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Reuniones</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Se organizará al menos una reunioón semanal durante las clases de laboratorio donde se discutirá el proyecto y posibles impedimentos.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Actas</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_restricciones_funcionales">2.3. <strong>Restricciones Funcionales </strong></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>Restricción</strong></th>
+<th class="tableblock halign-left valign-top"><strong>Explicación</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Versión clásica del juego Y</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe implementar la versión clásica del juego Y, respetando sus reglas originales.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Modo de juego: Humano vs Máquina</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El juego debe permitir partidas de un jugador humano contra la máquina.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Tablero configurable</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El tamaño del tablero debe ser configurable por el usuario o mediante parámetros del sistema.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Estrategias seleccionables</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El juego contra la máquina debe ofrecer más de una estrategia, que podrán ser seleccionadas por el usuario.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Módulo Rust para lógica de juego</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El módulo desarrollado en Rust debe ser capaz de comprobar si una partida ha sido ganada, según las reglas del juego.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_restricciones_de_api">2.4. <strong>Restricciones de API </strong></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>Restricción</strong></th>
+<th class="tableblock halign-left valign-top"><strong>Explicación</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>API externa para bots</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe exponer una API externa que permita a bots interactuar con el juego.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Gestión de usuarios y partidas</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">La API debe incluir endpoints para gestionar usuarios y partidas (crear, consultar, finalizar, etc.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Método <code>play</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">La API debe exponer un método <code>play</code> que:
+- Reciba al menos un parámetro <code>position</code> en notación YEN.
+- Devuelva el siguiente movimiento en notación YEN.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_restricciones_de_usuario_y_datos">2.5. <strong>Restricciones de Usuario y Datos</strong></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>Restricción</strong></th>
+<th class="tableblock halign-left valign-top"><strong>Explicación</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Registro de usuarios</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Los usuarios deben poder registrarse en el sistema con credenciales únicas.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Histórico de participación</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe almacenar el histórico de participación de cada usuario, incluyendo:
+- Número de partidas jugadas.
+- Partidas ganadas y perdidas.
+- Estadísticas asociadas (por ejemplo, porcentaje de victorias, movimientos promedio, etc.).</p></td>
+</tr>
+</tbody>
+</table>
 <div style="page-break-after: always;"></div>
+</div>
 </div>
 </div>
 <div class="sect1">
