@@ -17,7 +17,21 @@ export default function StartScreen() {
               <button className="play-button">Jugar</button>
             </div>
 
-            <div className="typing-holder" aria-hidden={false}>
+            <div
+              className="typing-holder"
+              aria-hidden={false}
+              // override CSS positioning locally so the typing box pushes content down
+              style={{
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                left: 'auto',
+                transform: 'none',
+                bottom: 'auto',
+                marginTop: '12px',
+                pointerEvents: 'none'
+              }}
+            >
               <Typing text="¡Hola! Somos los desarrolladores del juego yovi_es4d, Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 y Sergio ◻️. ¡Espero que te lo pases muy bien!" speed={40} tag="h2" />
             </div>
           </div>

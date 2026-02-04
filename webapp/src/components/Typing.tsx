@@ -19,7 +19,18 @@ export default function Typing({ text, speed = 60, tag = 'h2', className = 'typi
   const Tag = tag as any;
 
   return (
-    <Tag className={className} aria-live="polite">
+    <Tag
+      className={className}
+      aria-live="polite"
+      // Add inline wrapping styles so the component never overflows the viewport
+      style={{
+        whiteSpace: 'pre-wrap',
+        overflowWrap: 'anywhere',
+        wordBreak: 'break-word',
+        display: 'inline-block',
+        maxWidth: '100%'
+      }}
+    >
       {text.slice(0, index)}
       <span className="typing-cursor" aria-hidden="true" />
     </Tag>
