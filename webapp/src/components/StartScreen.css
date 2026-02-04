@@ -1,0 +1,342 @@
+:root {
+  /*-bg: #ffffff; */
+  /*--muted: #f4f6f8; */
+  --accent: #0066ff;
+  --text: #0a0a0a;
+}
+
+/* Full viewport wrapper */
+.start-screen {
+  /* Use a public static GIF to avoid asset resolution issues and ensure it centers correctly */
+  background-image: url('/background.gif');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  position: relative;
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  min-height: 100vh;
+  padding: 0;
+  width: 100%;
+}
+
+/* overlay gradient to improve contrast (separate layer so GIF centers correctly) */
+.start-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(0,123,247,0.45), rgba(0,0,0,0.06));
+  pointer-events: none;
+}
+/* Footer that sits below the main content */
+.start-footer {
+  text-align: center;
+  padding: 18px 16px;
+  color: rgba(255,255,255,0.85);
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04));
+  margin-top: 12px;
+}
+.start-footer p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+/* Ensure root-level elements don't add extra offset when screen is fixed */
+body, #root, .App {
+  height: 100%;
+}
+
+/* Sidebar */
+:root {
+  --sidebar-width: 220px;
+}
+
+.sidebar {
+  --w: var(--sidebar-width);
+  width: var(--w);
+  padding: 18px;
+  border-right: 1px solid #005eff;
+  transition: width 220ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease, transform 220ms cubic-bezier(.2,.8,.2,1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  will-change: width, transform, opacity;
+}
+
+/* Transition inner items for nicer effect */
+.sidebar-title,
+.menu-list {
+  transition: opacity 180ms ease, transform 200ms ease;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Hide inner content with a gentle transform */
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .menu-list {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+/* Ensure visible state properties */
+.sidebar:not(.collapsed) .sidebar-title,
+.sidebar:not(.collapsed) .menu-list {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapse-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-button {
+  display: inline-block;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-button:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+/* Main content grows to fill remaining space */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  position: relative;
+}
+
+/* When sidebar is collapsed, allow main content to use more space */
+.main-content.full {
+  padding: 32px; /* use normal padding when sidebar is hidden */
+}
+
+.content-inner {
+  max-width: 720px;
+  text-align: center;
+  position: relative;
+  z-index: 2; /* sit above the background */
+  padding-bottom: 120px; /* reserve space for the typing area so button doesn't move */
+}
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.typing-holder {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 18px; /* sits below the button visually */
+  width: min(92%, 720px);
+  max-width: 720px;
+  text-align: center;
+  z-index: 3;
+  pointer-events: none; /* non interactive */
+  padding: 0 12px;
+}
+
+.typing {
+  display: inline-block;
+  white-space: normal; /* allow wrapping */
+  word-break: break-word;
+  font-size: clamp(0.95rem, 2.6vw, 1.2rem);
+  margin: 0;
+  color: rgba(255,255,255,0.95);
+}
+
+/* Typing effect for h2 */
+.typing {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  margin: 8px 0 14px;
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  vertical-align: middle;
+  position: relative;
+  z-index: 3;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: #fff;
+  margin-left: 6px;
+  vertical-align: bottom;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Main content wrapper (background moved to .start-screen) */
+.main-content {
+  position: relative;
+}
+
+/* Subtle overlay to improve text contrast */
+.main-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.15));
+  pointer-events: none;
+}
+
+.main-content .play-button {
+  position: relative;
+  z-index: 3;
+}
+
+.main-content h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  margin: 0 0 16px 0;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  line-height: 1.12; /* more vertical space for descenders */
+  color: #fff;
+  text-shadow: 0 10px 22px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.04);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.35px rgba(0,0,0,0.12); /* subtle outline to avoid visual clipping */
+
+  /* Gradient text: ensure gradient isn't clipped at letter edges */
+  display: inline-block; /* isolates background to the text area */
+  padding: 6px 10px; /* vertical + horizontal padding avoids clipping */
+  overflow: visible; /* allow gradient to render outside if needed */
+  background: linear-gradient(90deg,#ffffff 0%, #0095ff 45%, #0004ff 100%);
+  background-size: 180% 140%; /* larger area so gradient covers even when scaled */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: hero-move 4.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes hero-move {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.play-button {
+  padding: 12px 22px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(43, 0, 255, 0.18);
+}
+
+.play-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Floating toggle button (useful on narrow screens) */
+.sidebar-toggle {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  border: none;
+  background: rgba(0,0,0,0.06);
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+/* Responsive: overlay sidebar on small screens */
+@media (max-width: 720px) {
+  .start-screen {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 40;
+    width: var(--sidebar-width);
+    transform: translateX(0);
+    transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease;
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%); /* slide out */
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .main-content {
+    padding: 24px;
+  }
+}
