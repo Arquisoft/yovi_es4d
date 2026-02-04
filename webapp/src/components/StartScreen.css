@@ -8,7 +8,7 @@
 /* Full viewport wrapper */
 .start-screen {
   /* Use a public static GIF to avoid asset resolution issues and ensure it centers correctly */
-  background-image: url('/background.gif');
+  background-image: url('../assets/y_game_pixel_fullscreen_loop.gif');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -17,7 +17,8 @@
   display: flex;
   gap: 24px;
   align-items: stretch;
-  min-height: 100vh;
+  flex: 1; /* allow .start-screen to grow inside the column layout */
+  min-height: 0; /* allow flex children to size correctly */
   padding: 0;
   width: 100%;
 }
@@ -43,9 +44,16 @@
   margin: 0;
   font-size: 0.95rem;
 }
-/* Ensure root-level elements don't add extra offset when screen is fixed */
-body, #root, .App {
+/* Ensure root-level elements don't add extra offset and use a column layout so footer sits below content */
+html, body {
   height: 100%;
+  margin: 0;
+}
+
+#root, .App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Sidebar */
@@ -56,6 +64,7 @@ body, #root, .App {
 .sidebar {
   --w: var(--sidebar-width);
   width: var(--w);
+  flex: 0 0 var(--w);
   padding: 18px;
   border-right: 1px solid #005eff;
   transition: width 220ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease, transform 220ms cubic-bezier(.2,.8,.2,1);
@@ -76,6 +85,7 @@ body, #root, .App {
 
 .sidebar.collapsed {
   width: 0;
+  flex: 0 0 0;
   padding-left: 0;
   padding-right: 0;
   opacity: 0;
@@ -154,6 +164,8 @@ body, #root, .App {
   gap: 16px;
   padding: 32px;
   position: relative;
+  min-width: 0; /* allow flex item to shrink properly inside .start-screen */
+  width: 100%;
 }
 
 /* When sidebar is collapsed, allow main content to use more space */
