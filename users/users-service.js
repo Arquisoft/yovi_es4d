@@ -32,7 +32,7 @@ app.post('/createuser', async (req, res) => {
     // Simulate a 1 second delay to mimic processing/network latency
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const message = `Hello ${username}! welcome to the course!`;
+    const message = `Hello ${username}! welcome to the course! PRUEBA`;
     res.json({ message });
   } catch (err) {
     res.status(400).json({ error: err.message });
