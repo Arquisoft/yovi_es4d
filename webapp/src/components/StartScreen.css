@@ -15,8 +15,9 @@
 
   position: relative;
   display: flex;
-  gap: 24px;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex: 1; /* allow .start-screen to grow inside the column layout */
   min-height: 0; /* allow flex children to size correctly */
   padding: 0;
@@ -56,102 +57,58 @@ html, body {
   flex-direction: column;
 }
 
-/* Sidebar */
-:root {
-  --sidebar-width: 220px;
-}
-
-.sidebar {
-  --w: var(--sidebar-width);
-  width: var(--w);
-  flex: 0 0 var(--w);
-  padding: 18px;
-  border-right: 1px solid #005eff;
-  transition: width 220ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease, transform 220ms cubic-bezier(.2,.8,.2,1);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow: hidden;
-  will-change: width, transform, opacity;
-}
-
-/* Transition inner items for nicer effect */
-.sidebar-title,
-.menu-list {
-  transition: opacity 180ms ease, transform 200ms ease;
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.sidebar.collapsed {
-  width: 0;
-  flex: 0 0 0;
-  padding-left: 0;
-  padding-right: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Hide inner content with a gentle transform */
-.sidebar.collapsed .sidebar-title,
-.sidebar.collapsed .menu-list {
-  opacity: 0;
-  transform: translateX(-8px);
-}
-
-/* Ensure visible state properties */
-.sidebar:not(.collapsed) .sidebar-title,
-.sidebar:not(.collapsed) .menu-list {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.sidebar-header {
+/* Navbar horizontal at top */
+.navbar {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.sidebar-title {
+  padding: 12px 24px;
+  background: linear-gradient(90deg, rgba(116, 65, 186, 0.95), rgba(0, 149, 255, 0.85), rgba(0, 4, 255, 0.85));
+  border-bottom: 2px solid #0066ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   margin: 0;
-  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+  font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.collapse-btn {
-  border: none;
-  background: transparent;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 6px 8px;
-}
-
-.menu-list {
+.navbar-menu {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 16px;
+  align-items: center;
 }
 
-.menu-button {
-  display: inline-block;
-  width: 100%;
-  padding: 10px 12px;
+.navbar-button {
+  padding: 8px 16px;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--text);
-  text-align: left;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
-.menu-button:hover {
-  background: rgba(0,0,0,0.03);
+.navbar-button:hover {
+  background: rgba(0, 102, 255, 0.2);
+  color: #fff;
 }
 
 /* Main content grows to fill remaining space */
@@ -308,44 +265,24 @@ html, body {
   transform: translateY(-2px);
 }
 
-/* Floating toggle button (useful on narrow screens) */
-.sidebar-toggle {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  border: none;
-  background: rgba(0,0,0,0.06);
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30;
-}
 
-/* Responsive: overlay sidebar on small screens */
+/* Responsive: navbar on small screens */
 @media (max-width: 720px) {
-  .start-screen {
+  .navbar {
     flex-direction: column;
-    min-height: 100vh;
+    gap: 12px;
+    padding: 12px 16px;
   }
 
-  .sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 40;
-    width: var(--sidebar-width);
-    transform: translateX(0);
-    transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease;
+  .navbar-menu {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
   }
 
-  .sidebar.collapsed {
-    transform: translateX(-100%); /* slide out */
-    opacity: 0;
-    pointer-events: none;
+  .navbar-button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
   }
 
   .main-content {

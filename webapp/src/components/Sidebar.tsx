@@ -1,23 +1,18 @@
 import './StartScreen.css';
 
-type Props = {
-  open: boolean;
-  onToggle: () => void;
-};
-
-export default function Sidebar({ open, onToggle }: Props) {
+export default function Sidebar() {
   return (
-    <aside className={`sidebar ${open ? 'open' : 'collapsed'}`} aria-hidden={!open}>
-      <div className="sidebar-header">
-        <h3 className="sidebar-title">{open ? 'Menú' : 'M'}</h3>
-        <button className="collapse-btn" onClick={onToggle} aria-label={open ? 'Cerrar menú' : 'Abrir menú'}>
-          {open ? '‹' : '›'}
-        </button>
+    <nav className="navbar">
+      <div className="navbar-brand">
+        <h3 className="navbar-title">yovi_es4d</h3>
       </div>
 
-      <ul className="menu-list">
-        <li><button className="menu-button">Cerrar sesión</button></li>
+      <ul className="navbar-menu">
+        <li><button className="navbar-button">Idioma</button></li>
+        <li><button className="navbar-button">Jugar</button></li>
+        <li><button className="navbar-button">Reglas</button></li>
+        <li><button className="navbar-button">Cerrar sesión</button></li>
       </ul>
-    </aside>
+    </nav>
   );
 }

@@ -1,25 +1,14 @@
-import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Typing from './Typing';
 import './StartScreen.css';
 
 export default function StartScreen() {
-  const [open, setOpen] = useState(false);
-
   return (
     <>
+      <Sidebar />
+
       <div className="start-screen">
-        <Sidebar open={open} onToggle={() => setOpen((o) => !o)} />
-
-        <main className={`main-content ${open ? 'with-sidebar' : 'full'}`}>
-          <button
-            className="sidebar-toggle"
-            aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
-            onClick={() => setOpen((o) => !o)}
-          >
-            ☰
-          </button>
-
+        <main className="main-content">
           <div className="content-inner">
             <h1>¡Bienvenido a yovi_es4d!</h1>
             <p>Disfruta el clásico juego Y</p>
