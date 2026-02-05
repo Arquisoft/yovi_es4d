@@ -1,0 +1,22 @@
+{
+  "startScreen": {
+    "title": "¡Bienvenido a yovi_es4d!",
+    "subtitle": "Disfruta el clásico juego Y",
+    "play": "Jugar",
+    "typing": "¡Hola! Somos los desarrolladores del juego yovi_es4d: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 y Sergio ◻️. ¡Que te diviertas!"
+  }
+  ,
+  "menu": {
+    "rules": "Reglas",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "spanish": "Español",
+    "english": "Inglés",
+    "team": "yovi_es4d",
+    "selectLanguage": "Seleccionar idioma"
+  },
+  "footer": {
+    "credits": "© 2026 yovi_es4d. Todos los derechos reservados."
+  }
+}
+

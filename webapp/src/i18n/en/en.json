@@ -1,0 +1,20 @@
+{
+  "startScreen": {
+    "title": "Welcome to yovi_es4d!",
+    "subtitle": "Enjoy the classic Y game",
+    "play": "Play",
+    "typing": "Hello! We are the developers of the yovi_es4d game: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 and Sergio ◻️. Have fun!"
+  },
+  "menu": {
+    "rules": "Rules",
+    "logout": "Log Out",
+    "profile": "Profile",
+    "spanish": "Spanish",
+    "english": "English",
+    "team": "yovi_es4d",
+    "selectLanguage": "Select language"
+  },
+  "footer": {
+    "credits": "© 2026 yovi_es4d. All rights reserved."
+  }
+}
