@@ -1,11 +1,10 @@
 import './App.css'
-import RegisterForm from './RegisterForm';
-import reactLogo from './assets/react.svg'
+import ScreenGame from './components/screen-game';
 
 function App() {
   return (
     <div className="App">
-      <div>
+      {/*<div>
         <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
           <img src="/vite.svg" className="logo" alt="Vite logo" />
         </a>
@@ -14,8 +13,8 @@ function App() {
         </a>
       </div>
 
-      <h2>Welcome to the Software Arquitecture 2025-2026 course</h2>
-      <RegisterForm />
+      <h2>Welcome to the Software Arquitecture 2025-2026 course</h2>*/}
+      <ScreenGame />
     </div>
   );
 }

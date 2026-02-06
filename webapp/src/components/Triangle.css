@@ -1,0 +1,21 @@
+.triangle-container {
+  position: relative;
+  background: burlywood;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+
+.hex {
+  clip-path: polygon(
+    50% 0%,
+    100% 25%,
+    100% 75%,
+    50% 100%,
+    0% 75%,
+    0% 25%
+  ); /* hexágono acostado */
+  border: 1px solid black;
+  background: white;
+  cursor: pointer;
+  position: absolute;
+}
