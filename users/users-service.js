@@ -1,6 +1,14 @@
 const express = require('express');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+require('dotenv').config();
+
 const app = express();
 const port = 3000;
+
+// Conectar a MongoDB
+connectDB();
 const swaggerUi = require('swagger-ui-express');
 const fs = require('node:fs');
 const YAML = require('js-yaml');
@@ -16,15 +24,11 @@ try {
   console.log(e);
 }
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
-
+app.use(cors());
 app.use(express.json());
+
+// Rutas de autenticación
+app.use('/api/users', authRoutes);
 
 app.post('/createuser', async (req, res) => {
   const username = req.body && req.body.username;
