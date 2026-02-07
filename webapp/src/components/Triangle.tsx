@@ -4,20 +4,30 @@ import "./Triangle.css";
 
 const N = 4; // filas/base
 
+interface HexData {
+  position: string;
+  player: "j1" | "j2" | null;
+}
+
+interface TriangleProps {
+  hexData: HexData[];
+  onHexClick: (position: string) => void;
+}
+
 // Función equivalente a Rust `from_index`
 function fromIndex(index: number, boardSize: number) {
   const r = Math.floor((Math.sqrt(8 * index + 1) - 1) / 2);
   const rowStartIndex = (r * (r + 1)) / 2;
   const c = index - rowStartIndex;
 
-  const x = boardSize - 1 - r; // fila invertida como en Rust
+  const x = boardSize - 1 - r; // fila invertida
   const y = c;
   const z = boardSize - 1 - x - y;
 
   return { x, y, z };
 }
 
-const Triangle: React.FC = () => {
+const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -30,24 +40,22 @@ const Triangle: React.FC = () => {
         height: window.innerHeight,
       });
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  const side = Math.min(window.innerWidth, window.innerHeight);
 
+  const side = Math.min(windowSize.width, windowSize.height);
   const hexHeight = Math.min(
     side / (1 + (N - 1) * 0.75),
     side / (N + 1) / 1.1547
   );
   const hexWidth = hexHeight * 1.1547;
-
   const triangleHeight = hexHeight + (N - 1) * hexHeight * 0.75;
   const containerWidth = N * hexWidth;
   const containerHeight = triangleHeight;
 
   const rows: JSX.Element[] = [];
-  let index = 0; // índice lineal para fromIndex
+  let index = 0;
 
   for (let row = 0; row < N; row++) {
     const hexCount = row + 1;
@@ -58,9 +66,11 @@ const Triangle: React.FC = () => {
       const left = rowOffsetX + col * hexWidth;
       const top = row * hexHeight * 0.75;
 
-      // ✅ Calculamos las coordenadas usando fromIndex
       const { x, y, z } = fromIndex(index, N);
       const position = `(${x},${y},${z})`;
+
+      // Busca el estado del hexágono desde el backend
+      const hex = hexData.find((h) => h.position === position);
 
       rows.push(
         <Hexagon
@@ -70,11 +80,12 @@ const Triangle: React.FC = () => {
           left={left}
           top={top}
           position={position}
-          player={index % 2 === 0 ? "j1" : "j2"}
+          player={hex?.player || null}
+          onClick={() => onHexClick(position)}
         />
       );
 
-      index++; // avanzamos al siguiente índice
+      index++;
     }
   }
 

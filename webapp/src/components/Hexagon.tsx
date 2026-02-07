@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./Hexagon.css";
 
 interface HexagonProps {
@@ -7,22 +7,13 @@ interface HexagonProps {
   left: number;
   top: number;
   position: string;
-  player?: "j1" | "j2"; // nuevo prop para indicar el jugador
+  player?: "j1" | "j2" | null; // ahora puede ser null
+  onClick: () => void; // nueva prop
 }
 
-const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, player }) => {
-  const [clicked, setClicked] = useState(false);
-
-  const handleClick = () => {
-    if (!clicked) {
-      setClicked(true);
-      console.log(`Hexágono ${position} pulsado por ${player}`);
-    }
-  };
-
+const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, player, onClick }) => {
   const classes = ["hex"];
   if (player) classes.push(player);
-  if (clicked) classes.push("clicked");
 
   return (
     <button
@@ -34,8 +25,8 @@ const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, p
         top,
         position: "absolute",
       }}
-      onClick={handleClick}
-      disabled={clicked}
+      onClick={onClick}
+      disabled={!!player} // deshabilita si ya hay jugador
       data-position={position}
     >
       {position}

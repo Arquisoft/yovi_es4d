@@ -5,8 +5,8 @@ interface PlayerInfoProps {
   name: string;
   imgSrc: string;
   points: number;
-  isActive?: boolean;
-  isPlaying?: boolean;
+  isActive?: boolean;   // true si es su turno
+  isPlaying?: boolean;  // true si está ejecutando un movimiento (bot)
 }
 
 const Jugador: React.FC<PlayerInfoProps> = ({
@@ -23,7 +23,9 @@ const Jugador: React.FC<PlayerInfoProps> = ({
         <span className="player-points">{points}</span>
       </div>
       <div className="player-name">{name}</div>
-      <div className="player-status">{isPlaying ? "Jugando..." : "Esperando..."}</div>
+      <div className="player-status">
+        {isPlaying ? "Jugando..." : isActive ? "Tu turno" : "Esperando..."}
+      </div>
       {isActive && <span className="active-indicator"></span>}
     </div>
   );
