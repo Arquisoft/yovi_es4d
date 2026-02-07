@@ -1,0 +1,581 @@
+openapi: 3.0.0
+info:
+  title: Gatewayservice API
+  description: Gateway OpenAPI specification.
+  version: 0.2.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: http://wichat-es4a.es:8000
+    description: Production server
+paths:
+  /adduser:
+    post:
+      summary: Add a new user to the database.
+      operationId: addUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: User ID that will be unique.
+                  example: student
+                password:
+                  type: string
+                  description: User password that must be at least 8 characters long and contain at least one uppercase letter,one number and no spaces.
+                  example: Password123
+      responses:
+        '200':
+          description: User added successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    description: User ID
+                    example: student
+                  password:
+                    type: string
+                    description: Hashed password
+                    example: $2b$10$ZKdNYLWFQxzt5Rei/YTc/OsZNi12YiWz30JeUFHNdAt7MyfmkTuvC
+                  _id:
+                    type: string
+                    description: Identification
+                    example: 65f756db3fa22d227a4b7c7d
+                  createdAt:
+                    type: string
+                    description: Creation date.
+                    example: '2024-03-17T20:47:23.935Z'
+                  ___v:
+                    type: integer
+                    example: '0'                                        
+        '400':
+          description: Failed to add user due to missing fields, not secure password or invalid username format.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        description: Missing field error.
+                        example: "Missing required field: password"
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        description: Password security error.
+                        example: "Password error content: notSecurePassword"
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        description: Username format error.
+                        example: "Invalid username format"
+        '409':
+          description: Username already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error information.
+                    example: Username already exists
+  /health:
+    get:
+      summary: Check the health status of the service.
+      operationId: checkHealth
+      responses:
+        '200':
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Health status.
+                    example: OK
+  /login:
+    post:
+      summary: Log in to the system.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: User ID from an existing user.
+                  example: student
+                password:
+                  type: string
+                  description: User password for the username.
+                  example: Password123
+      responses:
+        '200':
+          description: Login successful. Returns user token, username, and creation date.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for authentication.
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  username:
+                    type: string
+                    description: Username.
+                    example: student
+                  createdAt:
+                    type: string
+                    description: Creation date.
+                    example: '2024-03-17T20:47:23.935Z'
+                  id:
+                    type: string
+                    description: User ID.
+                    example: 65f756db3fa22d227a4b7c7d
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Shows the error info..
+                    example: Invalid credentials
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error information.
+                    example: Internal Server Error
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error information.
+                    example: Too many requests, please try again later
+                  
+  /api/user/editUser:
+    post:
+      summary: Change user password.
+      operationId: changeUserPassword
+      security:
+        - bearerAuth: []  # Requiere autenticación con JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: Current password of the user.
+                  example: Password123
+                newPassword:
+                  type: string
+                  description: New password.
+                  example: newSecurePass123
+      responses:
+        '200':
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: true
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User not found
+        '401':
+          description: Unauthorized - Incorrect Password.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Incorrent current password
+        '400':
+          description: Unauthorized - Missing or invalid token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cast to ObjectId failed for value \"guestXXXXXXXXXXXX\" (type string) at path \"_id\" for model \"User\"
+
+  /api/game/endAndSaveGame:
+    post:
+      summary: Save the result of a completed game
+      operationId: endAndSaveGame
+      security:
+        - bearerAuth: []  # Requiere autenticación JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - numberOfQuestions
+                - numberOfCorrectAnswers
+                - gameMode
+                - points
+                - questions
+              properties:
+                numberOfQuestions:
+                  type: integer
+                  example: 30
+                numberOfCorrectAnswers:
+                  type: integer
+                  example: 18
+                gameMode:
+                  type: string
+                  example: normal
+                points:
+                  type: integer
+                  example: 500
+                questions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - text
+                      - imageUrl
+                      - selectedAnswer
+                      - answers
+                    properties:
+                      text:
+                        type: string
+                        example: Esto es una pregunta
+                      imageUrl:
+                        type: string
+                        format: uri
+                        example: https://example.com/question-image.jpg
+                      selectedAnswer:
+                        type: string
+                        example: Esto es una respuesta1
+                      answers:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - text
+                            - isCorrect
+                          properties:
+                            text:
+                              type: string
+                              example: Esto es una respuesta1
+                            isCorrect:
+                              type: boolean
+                              example: true
+                        example:
+                          - text: Esto es una respuesta1
+                            isCorrect: true
+                          - text: Esto es una respuesta2
+                            isCorrect: false
+                          - text: Esto es una respuesta3
+                            isCorrect: false
+                          - text: Esto es una respuesta4
+                            isCorrect: false
+      responses:
+        '200':
+          description: Game saved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Game data saved successfully.
+        '400':
+          description: Invalid input or missing fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Missing fields or invalid format
+        '401':
+          description: Unauthorized - Invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '500':
+          description: Error saving the game.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
+
+
+
+  /api/game/history/gameList:
+    get:
+      summary: Get game history for the authenticated user
+      description: Returns a list of stored games for the currently authenticated user.
+      operationId: getGameHistory
+      security:
+        - bearerAuth: []  # Requiere autenticación JWT
+      responses:
+        '200':
+          description: List of games retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                      example: 661c8e10f7c1a5c7b0b3d2a4
+                    numberOfQuestions:
+                      type: integer
+                      example: 10
+                    numberOfCorrectAnswers:
+                      type: integer
+                      example: 8
+                    gameMode:
+                      type: string
+                      example: normal
+                    points:
+                      type: integer
+                      example: 800
+                    topics:
+                      type: array
+                      items:
+                        type: string
+                      example: ["art", "history"]
+        '401':
+          description: Unauthorized - Invalid or missing token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+        '404':
+          description: No games found for the user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No games found for this user.
+  /api/game/new:
+    post:
+      summary: Configure a new game with selected topics and language
+      operationId: configureNewGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topics
+                - lang
+              properties:
+                topics:
+                  type: array
+                  items:
+                    type: string
+                  example: ["art", "history"]
+                lang:
+                  type: string
+                  enum: [es, en]
+                  example: es
+      responses:
+        '200':
+          description: Game configured successfully. Returns a cacheId to be used in next requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cacheId:
+                    type: string
+                    example: abc123def456ghi789
+        '400':
+          description: Bad request - Invalid topics or language.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid topics or language
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+
+  /api/game/question:
+    post:
+      summary: Get a random question for the game using cacheId.
+      operationId: getRandomQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cacheId
+              properties:
+                cacheId:
+                  description: This cacheId should be changed with the one '/api/game/new' returns.
+                  type: string
+                  example: abcdef123456
+      responses:
+        '200':
+          description: Random question retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                    example: What is the capital of France?
+                  imageUrl:
+                    type: string
+                    format: uri
+                    example: https://example.com/question-image.jpg
+                  selectedAnswer:
+                    type: string
+                    example: Paris
+                  answers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                          example: Option text
+                        isCorrect:
+                          type: boolean
+                          example: false
+                    example:
+                      - text: Paris
+                        isCorrect: true
+                      - text: Madrid
+                        isCorrect: false
+                      - text: Berlin
+                        isCorrect: false
+                      - text: Rome
+                        isCorrect: false
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+        '400':
+          description: Bad request - Game settings not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Game settings not found.
+
+
+
+
+
+
+# This is the security scheme for JWT authentication. It defines how the authentication should be done in the API. 
+# The bearerAuth scheme is used to indicate that the API uses JWT (JSON Web Token) tokens for authentication.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
