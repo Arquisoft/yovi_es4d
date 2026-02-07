@@ -1,98 +1,73 @@
-.game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: sans-serif;
-}
-
-.board-container {
-  margin: 20px;
-}
-
-.row {
+/* Contenedor del tablero */
+.gameboard-container {
+  width: 80vw;
+  height: 80vh;
+  position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
+  border: 2px solid #555;
+  border-radius: 16px;
+  background-color: #242424; /* igual que body dark */
+  margin: auto; /* centrar el contenedor en la pantalla */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.hex {
-  width: 50px;
-  height: 50px;
-  margin: 2px;
-  clip-path: polygon(
-    25% 6.7%,
-    75% 6.7%,
-    100% 50%,
-    75% 93.3%,
-    25% 93.3%,
-    0% 50%
-  );
-  display: inline-block;
+/* Posición jugadores */
+.player1 {
+  position: absolute;
+  top: 1vw;
+  left: 1vw;
 }
 
-.hex.red {
+.player2 {
+  position: absolute;
+  top: 1vw;
+  right: 1vw;
+}
+
+/* Botones centrados abajo */
+.board-buttons {
+  position: absolute;
+  bottom: 2vw;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2vw;
+}
+
+/* Botones adaptativos */
+.board-buttons button {
+  padding: 0.8em 1.5em;
+  font-size: clamp(0.8rem, 1vw, 1rem);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: inherit; /* igual que body */
+  cursor: pointer;
+  transition: all 0.25s;
+  color: #fff;
+  background-color: #1a1a1a; /* igual que otros botones globales */
+}
+
+/* Hover de botones */
+.board-buttons button:hover {
+  border-color: #646cff;
+}
+
+/* Undo - rojo */
+.board-buttons .undo {
   background-color: #e74c3c;
 }
 
-.hex.blue {
+.board-buttons .undo:hover {
+  background-color: #c0392b;
+}
+
+/* Redo - azul */
+.board-buttons .redo {
   background-color: #3498db;
 }
 
-.hex.white {
-  background-color: #ecf0f1;
-}
-
-.players-container {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 700px;
-  margin-top: 20px;
-}
-
-.player-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.player-card img {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.player-name {
-  font-weight: bold;
-}
-
-.player-status {
-  color: gray;
-}
-
-.player-status.turn {
-  color: green;
-  font-weight: bold;
-}
-
-.chat-container {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.chat-container input {
-  padding: 5px;
-  width: 300px;
-  margin-bottom: 10px;
-}
-
-.buttons button {
-  margin: 0 5px;
-  padding: 5px 10px;
+.board-buttons .redo:hover {
+  background-color: #2980b9;
 }

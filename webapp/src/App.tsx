@@ -1,5 +1,5 @@
 import './App.css'
-import ScreenGame from './components/screen-game';
+import ScreenGame from './components/GameBoard';
 
 function App() {
   return (
