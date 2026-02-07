@@ -1,8 +1,13 @@
-const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 require('dotenv').config();
+
+const express = require('express');
+
+const { protect } = require('./middleware/authMiddleware');
+
+const router = express.Router();
 
 const app = express();
 const port = 3000;
@@ -43,6 +48,19 @@ app.post('/createuser', async (req, res) => {
   }
 });
 
+const logoutUser = (req, res) => {
+  res.setHeader('Set-Cookie', [
+    'token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict'
+  ]);
+
+  res.json({ message: 'Sesión cerrada' });
+};
+
+router.get('/me', protect, (req, res) => {
+  res.json(req.user);
+});
+
+module.exports = router;
 
 if (require.main === module) {
   app.listen(port, () => {

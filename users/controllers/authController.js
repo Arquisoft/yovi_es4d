@@ -47,20 +47,22 @@ const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Buscar por username o email
-    const user = await User.findOne({ 
-      $or: [
-        { username: username }, 
-        { email: username }
-      ] 
+    const user = await User.findOne({
+      $or: [{ username }, { email: username }],
     });
 
     if (user && (await user.matchPassword(password))) {
+      const token = generateToken(user._id);
+
+      res.setHeader('Set-Cookie', [
+        `token=${token}; HttpOnly; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Strict`
+      ]);
+
       res.json({
         _id: user._id,
         username: user.username,
         email: user.email,
-        token: generateToken(user._id),
+        token: token,
       });
     } else {
       res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
