@@ -1,6 +1,8 @@
 import React from "react";
-import "./GameBoard.css"; // Aquí pondremos los estilos
+//import "./GameBoard.css"; // Aquí pondremos los estilos
 import Triangle from "./Triangle";
+import TriangleC from "./continerTriangle";
+import TriangleR from "./continerTriangle2";
 const BOARD_SIZE = 6; // Número de hexágonos por lado
 
 type Player = {
@@ -25,9 +27,13 @@ const GameBoard: React.FC = () => {
   return (
     // Dentro del return de GameBoard
     <div className="board-container">
-      
+    
+      <TriangleC >
+        
         <Triangle />
-   
+        
+      </TriangleC>
+    
     </div>
   );
 };

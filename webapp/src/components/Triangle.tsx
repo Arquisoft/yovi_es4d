@@ -1,7 +1,7 @@
 import React from "react";
 import "./Triangle.css";
 
-const N = 6; // filas/base
+const N = 13; // filas/base
 
 const Triangle: React.FC = () => {
   const side = Math.min(window.innerWidth, window.innerHeight); // referencia de tamaño
