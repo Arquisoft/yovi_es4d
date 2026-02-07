@@ -13,9 +13,8 @@ const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const data = await login({ username, password });
-      alert('Login exitoso! Token: ' + data.token);
-      // Aquí podrías redirigir o guardar el token en localStorage/contexto
+      await login({ username, password });
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.message);
     } finally {
