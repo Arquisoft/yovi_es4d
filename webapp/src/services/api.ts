@@ -4,6 +4,7 @@ export const post = async (endpoint: string, data: any) => {
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
+      credentials: "include",
       headers: {
         'Content-Type': 'application/json',
       },

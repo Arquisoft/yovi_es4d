@@ -1,4 +1,5 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -24,9 +25,14 @@ try {
   console.log(e);
 }
 
-app.use(cors());
-app.use(express.json());
 
+app.use(cors({
+  origin: "http://localhost", // o http://localhost:5173 (Vite)
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(cookieParser());
 // Rutas de autenticación
 app.use('/api/users', authRoutes);
 

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { login } from '../services/userService';
+import { useNavigate } from "react-router-dom";
+
+
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -13,9 +18,9 @@ const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const data = await login({ username, password });
-      alert('Login exitoso! Token: ' + data.token);
-      // Aquí podrías redirigir o guardar el token en localStorage/contexto
+      await login({ username, password });
+
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
     } finally {
