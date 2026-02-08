@@ -28,7 +28,6 @@ app.use(express.json());
 const metricsMiddleware = promBundle({ includeMethod: true });
 app.use(metricsMiddleware);
 
-/*USAR PARA LA AUTENTIFICACION POR LA APP
 /**
  * Middleware to verify JWT token for authentication.
  * If the token is not provided, assigns a guest user. If the token is valid, decodes the user information and attaches it to the request body.
@@ -37,10 +36,9 @@ app.use(metricsMiddleware);
  * @param {Object} res - The response object.
  * @param {Function} next - The callback function to move to the next middleware or route handler.
  */
-/*
 const verifyToken = (req, res, next) => {
   if (!req.headers["authorization"]) {
-    req.body.userId = "guest" + Date.now() ;
+    req.body.userId = "guest" + Date.now();
     next();
   } else {
     const token = req.headers["authorization"]?.split(" ")[1];
@@ -56,7 +54,6 @@ const verifyToken = (req, res, next) => {
     });
   }
 };
-*/
 
 
 /**

@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import Hexagon from "./Hexagon";
 import "./Triangle.css";
 
-const N = 4; // filas/base
+// Determine board size from hexData length (n*(n+1)/2 = total cells)
+// If hexData is empty, fall back to 4
+function computeBoardSize(totalCells: number) {
+  if (!totalCells || totalCells <= 0) return 4;
+  return Math.floor((Math.sqrt(8 * totalCells + 1) - 1) / 2);
+}
 
 interface HexData {
   position: string;
@@ -44,20 +49,21 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const boardSize = computeBoardSize(hexData.length);
   const side = Math.min(windowSize.width, windowSize.height);
   const hexHeight = Math.min(
-    side / (1 + (N - 1) * 0.75),
-    side / (N + 1) / 1.1547
+    side / (1 + (boardSize - 1) * 0.75),
+    side / (boardSize + 1) / 1.1547
   );
   const hexWidth = hexHeight * 1.1547;
-  const triangleHeight = hexHeight + (N - 1) * hexHeight * 0.75;
-  const containerWidth = N * hexWidth;
+  const triangleHeight = hexHeight + (boardSize - 1) * hexHeight * 0.75;
+  const containerWidth = boardSize * hexWidth;
   const containerHeight = triangleHeight;
 
   const rows: JSX.Element[] = [];
   let index = 0;
 
-  for (let row = 0; row < N; row++) {
+  for (let row = 0; row < boardSize; row++) {
     const hexCount = row + 1;
     const rowWidth = hexWidth + (hexCount - 1) * hexWidth;
     const rowOffsetX = (containerWidth - rowWidth) / 2;
@@ -65,8 +71,7 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
     for (let col = 0; col < hexCount; col++) {
       const left = rowOffsetX + col * hexWidth;
       const top = row * hexHeight * 0.75;
-
-      const { x, y, z } = fromIndex(index, N);
+      const { x, y, z } = fromIndex(index, boardSize);
       const position = `(${x},${y},${z})`;
 
       // Busca el estado del hexágono desde el backend

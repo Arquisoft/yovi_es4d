@@ -13,6 +13,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Información del turno */
+.turn-info {
+  position: absolute;
+  top: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #3498db;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  z-index: 100;
+}
+
+.turn-info h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+  text-align: center;
+  font-weight: 600;
+}
+
 /* Posición jugadores */
 .player1 {
   position: absolute;
