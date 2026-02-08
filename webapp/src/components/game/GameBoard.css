@@ -1,0 +1,73 @@
+/* Contenedor del tablero */
+.gameboard-container {
+  width: 80vw;
+  height: 80vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #555;
+  border-radius: 16px;
+  background-color: #242424; /* igual que body dark */
+  margin: auto; /* centrar el contenedor en la pantalla */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Posición jugadores */
+.player1 {
+  position: absolute;
+  top: 1vw;
+  left: 1vw;
+}
+
+.player2 {
+  position: absolute;
+  top: 1vw;
+  right: 1vw;
+}
+
+/* Botones centrados abajo */
+.board-buttons {
+  position: absolute;
+  bottom: 2vw;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2vw;
+}
+
+/* Botones adaptativos */
+.board-buttons button {
+  padding: 0.8em 1.5em;
+  font-size: clamp(0.8rem, 1vw, 1rem);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: inherit; /* igual que body */
+  cursor: pointer;
+  transition: all 0.25s;
+  color: #fff;
+  background-color: #1a1a1a; /* igual que otros botones globales */
+}
+
+/* Hover de botones */
+.board-buttons button:hover {
+  border-color: #646cff;
+}
+
+/* Undo - rojo */
+.board-buttons .undo {
+  background-color: #e74c3c;
+}
+
+.board-buttons .undo:hover {
+  background-color: #c0392b;
+}
+
+/* Redo - azul */
+.board-buttons .redo {
+  background-color: #3498db;
+}
+
+.board-buttons .redo:hover {
+  background-color: #2980b9;
+}
