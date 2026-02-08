@@ -1,8 +1,10 @@
 import './StartScreen.css';
 import { useTranslation } from '../i18n';
+import { useNavigate } from 'react-router-dom';
 
 export default function Sidebar() {
   const { t, lang, setLang } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <nav className="navbar">
@@ -23,7 +25,7 @@ export default function Sidebar() {
             <option className='en-select'value="en">{t('menu.english')}</option>
           </select>
         </li>
-        <li><button className="navbar-button">{t('menu.rules')}</button></li>
+        <li><button className="navbar-button" onClick={() => navigate('/rules')}>{t('menu.rules')}</button></li>
         <li><button className="navbar-button">{t('menu.profile')}</button></li>
         <li><button className="navbar-button">{t('menu.logout')}</button></li>
       </ul>

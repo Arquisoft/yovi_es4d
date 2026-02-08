@@ -289,3 +289,48 @@ html, body {
 
   
 }
+
+#language-select > option.es-selected:hover {
+  background-color: #0066ff;
+  color: blue;
+}
+/* Rules Content Styles */
+.rules-content {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  flex: 1;
+  overflow: hidden;
+}
+
+.rules-content p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 18px 0;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.rules-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rules-content a {
+  color: #00d4ff;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid #00d4ff;
+  transition: all 0.3s ease;
+}
+
+.rules-content a:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}

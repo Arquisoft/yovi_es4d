@@ -3,7 +3,8 @@
     "title": "Welcome to yovi_es4d!",
     "subtitle": "Enjoy the classic Y game",
     "play": "Play",
-    "typing": "Hello! We are the developers of the yovi_es4d game: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 and Sergio ◻️. Have fun!"
+    "typing": "Hello! We are the developers of the yovi_es4d game: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 and Sergio ◻️. Have fun!",
+    "goback": "Go back"
   },
   "menu": {
     "rules": "Rules",
@@ -16,5 +17,14 @@
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. All rights reserved."
+  },
+  "rules": {
+    "title": "Game Rules",
+    "description1": "Y is a board game for two players in which participants take turns placing pieces of their color on a triangular board made up of hexagonal spaces.",
+    "description2": "The objective of the game is to connect the three sides of the board with a continuous chain of pieces, and the first player to achieve this wins the game.",
+    "description3": "The basic rules are very simple: each player places a piece of their color on an empty space during their turn, without moving or removing already placed pieces.",
+    "description4": "The corners of the board count as belonging to the two adjacent sides, for example, a piece at the tip of the triangle belongs to both its left and right sides.",
+    "wikipedia": "Information taken from ",
+    "wikipediaLink": "Wikipedia"
   }
 }
