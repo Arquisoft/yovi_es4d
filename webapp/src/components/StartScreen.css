@@ -1,0 +1,336 @@
+:root {
+  /*-bg: #ffffff; */
+  /*--muted: #f4f6f8; */
+  --accent: #0066ff;
+  --text: #0a0a0a;
+}
+
+/* Full viewport wrapper */
+.start-screen {
+  /* Use a public static GIF to avoid asset resolution issues and ensure it centers correctly */
+  background-image: url('../assets/y_game_pixel_fullscreen_loop.gif');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1; /* allow .start-screen to grow inside the column layout */
+  min-height: 0; /* allow flex children to size correctly */
+  padding: 0;
+  width: 100%;
+}
+
+/* overlay gradient to improve contrast (separate layer so GIF centers correctly) */
+.start-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(0,123,247,0.45), rgba(0,0,0,0.06));
+  pointer-events: none;
+}
+/* Footer that sits below the main content */
+.start-footer {
+  text-align: center;
+  padding: 18px 16px;
+  color: rgba(255,255,255,0.85);
+  background: linear-gradient(90deg, rgba(116, 65, 186, 0.95), rgba(0, 149, 255, 0.85), rgba(0, 4, 255, 0.85));
+}
+.start-footer p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+/* Ensure root-level elements don't add extra offset and use a column layout so footer sits below content */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#root, .App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar horizontal at top */
+.navbar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: linear-gradient(90deg, rgba(116, 65, 186, 0.95), rgba(0, 149, 255, 0.85), rgba(0, 4, 255, 0.85));
+  border-bottom: 2px solid #0066ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.navbar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.navbar-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Main content grows to fill remaining space */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  position: relative;
+  min-width: 0; /* allow flex item to shrink properly inside .start-screen */
+  width: 100%;
+}
+
+/* When sidebar is collapsed, allow main content to use more space */
+.main-content.full {
+  padding: 32px; /* use normal padding when sidebar is hidden */
+}
+
+.content-inner {
+  max-width: 720px;
+  text-align: center;
+  position: relative;
+  z-index: 2; /* sit above the background */
+  padding-bottom: 120px; /* reserve space for the typing area so button doesn't move */
+}
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.typing-holder {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 18px; /* sits below the button visually */
+  width: min(92%, 720px);
+  max-width: 720px;
+  text-align: center;
+  z-index: 3;
+  pointer-events: none; /* non interactive */
+  padding: 0 12px;
+}
+
+.typing {
+  display: inline-block;
+  white-space: normal; /* allow wrapping */
+  word-break: break-word;
+  font-size: clamp(0.95rem, 2.6vw, 1.2rem);
+  margin: 0;
+  color: rgba(255,255,255,0.95);
+}
+
+/* Typing effect for h2 */
+.typing {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  margin: 8px 0 14px;
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  vertical-align: middle;
+  position: relative;
+  z-index: 3;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: #fff;
+  margin-left: 6px;
+  vertical-align: bottom;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Main content wrapper (background moved to .start-screen) */
+.main-content {
+  position: relative;
+}
+
+/* Subtle overlay to improve text contrast */
+.main-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.15));
+  pointer-events: none;
+}
+
+.main-content .play-button {
+  position: relative;
+  z-index: 3;
+}
+
+.main-content h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  margin: 0 0 16px 0;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  line-height: 1.12; /* more vertical space for descenders */
+  color: #fff;
+  text-shadow: 0 10px 22px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.04);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.35px rgba(0,0,0,0.12); /* subtle outline to avoid visual clipping */
+
+  /* Gradient text: ensure gradient isn't clipped at letter edges */
+  display: inline-block; /* isolates background to the text area */
+  padding: 6px 10px; /* vertical + horizontal padding avoids clipping */
+  overflow: visible; /* allow gradient to render outside if needed */
+  background: linear-gradient(90deg,#ffffff 0%, #0095ff 45%, #0004ff 100%);
+  background-size: 180% 140%; /* larger area so gradient covers even when scaled */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: hero-move 4.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes hero-move {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.play-button {
+  padding: 12px 22px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(43, 0, 255, 0.18);
+}
+
+.play-button:hover {
+  transform: translateY(-2px);
+}
+
+#github-link {
+  text-decoration: none;
+  color: floralwhite;
+}
+
+/* Responsive: navbar on small screens */
+@media (max-width: 720px) {
+  .navbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .navbar-menu {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .navbar-button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .main-content {
+    padding: 24px;
+  }
+
+  
+}
+
+#language-select > option.es-selected:hover {
+  background-color: #0066ff;
+  color: blue;
+}
+/* Rules Content Styles */
+.rules-content {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  flex: 1;
+  overflow: hidden;
+}
+
+.rules-content p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 18px 0;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.rules-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rules-content a {
+  color: #00d4ff;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid #00d4ff;
+  transition: all 0.3s ease;
+}
+
+.rules-content a:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}

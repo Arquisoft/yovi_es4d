@@ -1,21 +1,21 @@
-import './App.css'
+import './components/StartScreen.css';
+import './App.css':
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import StartScreen from './components/StartScreen';
+import Rules from './components/Rules';
 import ScreenGame from './components/game/GameBoard';
 
 function App() {
   return (
-    <div className="App">
-      {/*<div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<StartScreen />} />
+          <Route path="/rules" element={<Rules />} />
+          <Route path="/game" element={<Rules />} />
+        </Routes>
       </div>
-
-      <h2>Welcome to the Software Arquitecture 2025-2026 course</h2>*/}
-      <ScreenGame />
-    </div>
+    </Router>
   );
 }
 
