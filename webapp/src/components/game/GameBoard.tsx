@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import Triangle from "./Triangle";
+import Triangle from "./Triangle.tsx";
 import Jugador from "./player";
 import "./GameBoard.css";
-import { API_URL } from "../config.ts";
+import { API_URL } from "../../config.ts";
 
 interface HexData {
   position: string;
