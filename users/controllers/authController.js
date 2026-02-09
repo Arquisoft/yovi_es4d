@@ -59,22 +59,29 @@ const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    // Buscar por username o email
     const user = await User.findOne({
-      $or: [{ username }, { email: username }],
+      $or: [
+        { username: username },
+        { email: username }
+      ]
     });
 
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user._id);
 
-      res.setHeader('Set-Cookie', [
-        `token=${token}; HttpOnly; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Strict`
-      ]);
+      // Configurar cookie con el token
+      res.cookie('token', token, {
+        httpOnly: true,  // No accesible desde JavaScript del cliente (más seguro)
+        secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
+        sameSite: 'strict', // Protección CSRF
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días en milisegundos
+      });
 
       res.json({
         _id: user._id,
         username: user.username,
         email: user.email,
-        token: token,
       });
     } else {
       res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
