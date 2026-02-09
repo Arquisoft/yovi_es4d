@@ -63,6 +63,8 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
   const rows: JSX.Element[] = [];
   let index = 0;
 
+  
+
   for (let row = 0; row < boardSize; row++) {
     const hexCount = row + 1;
     const rowWidth = hexWidth + (hexCount - 1) * hexWidth;
@@ -76,7 +78,7 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
 
       // Busca el estado del hexágono desde el backend
       const hex = hexData.find((h) => h.position === position);
-
+      console.log(position, hex?.player);
       rows.push(
         <Hexagon
           key={position}

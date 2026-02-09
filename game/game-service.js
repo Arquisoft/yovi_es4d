@@ -18,17 +18,15 @@ const games = new Map();
 
 /**
  * Iniciar un nuevo juego
- * POST /api/game/new
+ * POST /api/game/start
  */
-app.post('/api/game/new', async (req, res) => {
+app.post('/api/game/start', async (req, res) => {
   try {
     const { userId, gameMode = 'vsBot' } = req.body;
 
-    // Generar ID único del juego
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const boardSize = 11;
 
-    // Crear estructura inicial del juego
-    const boardSize = 11; // default board size (can be made configurable)
     const game = {
       gameId,
       userId,
@@ -37,7 +35,7 @@ app.post('/api/game/new', async (req, res) => {
       boardSize,
       players: [
         { id: userId, name: 'Player 1', points: 0, color: 'j1' },
-        { id: 'bot', name: 'Bot', points: 0, color: 'j2' }
+        { id: gameMode === 'vsBot' ? 'bot' : 'player2', name: gameMode === 'vsBot' ? 'Bot' : 'Player 2', points: 0, color: 'j2' }
       ],
       currentPlayer: 'j1',
       moves: [],
@@ -51,88 +49,86 @@ app.post('/api/game/new', async (req, res) => {
       gameId,
       board: game.board,
       players: game.players,
-      status: 'Game started'
+      turn: game.currentPlayer,
+      status: 'active',
+      winner: null
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+
+app.post('/api/game/:gameId/validateMove', (req, res) => {
+  const { gameId } = req.params;
+  const { move, userId } = req.body;
+
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+
+  // Solo el jugador humano puede mover
+  if (game.currentPlayer !== 'j1') return res.status(400).json({ error: 'Not your turn' });
+
+  if (!isCellEmpty(game, move)) return res.status(400).json({ error: 'Cell is already occupied' });
+
+  
+  res.json({ valid: true });
+});
+
 /**
- * Realizar un movimiento
- * POST /api/game/:gameId/move
+ * Mover jugador vs Bot
+ * POST /api/game/:gameId/vsBot/move
  */
-app.post('/api/game/:gameId/move', async (req, res) => {
+app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   try {
     const { gameId } = req.params;
     const { userId, move } = req.body;
 
     const game = games.get(gameId);
-    if (!game) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
+    if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    // Validar turno
-    if (game.currentPlayer !== 'j1') {
-      return res.status(400).json({ error: 'Not player turn' });
-    }
+    if (game.currentPlayer !== 'j1') return res.status(400).json({ error: 'Not your turn' });
 
-    // Verificar que la casilla está libre
-    if (!isCellEmpty(game, move)) {
+    const normMove = normalizePosition(game, move);
+
+    if (!isCellEmpty(game, normMove)) {
       return res.status(400).json({ error: 'Cell is already occupied' });
     }
 
-    // Normalizar posición del jugador y registrar movimiento
-    const normMove = normalizePosition(game, move);
-    const playerMove = {
-      player: 'j1',
-      position: normMove,
-      timestamp: new Date()
-    };
-    game.moves.push(playerMove);
+    // 1️⃣ Registrar movimiento del jugador
+    game.moves.push({ player: 'j1', position: normMove, timestamp: new Date() });
     updateBoard(game, normMove, 'j1');
 
-    // Cambiar turno al bot (si aplica)
-    game.currentPlayer = game.gameMode === 'vsBot' ? 'j2' : 'j1';
+    // 2️⃣ Turno del bot
+    game.currentPlayer = 'j2';
 
-    // Llamar a Gamey para obtener movimiento del bot
-    let botMove = null;
-    if (game.gameMode === 'vsBot') {
-      try {
-        const gameState = convertToYEN(game);
-        const botResponse = await axios.post(
-          `${GAMEY_BOT_URL}/v1/ybot/choose/random_bot`,
-          gameState,
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+    // Simular “pensando” 1-2 segundos
+    await sleep(Math.floor(Math.random() * 1000) + 1000);
 
-        botMove = botResponse.data.coords; // { x, y, z }
+    try {
+      const gameState = convertToYEN(game);
+      const botResponse = await axios.post(
+        `${GAMEY_BOT_URL}/v1/ybot/choose/random_bot`,
+        gameState,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-        // Registrar movimiento del bot (usar formato '(x,y,z)')
-        const botPosStr = `(${botMove.x},${botMove.y},${botMove.z})`;
-        console.log(`[Bot Move] Registering at position: ${botPosStr}`);
-        game.moves.push({
-          player: 'j2',
-          position: botPosStr,
-          timestamp: new Date()
-        });
-
-        // Aplicar movimiento del bot al tablero
-        updateBoard(game, botPosStr, 'j2');
-      } catch (error) {
-        console.error('Error calling Gamey bot:', error.message || error);
-        // Si Gamey falla, hacer un movimiento aleatorio
-        const rand = getRandomMove(game.board);
-        if (rand) {
-          updateBoard(game, rand, 'j2');
-          game.moves.push({ player: 'j2', position: rand, timestamp: new Date() });
-        }
+      const botMove = botResponse.data.coords;
+      const botPosStr = `(${botMove.x},${botMove.y},${botMove.z})`;
+      game.moves.push({ player: 'j2', position: botPosStr, timestamp: new Date() });
+      updateBoard(game, botPosStr, 'j2');
+    } catch (error) {
+      // Si falla el bot, hacer movimiento aleatorio
+      const rand = getRandomMove(game.board);
+      if (rand) {
+        game.moves.push({ player: 'j2', position: rand, timestamp: new Date() });
+        updateBoard(game, rand, 'j2');
       }
-      // Después del bot, devolver el turno al jugador
-      game.currentPlayer = 'j1';
     }
 
-    // Verificar si hay ganador
+    // Después del bot, vuelve al jugador
+    game.currentPlayer = 'j1';
+
     const winner = checkWinner(game.board);
     if (winner) {
       game.status = 'finished';
@@ -141,16 +137,30 @@ app.post('/api/game/:gameId/move', async (req, res) => {
 
     res.json({
       gameId,
-      board: game.board,
+      board: game.board.map(h => ({ position: h.position, player: h.player || null })),
       players: game.players,
       moves: game.moves,
       turn: game.currentPlayer,
       winner: game.winner || null,
       status: game.status
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/*
+ * Mover jugador 1vs1 (vacío de momento)
+ * POST /api/game/:gameId/multiplayer/move
+ */
+app.post('/api/game/:gameId/multiplayer/move', (req, res) => {
+  // No hacemos nada aún, solo devolver JSON de prueba
+  res.json({ message: 'Multiplayer move endpoint (empty)' });
 });
 
 /**
@@ -158,26 +168,19 @@ app.post('/api/game/:gameId/move', async (req, res) => {
  * GET /api/game/:gameId
  */
 app.get('/api/game/:gameId', (req, res) => {
-  try {
-    const { gameId } = req.params;
-    const game = games.get(gameId);
+  const { gameId } = req.params;
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    if (!game) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
-
-    res.json({
-      gameId,
-      board: game.board,
-      players: game.players,
-      moves: game.moves,
-      turn: game.currentPlayer,
-      status: game.status,
-      winner: game.winner || null
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    gameId,
+    board: game.board,
+    players: game.players,
+    moves: game.moves,
+    turn: game.currentPlayer,
+    status: game.status,
+    winner: game.winner || null
+  });
 });
 
 /**
@@ -185,119 +188,55 @@ app.get('/api/game/:gameId', (req, res) => {
  * POST /api/game/endAndSaveGame
  */
 app.post('/api/game/endAndSaveGame', (req, res) => {
-  try {
-    const { gameId, userId } = req.body;
-    const game = games.get(gameId);
+  const { gameId } = req.body;
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    if (!game) {
-      return res.status(404).json({ error: 'Game not found' });
+  game.status = 'finished';
+
+  res.json({
+    gameId,
+    status: 'Game saved',
+    result: {
+      winner: game.winner || 'draw',
+      moves: game.moves.length,
+      duration: new Date() - game.createdAt
     }
-
-    game.status = 'finished';
-
-    // Aquí podrías guardar en base de datos
-    res.json({
-      gameId,
-      status: 'Game saved',
-      result: {
-        winner: game.winner || 'draw',
-        moves: game.moves.length,
-        duration: new Date() - game.createdAt
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  });
 });
 
-// ============= FUNCIONES AUXILIARES =============
-
-/**
- * Inicializar tablero vacío con tamaño triangular
- * IMPORTANTE: Todas las posiciones en formato (x,y,z)
- */
+// ================= FUNCIONES AUXILIARES =================
 function initializeBoard(boardSize) {
   const total = (boardSize * (boardSize + 1)) / 2;
   const board = [];
-  console.log(`[initializeBoard] Creating board with ${total} cells, size ${boardSize}`);
   for (let i = 0; i < total; i++) {
     const { x, y, z } = indexToCoords(i, boardSize);
-    const pos = `(${x},${y},${z})`;
-    board.push({ position: pos, player: null });
+    board.push({ position: `(${x},${y},${z})`, player: null });
   }
-  console.log(`[initializeBoard] First 5 positions: ${board.slice(0, 5).map(b => b.position).join(', ')}`);
   return board;
 }
 
-/**
- * Actualizar tablero con movimiento
- * position puede ser un índice (string) o coordenadas 'x,y,z'
- */
 function updateBoard(game, position, player) {
-  // Normalize incoming position to string '(x,y,z)'
-  let norm = null;
-  if (typeof position === 'string') {
-    // remove possible parentheses
-    const cleaned = position.replace(/[()]/g, '');
-    const parts = cleaned.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length === 3) {
-      const [x, y, z] = parts.map(Number);
-      norm = `(${x},${y},${z})`;
-    } else if (!isNaN(Number(position))) {
-      // numeric index
-      const idx = Number(position);
-      const c = indexToCoords(idx, game.boardSize);
-      norm = `(${c.x},${c.y},${c.z})`;
-    }
-  } else if (typeof position === 'number') {
-    const c = indexToCoords(position, game.boardSize);
-    norm = `(${c.x},${c.y},${c.z})`;
-  }
-
-  if (!norm) return;
+  let norm = normalizePosition(game, position);
   const hex = game.board.find(h => h.position === norm);
   if (hex) hex.player = player;
 }
 
 function isCellEmpty(game, position) {
-  // Normalize like updateBoard and check
-  let norm = null;
-  if (typeof position === 'string') {
-    const cleaned = position.replace(/[()]/g, '');
-    const parts = cleaned.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length === 3) {
-      const [x, y, z] = parts.map(Number);
-      norm = `(${x},${y},${z})`;
-    } else if (!isNaN(Number(position))) {
-      const idx = Number(position);
-      const c = indexToCoords(idx, game.boardSize);
-      norm = `(${c.x},${c.y},${c.z})`;
-    }
-  } else if (typeof position === 'number') {
-    const c = indexToCoords(position, game.boardSize);
-    norm = `(${c.x},${c.y},${c.z})`;
-  }
-  if (!norm) return false;
+  const norm = normalizePosition(game, position);
   const hex = game.board.find(h => h.position === norm);
   return hex ? hex.player === null : false;
 }
 
-/**
- * Convertir estado del juego a formato YEN (formato de Gamey)
- * YEN: { size, turn, players, layout }
- */
 function convertToYEN(game) {
   const size = game.boardSize;
-  const players = ['B', 'R']; // j1 -> B, j2 -> R
+  const players = ['B', 'R'];
   const turn = game.currentPlayer === 'j1' ? 0 : 1;
-
-  // Build layout rows: row 0 has 1 cell, row 1 has 2 cells, ..., row size-1 has size cells
   const rows = [];
   let idx = 0;
   for (let r = 0; r < size; r++) {
-    const rowLen = r + 1;
     let row = '';
-    for (let c = 0; c < rowLen; c++) {
+    for (let c = 0; c <= r; c++) {
       const cell = game.board[idx];
       if (!cell || cell.player === null) row += '.';
       else if (cell.player === 'j1') row += players[0];
@@ -306,16 +245,13 @@ function convertToYEN(game) {
     }
     rows.push(row);
   }
-
-  const layout = rows.join('/');
-  return { size, turn, players, layout };
+  return { size, turn, players, layout: rows.join('/') };
 }
 
 function indexToCoords(index, boardSize) {
-  const i_f = index;
-  const r = Math.floor((Math.sqrt(8 * i_f + 1) - 1) / 2);
-  const rowStartIndex = (r * (r + 1)) / 2;
-  const c = index - rowStartIndex;
+  const r = Math.floor((Math.sqrt(8 * index + 1) - 1) / 2);
+  const rowStart = (r * (r + 1)) / 2;
+  const c = index - rowStart;
   const x = boardSize - 1 - r;
   const y = c;
   const z = boardSize - 1 - x - y;
@@ -324,22 +260,15 @@ function indexToCoords(index, boardSize) {
 
 function normalizePosition(game, position) {
   if (!position && position !== 0) return null;
-  // If it's an object with x,y,z
   if (typeof position === 'object' && position.x !== undefined) {
     return `(${position.x},${position.y},${position.z})`;
   }
   if (typeof position === 'string') {
     const cleaned = position.replace(/[()]/g, '');
-    const parts = cleaned.split(',').map(s => s.trim()).filter(Boolean);
-
-    if (parts.length === 3) {
-      const [x, y, z] = parts.map(Number);
-      return `(${x},${y},${z})`;
-    }
-    // if it's a numeric index
+    const parts = cleaned.split(',').map(s => s.trim());
+    if (parts.length === 3) return `(${parts[0]},${parts[1]},${parts[2]})`;
     if (!isNaN(Number(position))) {
-      const idx = Number(position);
-      const c = indexToCoords(idx, game.boardSize);
+      const c = indexToCoords(Number(position), game.boardSize);
       return `(${c.x},${c.y},${c.z})`;
     }
   }
@@ -350,30 +279,14 @@ function normalizePosition(game, position) {
   return null;
 }
 
-/**
- * Obtener un movimiento aleatorio válido
- */
-function coordsToIndex(x, y, z, boardSize) {
-  // r = (boardSize - 1) - x
-  const r = (boardSize - 1) - x;
-  const rowStart = (r * (r + 1)) / 2;
-  const c = y;
-  return rowStart + c;
-}
-
 function getRandomMove(board) {
   const emptyHexes = board.filter(h => h.player === null);
   if (emptyHexes.length === 0) return null;
   return emptyHexes[Math.floor(Math.random() * emptyHexes.length)].position;
 }
 
-/**
- * Verificar si hay ganador
- */
 function checkWinner(board) {
-  // Implementar lógica de victoria del juego Y
-  // Por ahora, devolver null
-  return null;
+  return null; // placeholder
 }
 
 // Health check
@@ -381,8 +294,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'Game Service is running' });
 });
 
-const server = app.listen(port, () => {
-  console.log(`Game Service listening on port ${port}`);
-});
+app.listen(port, () => console.log(`Game Service listening on port ${port}`));
 
-module.exports = server;
+module.exports = app;

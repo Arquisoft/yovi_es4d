@@ -17,7 +17,7 @@ const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, p
     classes.push("clicked");
     classes.push(player);
   }
-
+  console.log(`Rendering hex at ${position} with player ${player}`)
   return (
     <button
       className={classes.join(" ")}
@@ -32,6 +32,7 @@ const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, p
       disabled={!!player} // deshabilita si ya hay jugador
       data-position={position}
     >
+      
       {player ? (player === "j1" ? "🔵" : "🔴") : position}
     </button>
   );

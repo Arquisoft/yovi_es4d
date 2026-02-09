@@ -114,7 +114,7 @@ app.post('/api/user/editUser', verifyToken, async (req, res) => {
 app.post('/api/game/start', verifyToken, async (req, res) => {
   try {
     // Enviar petición al servicio de juego
-    const startResponse = await axios.post(`${gameServiceUrl}/api/game/new`, {
+    const startResponse = await axios.post(`${gameServiceUrl}/api/game/start`, {
       userId: req.body.userId,
       gameMode: req.body.gameMode || 'vsBot', // por si luego quieres multiplayer
     });
@@ -127,27 +127,73 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
 });
 
 /**
- * Realizar movimiento (usuario + bot)
+ * Validar movimiento del usuario
  */
-app.post('/api/game/:gameId/move', verifyToken, async (req, res) => {
+app.post('/api/game/:gameId/validateMove', async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { move } = req.body; // { position: "2,0,2" }
+    const { move, userId } = req.body;
 
-    // Llamada al backend para registrar movimiento del usuario y calcular jugada del bot
-    const moveResponse = await axios.post(`${gameServiceUrl}/api/game/${gameId}/move`, {
-      userId: req.body.userId,
+    // Llamamos al game-service para comprobar la validez
+    const validateResponse = await axios.post(`${gameServiceUrl}/api/game/${gameId}/validateMove`, {
       move,
+      userId
     });
 
-    // Respuesta contiene:
-    // board: estado del tablero
-    // moves: array de movimientos (usuario + bot)
-    // turn: turno actual
-    // winner: si alguien ganó
-    res.json(moveResponse.data);
+    res.json(validateResponse.data);
   } catch (error) {
-    res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error realizando movimiento' });
+    res.status(error.response?.status || 400).json({
+      error: error.response?.data?.error || 'Invalid move'
+    });
+  }
+});
+
+/**
+ * Realizar movimiento (usuario + bot)
+ */
+/**
+ * Realizar movimiento (usuario + bot)
+ * - Bloquea el tablero mientras el bot juega
+ * - Maneja vsBot y multiplayer
+ */
+app.post('/api/game/:gameId/move', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { move, userId, mode } = req.body; // mode = 'vsBot' | 'multiplayer'
+
+    console.log(`Received move for game ${gameId} from user ${userId} in mode ${mode}:`, move);
+
+    if (!move || !userId) {
+      return res.status(400).json({ error: 'Move and userId are required' });
+    }
+
+    let backendEndpoint = '';
+    if (mode === 'vsBot') {
+      backendEndpoint = `${gameServiceUrl}/api/game/${gameId}/vsBot/move`;
+    } else if (mode === 'multiplayer') {
+      backendEndpoint = `${gameServiceUrl}/api/game/${gameId}/multiplayer/move`;
+    } else {
+      return res.status(400).json({ error: 'Invalid game mode' });
+    }
+
+    // Llamada al backend del game-service
+    const moveResponse = await axios.post(backendEndpoint, {
+      userId,
+      move,
+      mode, // importante para que game-service sepa si es vsBot
+    });
+
+    // Devuelve el estado actualizado del tablero (incluyendo turno del bot si aplica)
+    res.json(moveResponse.data);
+
+  } catch (error) {
+    console.error(error.response?.data || error.message || error);
+
+    // Diferenciar errores del backend y errores de servidor
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.error || error.message || 'Internal server error';
+
+    res.status(status).json({ error: message });
   }
 });
 

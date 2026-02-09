@@ -23,10 +23,6 @@ const Jugador: React.FC<PlayerInfoProps> = ({
         <span className="player-points">{points}</span>
       </div>
       <div className="player-name">{name}</div>
-      <div className="player-status">
-        {isPlaying ? "Jugando..." : isActive ? "Tu turno" : "Esperando..."}
-      </div>
-      {isActive && <span className="active-indicator"></span>}
     </div>
   );
 };
