@@ -8,6 +8,7 @@ export const post = async (endpoint: string, data: any) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
