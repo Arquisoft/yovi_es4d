@@ -1,43 +1,39 @@
-//! GameY binary entry point.
-//!
-//! This is the main executable for the GameY application. It supports three modes:
-//!
-//! - **Human mode** (default): Two players take turns at the terminal
-//! - **Computer mode**: Play against a bot
-//! - **Server mode**: Run as an HTTP server exposing the bot API
-//!
-//! # Usage
-//!
-//! ```bash
-//! # Play human vs human (default)
-//! gamey
-//!
-//! # Play against the random bot
-//! gamey --mode computer
-//!
-//! # Start the bot server on port 3000
-//! gamey --mode server --port 3000
-//! ```
+//PRUEBA PARA COMPROABR FUNCIONAR EL BOT DE RUST DESDE NODEJS
+// main.rs
+use actix_web::{web, App, HttpServer};
+use serde::Deserialize;
 
-use clap::Parser;
-use gamey::{self, CliArgs, Mode, run_bot_server, run_cli_game};
-use tracing_subscriber::prelude::*;
+// 1️⃣ Definir la estructura de los datos que recibirá
+#[derive(Debug, Deserialize)]
+struct GameState {
+    // Pon los campos que quieras probar
+    board_size: u32,
+}
 
-/// Main entry point for the GameY application.
-///
-/// Parses command-line arguments and runs either the CLI game or the HTTP server
-/// depending on the selected mode.
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::registry().init();
-    let args = CliArgs::parse();
+// 2️⃣ Endpoint que recibe POST y devuelve JSON
+async fn random_bot(game: web::Json<GameState>) -> web::Json<serde_json::Value> {
+    // Imprime en consola lo que llega desde Node.js
+    println!("🚀 Recibí el tablero: {:?}", game);
 
-    if args.mode == Mode::Server {
-        if let Err(e) = run_bot_server(args.port).await {
-            eprintln!("Error: {}", e);
-            std::process::exit(1);
-        }
-    } else {
-        run_cli_game().expect("End CLI game");
-    }
+    // Respuesta de prueba
+    web::Json(serde_json::json!({
+        "coords": { "x": 0, "y": 0, "z": 0 }
+    }))
+}
+
+// 3️⃣ Main: levantar servidor en localhost:3001
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    println!("🚀 Servidor Rust escuchando en http://127.0.0.1:3001");
+
+    HttpServer::new(|| {
+        App::new()
+            .route(
+                "/v1/ybot/choose/random_bot", 
+                web::post().to(random_bot)
+            )
+    })
+    .bind("127.0.0.1:3001")?
+    .run()
+    .await
 }
