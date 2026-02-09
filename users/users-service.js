@@ -41,6 +41,13 @@ app.use(
 // Middleware para parsear JSON
 app.use(express.json());
 
+app.use(cors({
+  origin: "http://localhost", // o http://localhost:5173 (Vite)
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(cookieParser());
 // Rutas de autenticación
 app.use('/api/users', authRoutes);
 
