@@ -213,47 +213,79 @@ pub async fn bot_move(
             serde_json::json!({ "valid": false, "message": "No hay movimientos disponibles" })
         }),
     };
+        println!("🔹 Turno antes de validar: {:?}", game.next_player());
 
-    // 3️⃣ Aplicamos movimiento como bot
-    let bot_player = PlayerId::new(1); // Bot = player 1
-    let movement = Movement::Placement { player: bot_player, coords: bot_move };
+    // Turno del jugador
+    let next_player = match game.next_player() {
+        Some(p) => p,
+        None => return HttpResponse::Ok().json(json!({
+            "valid": false,
+            "message": "El juego ya terminó",
+            "winner": null,
+            "status": "finished"
+        })),
+    };
 
-    if let Err(e) = game.add_move(movement) {
-        return HttpResponse::BadRequest().json({
-            serde_json::json!({ "valid": false, "message": format!("Movimiento inválido: {:?}", e) })
-        });
+    // 📌 DEBUG: información del turno
+    println!("🔹 Next player: {:?}", next_player);
+    println!("🔹 Player intentando mover: bot");
+
+  
+
+    println!("🔵 Movimiento recibido: bot x={} y={} z={}", bot_move.x(), bot_move.y(), bot_move.z());
+
+    let movement = Movement::Placement {
+        player: next_player,
+        coords: bot_move,
+    };
+
+    // 📌 DEBUG: antes de aplicar movimiento
+    println!("🔹 Antes de aplicar movimiento, turno actual: {:?}", game.next_player());
+
+    match game.add_move(movement) {
+        Ok(_) => {
+            // 📌 DEBUG: después de aplicar movimiento
+            println!("✅ Movimiento aplicado para player bot");
+            println!("🔹 Turno después del movimiento: {:?}", game.next_player());
+ 
+            let board = game.board_state().into_iter().map(|(coords, player_id)| {
+                json!({
+                    "x": coords.x(),
+                    "y": coords.y(),
+                    "z": coords.z(),
+                    "player": player_id,
+                })
+            }).collect::<Vec<_>>();
+
+            HttpResponse::Ok().json(json!({
+    "valid": true,
+    "message": "Movimiento registrado",
+    "board": board,
+    "turn": game.next_player().map(|p| p.id()), // 0 o 1
+    "status": match game.status() {
+        GameStatus::Ongoing { .. } => "active",
+        GameStatus::Finished { .. } => "finished",
+    },
+    "winner": match game.status() {
+        GameStatus::Finished { winner } => Some(winner.id()),
+        _ => None,
+    },
+    "lastMove": {
+        "x": bot_move.x(),
+        "y": bot_move.y(),
+        "z": bot_move.z()
     }
-
-    // 4️⃣ Construimos tablero actualizado
-    let board = game.board_state().into_iter().map(|(coords, player_id)| {
-        serde_json::json!({
-            "x": coords.x(),
-            "y": coords.y(),
-            "z": coords.z(),
-            "player": player_id,
-        })
-    }).collect::<Vec<_>>();
-
-    // 5️⃣ Devolver respuesta
-    HttpResponse::Ok().json(serde_json::json!({
-        "valid": true,
-        "message": "Movimiento del bot registrado",
-        "board": board,
-        "turn": game.next_player().map(|p| p.id()),
-        "status": match game.status() {
-            GameStatus::Ongoing { .. } => "active",
-            GameStatus::Finished { .. } => "finished",
-        },
-        "winner": match game.status() {
-            GameStatus::Finished { winner } => Some(winner.id()),
-            _ => None,
-        },
-        "bot_move": {
-            "x": bot_move.x(),
-            "y": bot_move.y(),
-            "z": bot_move.z()
+}))
         }
-    }))
+
+        Err(e) => {
+            println!("❌ Movimiento inválido: {:?}", e);
+            HttpResponse::BadRequest().json(json!({
+                "valid": false,
+                "message": format!("Movimiento inválido: {:?}", e),
+            }))
+        },
+    }
 }
 
 
