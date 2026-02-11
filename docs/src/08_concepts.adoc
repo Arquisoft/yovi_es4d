@@ -57,18 +57,13 @@ See https://docs.arc42.org/section-8/[Concepts] in the arc42 documentation.
 ****
 endif::arc42help[]
 
-=== _<Concept 1>_
+=== Usabilidad
 
-_<explanation>_
+La aplicación web será intuitiva y accesible para la mayor cantidad de usuarios posible
 
+=== Autenticación
+El sistema ha de poder validad la identidad de los usuarios antes de permitir el acceso a funcionalidades de la aplicación. Los datos personales han de estar protegidos de cualquier acceso no autorizado.
 
+=== Persistencia
+El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema.
 
-=== _<Concept 2>_
-
-_<explanation>_
-
-...
-
-=== _<Concept n>_
-
-_<explanation>_
