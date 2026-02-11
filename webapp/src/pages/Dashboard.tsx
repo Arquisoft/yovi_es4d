@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getProfile } from '../services/userService';
 import { useNavigate } from "react-router-dom";
+import { logout } from '../services/userService';
 
 const Dashboard: React.FC = () => {
     const [name, setName] = useState("");
@@ -22,6 +23,16 @@ const Dashboard: React.FC = () => {
         loadProfile();
     }, []);
 
+    const handleLogout = async () => {
+        try {
+            await logout(); // llama al backend
+            localStorage.removeItem("token"); // limpia sesión local
+            navigate("/login", { replace: true }); // redirige al login
+        } catch (error) {
+            console.error("Error al cerrar sesión", error);
+        }
+    };
+
 
 
 
@@ -32,6 +43,7 @@ const Dashboard: React.FC = () => {
                 <div className="user-info">
                     <p>Bienvenido, <strong>{name}</strong></p>
                     <p>Email: {email}</p>
+                    <button onClick={handleLogout}>Cerrar sesión</button>
 
 
                 </div>

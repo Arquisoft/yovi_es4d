@@ -25,3 +25,19 @@ export const getProfile = async () => {
 
   return res.json();
 };
+
+export const logout = async () => {
+  const res = await fetch("http://localhost:3000/api/users/logout", {
+    method: 'POST',
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Error al cerrar sesión");
+  }
+
+  return res.json();
+};
