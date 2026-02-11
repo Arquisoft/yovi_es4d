@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { getProfile } from '../services/userService';
+import { useNavigate } from "react-router-dom";
 
 const Dashboard: React.FC = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -13,6 +15,7 @@ const Dashboard: React.FC = () => {
                 setEmail(data.email);
             } catch (error) {
                 console.error("El usuario no está autenticado", error);
+                navigate("/login", { replace: true });
             }
         };
 

@@ -26,8 +26,22 @@ try {
 }
 
 
+
+// Lista de orígenes permitidos para que las peticiones sean seguras
+const allowedOrigins = [
+  'http://localhost',      // puerto 80
+  'http://localhost:5173'  // Vite dev server
+];
+
 app.use(cors({
-  origin: "http://localhost", // o http://localhost:5173 (Vite)
+  origin: function(origin, callback) {
+    //Comprobamos cual es el origen de la peticion
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS el acceso al microservicio'));
+    }
+  },
   credentials: true
 }));
 
