@@ -33,11 +33,11 @@ const LoginForm: React.FC = () => {
       <h2>Iniciar Sesión</h2>
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
-          <label htmlFor="username">Usuario o Email:</label>
+          <label htmlFor="username">Email:</label>
           <input
             id="username"
             type="text"
-            placeholder="Introduce tu usuario o email"
+            placeholder="Introduce tu email "
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -49,6 +49,7 @@ const LoginForm: React.FC = () => {
             id="password"
             type="password"
             value={password}
+            placeholder="Introduce tu contraseña "
             onChange={(e) => setPassword(e.target.value)}
             required
           />

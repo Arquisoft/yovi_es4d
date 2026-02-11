@@ -15,10 +15,10 @@ const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    const userExists = await User.findOne({ email });
 
     if (userExists) {
-      return res.status(400).json({ error: 'El usuario o email ya existe' });
+      return res.status(400).json({ error: 'El email ya existe' });
     }
 
     const user = await User.create({
@@ -59,13 +59,7 @@ const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Buscar por username o email
-    const user = await User.findOne({
-      $or: [
-        { username: username },
-        { email: username }
-      ]
-    });
+    const user = await User.findOne({email: username});
 
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user._id);

@@ -8,7 +8,6 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <h1>Sistema de Usuarios</h1>
         </header>
         <main>
           <Routes>

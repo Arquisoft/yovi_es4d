@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
                 setName(data.username);
                 setEmail(data.email);
             } catch (error) {
-                console.error("No autenticado EEEEPPPPAAA", error);
+                console.error("El usuario no está autenticado", error);
             }
         };
 
@@ -29,6 +29,7 @@ const Dashboard: React.FC = () => {
                 <div className="user-info">
                     <p>Bienvenido, <strong>{name}</strong></p>
                     <p>Email: {email}</p>
+
 
                 </div>
             </header>

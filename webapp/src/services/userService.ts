@@ -10,6 +10,7 @@ export const register = async (userData: any) => {
 
 
 export const getProfile = async () => {
+
   const res = await fetch("http://localhost:3000/api/users/getUserProfile", {
     method: 'POST',
     credentials: "include",
