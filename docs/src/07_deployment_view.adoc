@@ -53,7 +53,6 @@ ifdef::arc42help[]
 image::DiagramaDespliegueNivel1.png["Diagrama de despliegue - Nivel 1"]
 image::DiagramaDespliegueNivel1.png["Diagrama de despliegue - Nivel 1"]
 
-
 *Motivacion* 
 * Escalabilidad: La infraestructura de Microsoft Azure permite escalar horizontalmente mediante la creación dinámica de instancias de contenedores según la demanda del sistema.
 
