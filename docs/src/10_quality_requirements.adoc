@@ -27,7 +27,19 @@ See https://docs.arc42.org/section-10/[Quality Requirements] in the arc42 docume
 ****
 endif::arc42help[]
 
-=== Quality Tree
+== Quality Tree
+
+* *Calidad del Sistema*
+** *Usabilidad*
+*** La aplicación es fácil de aprender y utilizar.
+** *Rendimiento*
+*** El sistema responde en menos de 1 segundo.
+** *Fiabilidad*
+*** La aplicación se comporta de forma estable.
+** *Funcionalidad*
+*** Las reglas del juego y-game y sus variantes se aplican correctamente.
+** *Portabilidad*
+*** La aplicación funciona en los navegadores web más comunes.
 
 ifdef::arc42help[]
 [role="arc42help"]
@@ -51,6 +63,41 @@ In any case the tree should include links to the scenarios of the following sect
 endif::arc42help[]
 
 === Quality Scenarios
+
+[cols="2,2,3,2", options="header"]
+|===
+|Atributo de Calidad |Contexto |Respuesta del Sistema |Medida
+
+|Usabilidad
+|Usuario accede por primera vez a la aplicación
+|Permite iniciar una partida de forma intuitiva
+|Inicia la partida sin ayuda externa
+
+|Rendimiento
+|Partida en curso
+|El jugador hace un movimento y se actualiza el tablero
+|Se espera que el tiempo de respuesta sea menor a 1 segundo
+
+|Fiabilidad
+|Usuario actualiza la página durante una partida en progreso
+|Se mantiene el estado tras recargar la página
+|No se pierde información
+
+|Funcionalidad
+|Usuario intenta un movimiento inválido
+|Rechaza el movimiento
+|El estado del juego no se modifica, el usuario puede elegir hacer otro movimiento
+
+|Portabilidad
+|Acceso desde otro navegador
+|La aplicación funciona correctamente
+|Aplicación operativa en navegadores comunes
+
+|Usabilidad
+|Usuario realiza una acción incorrecta
+|Muestra un mensaje o una indicacion visual de error clara
+|El mensaje es comprensible
+
 
 ifdef::arc42help[]
 [role="arc42help"]
