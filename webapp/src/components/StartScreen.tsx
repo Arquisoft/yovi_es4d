@@ -2,10 +2,14 @@ import Sidebar from './Sidebar';
 import Typing from './Typing';
 import './StartScreen.css';
 import { useTranslation } from '../i18n';
+import { useNavigate } from 'react-router-dom'; 
 
 export default function StartScreen() {
   const { t } = useTranslation();
-
+  const navigate = useNavigate();
+ const handlePlayClick = () => {
+    navigate('/game'); // redirige a la ruta del juego
+  };
   return (
     <>
       <Sidebar />
@@ -17,7 +21,8 @@ export default function StartScreen() {
             <h2>{t('startScreen.subtitle')}</h2>
 
             <div className="action-row">
-              <button className="play-button">{t('startScreen.play')}</button>
+              <button className="play-button" onClick={handlePlayClick}>
+                {t('startScreen.play')}</button>
             </div>
             <div
               className="typing-holder"

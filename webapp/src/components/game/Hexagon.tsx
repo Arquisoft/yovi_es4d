@@ -13,12 +13,10 @@ interface HexagonProps {
 
 const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, player, onClick }) => {
   const classes = ["hex"];
-  console.log(`Player ${player} clicked hex at ${position}`);
   if (player) {
     classes.push("clicked");
     classes.push(player);
   }
-  console.log(`Rendering hex at ${position} with player ${player}`)
   return (
     <button
       className={classes.join(" ")}

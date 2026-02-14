@@ -8,7 +8,6 @@ const port = process.env.PORT || 8003;
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://localhost:3001';
 
-console.log('Game Service starting...');
 
 app.use(cors());
 app.use(express.json());
@@ -73,13 +72,11 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   if (!game) return res.status(404).json({ error: 'Game not found' });
 
   const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
-console.log('board user antes', game.board);
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
     player: userId === 'j1' ? 0 : 1
   });
 
-  console.log('💡 Ganador:', rustResponse.data.winner);
   // Actualizar Node.js con tablero completo
  // game.board = rustResponse.data.board;
  // game.moves.push({ player: userId, position: move, timestamp: new Date() });
@@ -91,7 +88,6 @@ console.log('board user antes', game.board);
   });
   if (cell) cell.player = move.player === 0 ? 'j1' : 'j2';
 });
-console.log('board user despues', game.board);
   res.json({ valid: true,
     winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
     status: rustResponse.data.status
@@ -107,11 +103,9 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     const game = games.get(gameId);
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
-    console.log('💡 Antes de que el bot mueva: Turno actual Node.js:', game.currentPlayer);
     
     if (game.currentPlayer !== 'j2') {
       return res.status(400).json({ message: 'No es turno del bot', valid: false });
-      console.log('💡 No es turno del bot');
     }
 
     // Bot “piensa”
@@ -126,11 +120,9 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     if (!rustResponse.data?.board) {
       return res.status(500).json({ error: 'Rust no devolvió tablero' });
     }
-    console.log('💡 Bot ha movido. Respuesta de Rust:', rustResponse.data);
     const botMove = rustResponse.data.lastMove;
 
     // Actualizar estado Node.js
-console.log('board antes', game.board);
 // Actualizar solo la celda correspondiente
 rustResponse.data.board.forEach(move => {
   const cell = game.board.find(c => {
@@ -139,7 +131,6 @@ rustResponse.data.board.forEach(move => {
   });
   if (cell) cell.player = move.player === 0 ? 'j1' : 'j2';
 });
-console.log('board', game.board);
     game.currentPlayer = rustResponse.data.turn === 0 ? 'j1' : 'j2';
 
     if (rustResponse.data.status === 'finished') {

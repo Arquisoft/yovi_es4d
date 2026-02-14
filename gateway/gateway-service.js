@@ -158,12 +158,9 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
  */
 app.post('/api/game/:gameId/move', async (req, res) => {
   try {
-     console.log('HOLA');
     const { gameId } = req.params;
     const { move, userId, mode } = req.body; // mode = 'vsBot' | 'multiplayer'
-    console.log('HOLA');
-    console.log(`Received move for game ${gameId} from user ${userId} in mode ${mode}:`, move);
-
+   
     if (!move || !userId) {
       return res.status(400).json({ error: 'Move and userId are required' });
     }
