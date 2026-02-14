@@ -67,3 +67,5 @@ El sistema ha de poder validad la identidad de los usuarios antes de permitir el
 === Persistencia
 El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema.
 
+=== Internacionalizacion
+La aplicación será implementada en inglés y español, para hacerla entendible a un mayor rango de usuarios.
