@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Triangle from "./Triangle";
 import Jugador from "./player";
 import "./GameBoard.css";
@@ -26,7 +28,9 @@ interface GameState {
 }
 
 const GameBoard: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>({
+  
+  const navigate = useNavigate(); // ✅ aquí, dentro del componente, fuera de useEffect
+    const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     hexData: [],
     players: [],
@@ -38,6 +42,9 @@ const GameBoard: React.FC = () => {
 
   // Inicia juego
   useEffect(() => {
+     if (gameState.status === "finished") {
+    navigate("/gameover", { state: gameState });
+  }
     const startGame = async () => {
       try {
         const res = await fetch(`${API_URL}/api/game/start`, {
@@ -60,10 +67,10 @@ const GameBoard: React.FC = () => {
       }
     };
     startGame();
-  }, []);
+  }, [gameState.status, navigate]);
 
   const handleHexClick = async (position: string) => {
-    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1") return;
+    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1" || gameState.status === "finished") return;
 
     // Bloqueamos el tablero inmediatamente
     setGameState(prev => ({ ...prev, botPlaying: true }));
@@ -94,7 +101,9 @@ const GameBoard: React.FC = () => {
         ),
          players: prev.players.map(p =>
     p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p
-  )
+  ),
+  winner: validateData.winner || prev.winner,
+  status: validateData.status || prev.status
       }));
 
       // 3️⃣ Llamamos al endpoint /move para registrar el movimiento y mover al bot

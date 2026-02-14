@@ -13,6 +13,7 @@ interface HexagonProps {
 
 const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, player, onClick }) => {
   const classes = ["hex"];
+  console.log(`Player ${player} clicked hex at ${position}`);
   if (player) {
     classes.push("clicked");
     classes.push(player);
@@ -32,7 +33,6 @@ const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, p
       disabled={!!player} // deshabilita si ya hay jugador
       data-position={position}
     >
-      
       {player ? (player === "j1" ? "🔵" : "🔴") : position}
     </button>
   );

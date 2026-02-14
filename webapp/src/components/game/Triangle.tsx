@@ -17,6 +17,7 @@ interface HexData {
 interface TriangleProps {
   hexData: HexData[];
   onHexClick: (position: string) => void;
+  scale?: number; // nuevo prop opcional para reducir tamaño
 }
 
 // Función equivalente a Rust `from_index`
@@ -32,7 +33,7 @@ function fromIndex(index: number, boardSize: number) {
   return { x, y, z };
 }
 
-const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
+const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick, scale = 1 }) => {
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -50,7 +51,10 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
   }, []);
 
   const boardSize = computeBoardSize(hexData.length);
-  const side = Math.min(windowSize.width, windowSize.height);
+  
+  // Aplicamos scale al tamaño máximo
+  const side = Math.min(windowSize.width, windowSize.height) * scale;
+
   const hexHeight = Math.min(
     side / (1 + (boardSize - 1) * 0.75),
     side / (boardSize + 1) / 1.1547
@@ -62,8 +66,6 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
 
   const rows: JSX.Element[] = [];
   let index = 0;
-
-  
 
   for (let row = 0; row < boardSize; row++) {
     const hexCount = row + 1;
@@ -78,7 +80,6 @@ const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick }) => {
 
       // Busca el estado del hexágono desde el backend
       const hex = hexData.find((h) => h.position === position);
-      console.log(position, hex?.player);
       rows.push(
         <Hexagon
           key={position}

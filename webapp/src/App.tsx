@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import StartScreen from './components/StartScreen';
 import Rules from './components/Rules';
 import ScreenGame from './components/game/GameBoard';
+import GameOver from './components/GameOver';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<StartScreen />} />
           <Route path="/rules" element={<Rules />} />
           <Route path="/game" element={<ScreenGame />} />
+          <Route path="/gameover" element={<GameOver />} />
         </Routes>
       </div>
     </Router>
