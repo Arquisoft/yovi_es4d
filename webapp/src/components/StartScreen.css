@@ -13,13 +13,15 @@
   background-position: center center;
   background-repeat: no-repeat;
 
+  min-height: 100dvh;
+
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex: 1; /* allow .start-screen to grow inside the column layout */
-  min-height: 0; /* allow flex children to size correctly */
+  min-height: 100%;
   padding: 0;
   width: 100%;
 }
@@ -51,9 +53,8 @@ html, body {
 }
 
 #root, .App {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 /* Navbar horizontal at top */
@@ -188,11 +189,6 @@ html, body {
 @keyframes blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
-}
-
-/* Main content wrapper (background moved to .start-screen) */
-.main-content {
-  position: relative;
 }
 
 /* Subtle overlay to improve text contrast */
