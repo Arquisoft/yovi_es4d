@@ -4,7 +4,53 @@ ifndef::imagesdir[:imagesdir: ../images]
 
 
 == Vista de Bloques
+
+ifdef::arc42help[]
+[role="arc42help"]
+
+****
+.Contenido
+La vista de bloques muestra la descomposición estática del sistema en bloques
+(módulos, componentes, subsistemas, clases, interfaces, paquetes, librerías,
+frameworks, capas, particiones, niveles, funciones, macros, operaciones,
+estructuras de datos, etc.), así como sus dependencias (relaciones,
+asociaciones, etc.).
+
+Esta vista es obligatoria en toda documentación arquitectónica.
+En analogía con una casa, representa el _plano_.
+
+.Motivación
+Mantener una visión general del código fuente haciendo que su estructura
+sea comprensible mediante la abstracción.
+
+Esto permite comunicarse con los stakeholders a un nivel abstracto sin
+revelar detalles de implementación.
+
+.Forma
+La vista de bloques es una colección jerárquica de cajas negras y cajas blancas
+(véase la figura siguiente) junto con sus descripciones.
+
+image::05_building_blocks-EN.png["Jerarquía de bloques"]
+
+*Nivel 1* es la descripción en caja blanca del sistema completo junto con
+las descripciones en caja negra de todos los bloques que contiene.
+
+*Nivel 2* amplía (hace zoom sobre) algunos bloques del nivel 1.
+Por tanto, contiene la descripción en caja blanca de bloques seleccionados
+del nivel 1, junto con las descripciones en caja negra de sus bloques internos.
+
+*Nivel 3* amplía bloques seleccionados del nivel 2, y así sucesivamente.
+
+.Más información
+
+Consulta https://docs.arc42.org/section-5/[Vista de Bloques] en la documentación de arc42.
+****
+
+
+endif::arc42help[]
+
 La vista de bloques muestra el comportamiento interno de la aplicación haciendo uso de diagramas de componentes que ilustran el funcionamiento de los microservicios que emplea la aplicación. 
+
 
 
 === Representación del sistema general
@@ -24,6 +70,31 @@ Yovi permite interactuar con el sistema, hace que los usuarios se puedan registr
 | UserService | Gestiona la creación de nuevos usuarios e interactua con la base de datos.
 | Base de Datos | Base de datos donde se encuentran los usuarios y las estadísticas de las partidas.
 |===
+
+ifdef::arc42help[]
+[role="arc42help"]
+****
+Inserta aquí las explicaciones de las cajas negras del nivel 1:
+
+Si utilizas formato tabular, solo deberás describir tus cajas negras con
+nombre y responsabilidad según el siguiente esquema:
+
+[cols="1,2" options="header"]
+|===
+| **Nombre** | **Responsabilidad**
+| _<caja negra 1>_ | _<Texto>_
+| _<caja negra 2>_ | _<Texto>_
+|===
+
+Si utilizas una lista de descripciones de cajas negras, entonces deberás
+rellenar una plantilla de caja negra independiente para cada bloque de
+construcción importante.
+
+El encabezado debe ser el nombre de la caja negra.
+****
+endif::arc42help[]
+
+
 
 ifdef::arc42help[]
 [role="arc42help"]
