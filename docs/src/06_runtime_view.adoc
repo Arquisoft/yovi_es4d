@@ -47,7 +47,7 @@ endif::arc42help[]
 [plantuml,"Diagrama de secuencia:Registro",png]
 ----
 actor usuario
-database UserDB as "UserDB"
+database UserDB
 usuario -> user-service: Registro con nombre de usuario, correo y contraseña
 user-service --> user-service: Comprobación de datos
 user-service --> UserDB: Almacenamiento de datos de usuario
@@ -59,7 +59,7 @@ user-service --> usuario: Confirmación de registro exitoso
 [plantuml,"Diagrama de secuencia:Inicio de sesión",png]
 ----
 actor usuario
-database UserDB as "UserDB"
+database UserDB
 usuario -> user-service: Inicio de sesión con nombre de usuario y contraseña
 user-service --> user-service: Comprobación de datos
 user-service --> UserDB: Comprobación de datos de usuario
