@@ -68,7 +68,8 @@ El sistema ha de poder validad la identidad de los usuarios antes de permitir el
 === Persistencia
 El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema. En la base se guardarán los datos de las credenciales de los usuarios.
 
-//TODO: diagrama de la base de datos
+La base de datos es, de momento:
+image::08_Diagrama_database.jpg["Diagrama de la base de datos"]
 
 === Internacionalizacion
 La aplicación será implementada en inglés y español. Se seguirán las recomendaciones i18n, para hacerla entendible a un mayor rango de usuarios.
