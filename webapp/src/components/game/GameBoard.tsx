@@ -43,6 +43,7 @@ const GameBoard: React.FC = () => {
   // Inicia juego
   useEffect(() => {
      if (gameState.status === "finished") {
+      
     navigate("/gameover", { state: gameState });
   }
     const startGame = async () => {
@@ -124,12 +125,7 @@ const GameBoard: React.FC = () => {
         );
 
         // Si hay ganador, sumamos 100 puntos
-        if (moveData.winner) {
-          updatedPlayers = updatedPlayers.map(p =>
-            p.id === (moveData.winner === "j1" ? "jugador1" : "bot") ? { ...p, points: p.points + 100 } : p
-          );
-        }
-
+        
         return {
           ...prev,
           hexData: moveData.board,
