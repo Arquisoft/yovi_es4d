@@ -1,67 +1,92 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-runtime-view]]
-== Runtime View
+== Vista de tiempo de ejecución
 
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-The runtime view describes concrete behavior and interactions of the system’s building blocks in form of scenarios from the following areas:
+.Contenido
+La vista de ejecución (Runtime View) describe el comportamiento concreto y las interacciones de los bloques de construcción del sistema en forma de escenarios de las siguientes áreas:
 
-* important use cases or features: how do building blocks execute them?
-* interactions at critical external interfaces: how do building blocks cooperate with users and neighboring systems?
-* operation and administration: launch, start-up, stop
-* error and exception scenarios
+* Casos de uso o funcionalidades importantes: ¿cómo los ejecutan los bloques de construcción?
 
-Remark: The main criterion for the choice of possible scenarios (sequences, workflows) is their *architectural relevance*. It is *not* important to describe a large number of scenarios. You should rather document a representative selection.
+* Interacciones en interfaces externas críticas: ¿cómo cooperan los bloques con usuarios y sistemas vecinos?
 
-.Motivation
-You should understand how (instances of) building blocks of your system perform their job and communicate at runtime.
-You will mainly capture scenarios in your documentation to communicate your architecture to stakeholders that are less willing or able to read and understand the static models (building block view, deployment view).
+* Operación y administración: lanzamiento, inicio, parada
+
+* Escenarios de error y excepción
+
+Observación: El criterio principal para la selección de los posibles escenarios (secuencias, flujos de trabajo) es su relevancia arquitectónica. No es importante describir una gran cantidad de escenarios. Es preferible documentar una selección representativa.
 
 .Form
-There are many notations for describing scenarios, e.g.
+* Existen muchas notaciones para describir escenarios, por ejemplo:
 
-* numbered list of steps (in natural language)
-* activity diagrams or flow charts
-* sequence diagrams
-* BPMN or EPCs (event process chains)
-* state machines
+* Lista numerada de pasos (en lenguaje natural)
+
+* Diagramas de actividad o diagramas de flujo
+
+* Diagramas de secuencia
+
+* BPMN o EPCs (cadenas de procesos dirigidas por eventos)
+
+* Máquinas de estados
+
 * ...
 
 
 .Further Information
 
-See https://docs.arc42.org/section-6/[Runtime View] in the arc42 documentation.
+Consulta https://docs.arc42.org/section-6/[Runtime View] en la documentación de arc42.
 
 ****
 endif::arc42help[]
 
-=== <Runtime Scenario 1>
-
-
-* _<insert runtime diagram or textual description of the scenario>_
-* _<insert description of the notable aspects of the interactions between the
-building block instances depicted in this diagram.>_
-
-It is possible to use a sequence diagram:
-
-[plantuml,"Sequence diagram",png]
+=== Escenario 1: Registro de usuario
+[plantuml,"Diagrama de secuencia:Registro",png]
 ----
-actor Alice
-actor Bob
-database Pod as "Bob's Pod"
-Alice -> Bob: Authentication Request
-Bob --> Alice: Authentication Response
-Alice  --> Pod: Store route
-Alice -> Bob: Another authentication Request
-Alice <-- Bob: another authentication Response
+actor usuario
+database UserDB as "UserDB"
+usuario -> user-service: Registro con nombre de usuario, correo y contraseña
+user-service --> user-service: Comprobación de datos
+user-service --> UserDB: Almacenamiento de datos de usuario
+UserDB --> user-service: Confirmación de datos almacenados
+user-service --> usuario: Confirmación de registro exitoso
 ----
 
-=== <Runtime Scenario 2>
+=== Escenario 2: Inicio de sesión
+[plantuml,"Diagrama de secuencia:Inicio de sesión",png]
+----
+actor usuario
+database UserDB as "UserDB"
+usuario -> user-service: Inicio de sesión con nombre de usuario y contraseña
+user-service --> user-service: Comprobación de datos
+user-service --> UserDB: Comprobación de datos de usuario
+UserDB --> user-service: Confirmación de la existencia de los datos almacenados
+user-service --> usuario: Confirmación de inicio de sesión exitoso
+----
 
-=== ...
+=== Escenario 3: Juego con el bot
+[plantuml,"Diagrama de secuencia:Juego bot",png]
+----
+actor usuario
+usuario -> webapp: Inicio de juego
+webapp --> game: Solicitud de inicio de juego
+game --> gamey: Pedida de datos para iniciar el juego
+gamey --> game: Devuelta de datos para iniciar el juego
+game --> webapp: Devuelta del tablero
+webapp --> usuario: Visión del tablero
+usuario -> webapp: Movimiento del jugador
+webapp --> game: Envío del movimiento del jugador
+game --> gamey: Envío y validación del movimiento del jugador a Rust 
+gamey --> game: Devuelve el movimiento del jugador validado
+game --> webapp: Devuelta del movimiento del jugador
+webapp --> usuario: Visión del movimiento del jugador
+webapp --> game: Solicitud de movimiento del bot
+game --> gamey: Pedida y validación de movimiento del bot a Rust
+gamey --> game: Devuelta del movimiento del bot validado
+game --> webapp: Devuelta del movimiento del bot
+webapp --> usuario: Visión del movimiento del bot
 
-=== <Runtime Scenario n>
+----
