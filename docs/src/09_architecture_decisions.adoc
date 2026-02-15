@@ -67,6 +67,14 @@ En este apartado se justifican las decisiones tomadas por el equipo en cuanto a 
 | Lenguaje principal web
 | Javascript / Typescript
 | Tecnologías ampliamente utilizadas en el desarrollo web, con una gran comunidad y ecosistema consolidado. Permiten una integración natural entre frontend y backend, facilitando el mantenimiento, la reutilización de código y la productividad del equipo.
+
+| Contenerización y despliegue
+| Docker
+| Se eligió Docker dado que permite de manera sencilla garantizar entornos consistentes entre desarrollo, pruebas y producción. Además es una herramienta que facilita la portabilidad, el aislamiento de dependencias y simplifica el proceso de despliegue.
+
+| Internacionalización
+| i18n
+| Incorporamos un sistema de internacionalización (i18n) que permite la adaptación de la aplicación a múltiples idiomas.
 |===
 
 
