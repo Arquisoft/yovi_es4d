@@ -4,6 +4,8 @@ ifndef::imagesdir[:imagesdir: ../images]
 [[section-introduction-and-goals]]
 == Introducción y Objetivos
 Este proyecto consiste en el desarrollo de YOVI, un sistema que permite jugar partidas del juego Y a través de una aplicación web y un módulo de lógica en Rust. La aplicación web permite a los usuarios jugar, consultar estadísticas y usar un API para interacción con bots. El módulo de Rust verifica partidas y sugiere movimientos. El sistema soporta diferentes estrategias, tamaños de tablero y modalidades de juego.
+
+Esta documentación ha sido creada por Andrea, Sara, Sergio y Jorge como parte de las prácticas del curso ASW de la Universidad de Oviedo.
 ifdef::arc42help[]
 [role="arc42help"]
 ****

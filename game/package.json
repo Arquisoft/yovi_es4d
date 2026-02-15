@@ -1,0 +1,13 @@
+{
+  "name": "game-service",
+  "version": "1.0.0",
+  "main": "game-service.js",
+  "scripts": {
+    "start": "node game-service.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5"
+  }
+}
