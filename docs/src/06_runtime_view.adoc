@@ -48,11 +48,11 @@ endif::arc42help[]
 ----
 actor usuario
 database UserDB
-usuario -> user-service: Registro con nombre de usuario, correo y contraseña
-user-service --> user-service: Comprobación de datos
-user-service --> UserDB: Almacenamiento de datos de usuario
-UserDB --> user-service: Confirmación de datos almacenados
-user-service --> usuario: Confirmación de registro exitoso
+usuario -> userservice: Registro con nombre de usuario, correo y contraseña
+userservice --> userservice: Comprobación de datos
+userservice --> UserDB: Almacenamiento de datos de usuario
+UserDB --> userservice: Confirmación de datos almacenados
+userservice --> usuario: Confirmación de registro exitoso
 ----
 
 === Escenario 2: Inicio de sesión
@@ -60,11 +60,11 @@ user-service --> usuario: Confirmación de registro exitoso
 ----
 actor usuario
 database UserDB
-usuario -> user-service: Inicio de sesión con nombre de usuario y contraseña
-user-service --> user-service: Comprobación de datos
-user-service --> UserDB: Comprobación de datos de usuario
-UserDB --> user-service: Confirmación de la existencia de los datos almacenados
-user-service --> usuario: Confirmación de inicio de sesión exitoso
+usuario -> userservice: Inicio de sesión con nombre de usuario y contraseña
+userservice --> userservice: Comprobación de datos
+userservice --> UserDB: Comprobación de datos de usuario
+UserDB --> userservice: Confirmación de la existencia de los datos almacenados
+userservice --> usuario: Confirmación de inicio de sesión exitoso
 ----
 
 === Escenario 3: Juego con el bot
