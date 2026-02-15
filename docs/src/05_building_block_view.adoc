@@ -64,12 +64,12 @@ Yovi permite interactuar con el sistema, hace que los usuarios se puedan registr
 |===
 | Actores | Descripción
 | Usuario | Cliente/Usuario de la aplicación que interactúa con Yovi.
-| Yovi | Sitema que emplean los usuarios para poder hacer uso del juego.
+| Yovi | Sistema principal que permite a los usuarios hacer uso del juego.
 | WebApp | Contiene la interfaz de usuario de la aplicación.
-| Gateway | Api que permite conectar todos los microservicios en un único paquete.
-| UserService | Gestiona la creación de nuevos usuarios e interactua con la base de datos.
-| Base de Datos | Base de datos donde se encuentran los usuarios y las estadísticas de las partidas.
+| Backend (Microservicios) | Conjunto de microservicios que gestionan la lógica de negocio del sistema, incluyendo la gestión de usuarios, partidas y estadísticas.
+| Base de Datos | Sistema de almacenamiento donde se persisten los usuarios y las estadísticas de las partidas.
 |===
+
 
 ifdef::arc42help[]
 [role="arc42help"]
