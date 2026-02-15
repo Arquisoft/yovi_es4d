@@ -63,6 +63,10 @@ En este apartado se justifican las decisiones tomadas por el equipo en cuanto a 
 | Motor de estrategia y procesamiento
 | Rust
 | Lenguaje de alto rendimiento, eficiente para cálculos de estrategia del juego, seguridad de memoria.
+
+| Lenguaje principal web
+| Javascript / Typescript
+| Tecnologías ampliamente utilizadas en el desarrollo web, con una gran comunidad y ecosistema consolidado. Permiten una integración natural entre frontend y backend, facilitando el mantenimiento, la reutilización de código y la productividad del equipo.
 |===
 
 
