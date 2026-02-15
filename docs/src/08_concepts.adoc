@@ -1,71 +1,78 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-concepts]]
-== Cross-cutting Concepts
-
+== Conceptos Transversales
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Content
-This section describes overall, principal regulations and solution ideas that are relevant in multiple parts (= cross-cutting) of your system.
-Such concepts are often related to multiple building blocks.
-They can include many different topics, such as
+.Contenido
+Esta sección describe las principales normas generales y las ideas de solución que son relevantes en múltiples partes (= transversales) de su sistema.
+Estos conceptos suelen estar relacionados con varios bloques de construcción.
+Pueden incluir muchos temas diferentes, como por ejemplo:
 
-* models, especially domain models
-* architecture or design patterns
-* rules for using specific technology
-* principal, often technical decisions of an overarching (= cross-cutting) nature
-* implementation rules
-
-
-.Motivation
-Concepts form the basis for _conceptual integrity_ (consistency, homogeneity) of the architecture. 
-Thus, they are an important contribution to achieve inner qualities of your system.
-
-Some of these concepts cannot be assigned to individual building blocks, e.g. security or safety. 
+* modelos, especialmente modelos de dominio
+* patrones de arquitectura o de diseño
+* reglas para el uso de tecnologías específicas
+* decisiones principales, a menudo técnicas, de carácter global (= transversal)
+* reglas de implementación
 
 
-.Form
-The form can be varied:
+.Motivación
+Los conceptos forman la base de la _integridad conceptual_ (consistencia, homogeneidad) de la arquitectura.
+Por lo tanto, son una contribución importante para lograr las cualidades internas de su sistema.
 
-* concept papers with any kind of structure
-* cross-cutting model excerpts or scenarios using notations of the architecture views
-* sample implementations, especially for technical concepts
-* reference to typical usage of standard frameworks (e.g. using Hibernate for object/relational mapping)
-
-.Structure
-A potential (but not mandatory) structure for this section could be:
-
-* Domain concepts
-* User Experience concepts (UX)
-* Safety and security concepts
-* Architecture and design patterns
-* "Under-the-hood"
-* development concepts
-* operational concepts
-
-Note: it might be difficult to assign individual concepts to one specific topic
-on this list.
-
-image::08-concepts-EN.drawio.png["Possible topics for crosscutting concepts"]
+Algunos de estos conceptos no pueden asignarse a bloques de construcción individuales, por ejemplo, la seguridad o la protección.
 
 
-.Further Information
+.Forma
+La forma puede variar:
+
+* documentos de conceptos con cualquier tipo de estructura
+* extractos de modelos o escenarios transversales utilizando notaciones de las vistas de arquitectura
+* implementaciones de ejemplo, especialmente para conceptos técnicos
+* referencia al uso típico de frameworks estándar (por ejemplo, usar Hibernate para el mapeo objeto/relacional)
+
+.Estructura
+Una estructura posible (pero no obligatoria) para esta sección podría ser:
+
+* Conceptos de dominio
+* Conceptos de experiencia de usuario (UX)
+* Conceptos de seguridad y protección
+* Patrones de arquitectura y diseño
+* “Bajo el capó”
+* Conceptos de desarrollo
+* Conceptos operativos
+
+Nota: puede resultar difícil asignar conceptos individuales a un único tema de esta lista.
+
+image::08-concepts-EN.drawio.png["Temas posibles para conceptos transversales"]
+
+
+.Más información
+
 
 See https://docs.arc42.org/section-8/[Concepts] in the arc42 documentation.
 ****
 endif::arc42help[]
 
-=== Usabilidad
+//TOD: Modelo del dominio de entidades
 
-La aplicación web será intuitiva y accesible para la mayor cantidad de usuarios posible
+=== Usabilidad
+Usabilidad es la facilidad con la que un usuario puede interactuar con un sitio o aplicación, logrando sus objetivos de manera eficiente, efectiva y satisfactoria.
+La aplicación web será intuitiva, el tebloro mostrará en todo momento el estado del juego, se podrán consultar las reglas del juego durante una partida. La aplicación será también accesible para la mayor cantidad de usuarios posible.
 
 === Autenticación
-El sistema ha de poder validad la identidad de los usuarios antes de permitir el acceso a funcionalidades de la aplicación. Los datos personales han de estar protegidos de cualquier acceso no autorizado.
+El sistema ha de poder validad la identidad de los usuarios antes de permitir el acceso a funcionalidades de la aplicación. Los datos personales han de estar protegidos de cualquier acceso no autorizado. Lo0s datos personales incluyen las credenciales de los usarios; nombre, correo asociado y contraseña encriptada.
 
 === Persistencia
-El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema.
+El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema. En la base se guardarán los datos de las credenciales de los usuarios.
+
+//TODO: diagrama de la base de datos
 
 === Internacionalizacion
-La aplicación será implementada en inglés y español, para hacerla entendible a un mayor rango de usuarios.
+La aplicación será implementada en inglés y español. Se seguirán las recomendaciones i18n, para hacerla entendible a un mayor rango de usuarios.
+
+=== Microservicio
+Una aplicación pequeña e independiente que hace una sola función específica y se comunica con otros servicios, normalmente por APIs.
+Se puede desplegar, escalar y mantener sin depender del resto del sistema.
