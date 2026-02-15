@@ -8,44 +8,38 @@
     25% 100%, 
     0% 50%
   );
-  border: 2px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   font-weight: bold;
-  color: #999;
-  background-color: #f8f8f8;
+  background-color: #204274;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(32, 66, 116, 0.1);
 }
 
 /* Casilla hovereable (vacía) */
 .hex:not(.clicked):hover {
   transform: scale(1.08);
-  background-color: #e8f4f8;
-  border-color: #3498db;
+  background-color: #204274;
+  border-color: #432f8c;
 }
 
 /* Jugador 1 - Azul */
 .hex.clicked.j1 {
-  background: linear-gradient(135deg, #64b898 0%, #64b898 100%);
+  background: #64b898 ;
   border-color: #64b898;
-  color: white;
   font-size: 1.5rem;
   cursor: not-allowed;
-  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
 }
 
 /* Jugador 2 - Rojo */
 .hex.clicked.j2 {
-  background: linear-gradient(135deg, #a04e84 0%, #a04e84 100%);
+  background: #a04e84 ;
   border-color: #a04e84;
-  color: white;
   font-size: 1.5rem;
   cursor: not-allowed;
-  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
 }
 
 /* Deshabilitar interacción en casillas ocupadas */

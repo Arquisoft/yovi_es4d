@@ -31,7 +31,6 @@ const Hexagon: React.FC<HexagonProps> = ({ width, height, left, top, position, p
       disabled={!!player} // deshabilita si ya hay jugador
       data-position={position}
     >
-      {player ? (player === "j1" ? " " : " ") : position}
     </button>
   );
 };
