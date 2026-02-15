@@ -1,4 +1,12 @@
 /* Contenedor del tablero */
+body {
+  margin: 0;
+  min-height: 100vh;
+
+  background: rgba(12, 44, 80, 0.95);
+
+  background-attachment: fixed;
+}
 .gameboard-container {
   width: 80vw;
   height: 80vh;
@@ -6,11 +14,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 2px solid #555;
+
+  margin: auto;
   border-radius: 16px;
-  background-color: #242424; /* igual que body dark */
-  margin: auto; /* centrar el contenedor en la pantalla */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  background: linear-gradient(
+    180deg,
+    rgba(7, 47, 93, 0.85),
+    rgba(11, 19, 34, 0.85)
+  );
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 /* Información del turno */
@@ -19,18 +33,18 @@
   top: 2vh;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, #194c70 0%, #042f68 100%);
   padding: 1rem 2rem;
   border-radius: 12px;
-  border: 2px solid #3498db;
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  border: 2px solid #4f3a8a;
+  box-shadow: 0 4px 12px rgba(137, 107, 218, 0.4);
   z-index: 100;
 }
 
 .turn-info h2 {
   margin: 0;
   font-size: 1.3rem;
-  color: #fff;
+  color: #ffffff;
   text-align: center;
   font-weight: 600;
 }
@@ -63,12 +77,10 @@
   padding: 0.8em 1.5em;
   font-size: clamp(0.8rem, 1vw, 1rem);
   border-radius: 8px;
-  border: 1px solid transparent;
-  font-family: inherit; /* igual que body */
   cursor: pointer;
   transition: all 0.25s;
-  color: #fff;
-  background-color: #1a1a1a; /* igual que otros botones globales */
+  color: white;
+  background-color: rgba(43, 0, 255, 0.18); /* igual que otros botones globales */
 }
 
 /* Hover de botones */
@@ -76,20 +88,3 @@
   border-color: #646cff;
 }
 
-/* Undo - rojo */
-.board-buttons .undo {
-  background-color: #e74c3c;
-}
-
-.board-buttons .undo:hover {
-  background-color: #c0392b;
-}
-
-/* Redo - azul */
-.board-buttons .redo {
-  background-color: #3498db;
-}
-
-.board-buttons .redo:hover {
-  background-color: #2980b9;
-}

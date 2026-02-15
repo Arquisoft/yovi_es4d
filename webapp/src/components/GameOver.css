@@ -50,4 +50,7 @@
   padding: 12px 24px;
   font-size: 16px;
   cursor: pointer;
+  color: white;
+  background-color: #8A5CFF;
+  border: 1px solid rgba(20, 7, 86, 0.18);
 }

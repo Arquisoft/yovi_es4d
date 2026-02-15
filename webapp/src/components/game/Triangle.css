@@ -12,8 +12,8 @@
     0% 75%,
     0% 25%
   ); /* hexágono acostado */
-  border: 1px solid black;
-  background: white;
+  border: 1px solid #d2d2d0;
+  background: #f8f7f3;
   cursor: pointer;
   position: absolute;
 }
