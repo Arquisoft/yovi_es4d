@@ -13,7 +13,7 @@ services:
 
   users:
     container_name: users
-    image: ghcr.io/arquisoft/yovi_0-users:latest
+    image: ghcr.io/arquisoft/yovi_es4d-users:latest
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/usersdb
     ports:
@@ -25,7 +25,7 @@ services:
 
   webapp:
     container_name: webapp
-    image: ghcr.io/arquisoft/yovi_0-webapp:latest
+    image: ghcr.io/arquisoft/yovi_es4d-webapp:latest
     environment:
       - VITE_API_URL=http://gateway:8000
     ports:
@@ -37,7 +37,7 @@ services:
 
   gamey:
     container_name: gamey
-    image: ghcr.io/arquisoft/yovi_0-gamey:latest
+    image: ghcr.io/arquisoft/yovi_es4d-gamey:latest
     ports:
       - "4000:4000"
     networks:
@@ -45,7 +45,7 @@ services:
 
   game:
     container_name: game
-    image: ghcr.io/arquisoft/yovi_0-game:latest
+    image: ghcr.io/arquisoft/yovi_es4d-game:latest
     ports:
       - "8003:8003"
     networks:
@@ -53,7 +53,7 @@ services:
 
   gateway:
     container_name: gateway
-    image: ghcr.io/arquisoft/yovi_0-gateway:latest
+    image: ghcr.io/arquisoft/yovi_es4d-gateway:latest
     ports:
       - "8000:8000"
     networks:
