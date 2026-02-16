@@ -64,6 +64,18 @@ impl Coordinates {
     ///
     /// This is the inverse of `from_index`.
     pub fn to_index(&self, board_size: u32) -> u32 {
+        println!(
+    "🔹 board_size={}, x={}, y={}, z={}, (board_size-1)-x={} ",
+            board_size,
+            self.x,
+            self.y,
+            self.z,
+            (board_size - 1).checked_sub(self.x).unwrap_or_else(|| {
+                println!("❌ Overflow detectado!");
+        0
+    })
+);
+
         let r = (board_size - 1) - self.x;
         let row_start_index = (r * (r + 1)) / 2;
         let c = self.y;

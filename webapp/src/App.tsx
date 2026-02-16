@@ -1,22 +1,30 @@
-import './App.css'
-import RegisterForm from './RegisterForm';
-import reactLogo from './assets/react.svg'
+import './components/StartScreen.css';
+import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import StartScreen from './components/StartScreen';
+import Rules from './components/Rules';
+import ScreenGame from './components/game/GameBoard';
+import GameOver from './components/GameOver';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<StartScreen />} />
+          <Route path="/rules" element={<Rules />} />
+          <Route path="/game" element={<ScreenGame />} />
+          <Route path="/gameover" element={<GameOver />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
       </div>
+    </Router>
 
-      <h2>Welcome to the Software Arquitecture 2025-2026 course</h2>
-      <RegisterForm />
-    </div>
   );
 }
 
