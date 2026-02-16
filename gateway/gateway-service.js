@@ -123,6 +123,7 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
     res.json(startResponse.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error iniciando juego' });
+    console.log(error);
   }
 });
 
