@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   mongodb:
     image: mongo:latest
@@ -10,7 +12,6 @@ services:
       - mongo-data:/data/db
 
   users:
-    build: ./users
     container_name: users
     image: ghcr.io/arquisoft/yovi_es4d-users:latest
     environment:
@@ -23,10 +24,6 @@ services:
       - monitor-net
 
   webapp:
-    build:
-      context: ./webapp
-      args:
-        - VITE_API_URL=http://localhost:3000
     container_name: webapp
     image: ghcr.io/arquisoft/yovi_es4d-webapp:latest
     ports:
@@ -37,7 +34,6 @@ services:
       - monitor-net
 
   gamey:
-    build: ./gamey
     container_name: gamey
     image: ghcr.io/arquisoft/yovi_es4d-gamey:latest
     ports:
@@ -46,7 +42,6 @@ services:
       - monitor-net
 
   game:
-    build: ./game
     container_name: game
     image: ghcr.io/arquisoft/yovi_es4d-game:latest
     ports:
@@ -55,7 +50,6 @@ services:
       - monitor-net
 
   gateway:
-    build: ./gateway
     container_name: gateway
     image: ghcr.io/arquisoft/yovi_es4d-gateway:latest
     ports:
