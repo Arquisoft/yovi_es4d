@@ -1,5 +1,7 @@
 import { post } from './api';
 
+import { API_URL } from '../config';
+
 export const login = async (userData: any) => {
   return await post('/api/users/login', userData);
 };
@@ -11,7 +13,8 @@ export const register = async (userData: any) => {
 
 export const getProfile = async () => {
 
-  const res = await fetch("http://localhost:3000/api/users/getUserProfile", {
+  `${API_URL}/api/users/getUserProfile`
+  const res = await fetch(`${API_URL}/api/users/getUserProfile`, {
     method: 'POST',
     credentials: "include",
     headers: {
@@ -27,7 +30,7 @@ export const getProfile = async () => {
 };
 
 export const logout = async () => {
-  const res = await fetch("http://localhost:3000/api/users/logout", {
+  const res = await fetch(`${API_URL}/api/users/logout`, {
     method: 'POST',
     credentials: "include",
     headers: {
