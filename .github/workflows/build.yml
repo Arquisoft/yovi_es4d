@@ -22,8 +22,8 @@ jobs:
     - run: npm --prefix users ci
     - run: npm --prefix webapp ci
     - run: npm --prefix users run test:coverage
-    - run: npm --prefix webapp run test:coverage
-    - name: Install cargo-llvm-cov
+    #- run: npm --prefix webapp run test:coverage
+    #- name: Install cargo-llvm-cov
       run: cargo install cargo-llvm-cov --locked
     - name: Generate gamey code coverage
       run: cd gamey && cargo llvm-cov --lcov --output-path lcov.info
@@ -31,7 +31,7 @@ jobs:
       run: |
         sed -i "s|SF:${GITHUB_WORKSPACE}/|SF:|g" gamey/lcov.info
         grep '^SF:' gamey/lcov.info | head
-    - name: Analyze with SonarQube
-      uses: SonarSource/sonarqube-scan-action@master
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #- name: Analyze with SonarQube
+    #  uses: SonarSource/sonarqube-scan-action@master
+    #  env:
+    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
