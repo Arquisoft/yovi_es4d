@@ -6,7 +6,7 @@ const app = express();
 const port = process.env.PORT || 8003;
 
 // URL del servidor bot de Rust/Gamey
-const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://localhost:3001';
+const GAMEY_BOT_URL = 'http://20.188.62.231' || 'http://localhost:3001';
 
 
 app.use(cors());
