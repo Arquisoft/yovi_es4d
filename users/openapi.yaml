@@ -33,3 +33,53 @@ paths:
                     example: "Hello testuser! welcome to the course!"
         '400':
           description: Error creating user
+
+  /api/users/register:
+    post:
+      summary: Registra un nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Usuario registrado
+        '400':
+          description: Error en los datos
+
+  /api/users/login:
+    post:
+      summary: Inicia sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Puede ser el nombre de usuario o el email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login exitoso
+        '401':
+          description: Credenciales incorrectas
