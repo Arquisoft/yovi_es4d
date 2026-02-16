@@ -27,7 +27,7 @@ services:
     container_name: webapp
     image: ghcr.io/arquisoft/yovi_es4d-webapp:latest
     environment:
-      - VITE_API_URL=http://gateway:8000
+      - VITE_API_URL=http://20.188.62.231:8000
     ports:
       - "80:80"
     depends_on:
