@@ -1,27 +1,75 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-technical-risks]]
-== Risks and Technical Debts
+== Riesgos y deudas técnicas
+
+=== Riesgos técnicos
+
+[cols="1,2", options="header"]
+|===
+| Riesgo | Explicación detallada
+
+| Inexperiencia del grupo
+| Somos un grupo de estudiantes de informática, por lo que no tenemos experiencia en el desarrollo de grandes proyectos.
+
+| Inexperiencia con Rust
+| No tenemos experiencia con Rust, lo que puede dificultar el desarrollo del bot, como la del tablero de juego y los moviemientos.
+
+| Inexperiencia con React
+| No tenemos experiencia con React, lo que puede dificultar el desarrollo de la aplicación principal para mostrar el juego yel inicio de sesión.
+
+| Poco conocimiento con Node.js
+| En el curso se ha visto algo de Node.js, pero no tenemos la suficiente experiencia, por lo que podría llegar a dificultar el desarrollo del proyecto.
+
+| Poco conocimiento con Docker
+| Aplicación principal para mostrar el juego.
+
+| Caída de la máquina virtual
+| La caída de Azure podría afectar a la disponibilidad de la máquina virtual, lo que podría afectar al funcionamiento de la aplicación principal.
+
+| Tiempo ajustado
+| El poco tiempo disponible por otras asignaturas y prácticas de empresa haría que el tiempo para desarrollar el proyecto sea vea mermado.
+
+| Factor del autobús
+| Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.
+
+|===
+
+=== Deudas técnicas
+[cols="1,2", options="header"]
+|===
+| Deuda | Explicación detallada
+
+| Deuda técnica 1
+| Explicación detallada de la deuda técnica 1.
+
+| Deuda técnica 2
+| Explicación detallada de la deuda técnica 2.
+
+
+|===
+
+En desarrollo...
 
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-A list of identified technical risks or technical debts, ordered by priority
+.Contenido
+Una lista de los riesgos técnicos o deudas técnicas identificadas, ordenadas por prioridad.
 
-.Motivation
-“Risk management is project management for grown-ups” (Tim Lister, Atlantic Systems Guild.) 
+.Motivación
+«La gestión de riesgos es la gestión de proyectos para adultos» (Tim Lister, Atlantic Systems Guild).
 
-This should be your motto for systematic detection and evaluation of risks and technical debts in the architecture, which will be needed by management stakeholders (e.g. project managers, product owners) as part of the overall risk analysis and measurement planning.
+Este debería ser tu lema para la detección y evaluación sistemática de riesgos y deudas técnicas en la arquitectura, que serán necesarios para los interesados de gestión (por ejemplo, jefes de proyecto, product owners) como parte del análisis global de riesgos y la planificación de mediciones.
 
-.Form
-List of risks and/or technical debts, probably including suggested measures to minimize, mitigate or avoid risks or reduce technical debts.
+.Forma
+Lista de riesgos y/o deudas técnicas, que probablemente incluya medidas sugeridas para minimizar, mitigar o evitar los riesgos, o para reducir la deuda técnica.
 
 
 .Further Information
 
-See https://docs.arc42.org/section-11/[Risks and Technical Debt] in the arc42 documentation.
+Consulta https://docs.arc42.org/section-11/[Risks and Technical Debt] en la documentación de arc42.
 
 ****
 endif::arc42help[]

@@ -3,98 +3,95 @@ ifndef::imagesdir[:imagesdir: ../images]
 [[section-deployment-view]]
 
 
-== Deployment View
+== 7. Vista de Despliegue
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Content
-The deployment view describes:
+.Contenido
+La vista de despliegue describe:
 
- 1. technical infrastructure used to execute your system, with infrastructure elements like geographical locations, environments, computers, processors, channels and net topologies as well as other infrastructure elements and
+ 1. La infraestructura técnica utilizada para ejecutar el sistema, con elementos de infraestructura como ubicaciones geográficas, entornos, computadoras, procesadores, canales y topologías de red, así como otros elementos de infraestructura.
 
-2. mapping of (software) building blocks to that infrastructure elements.
+ 2. La asignación de los bloques de construcción (software) a esos elementos de infraestructura.
 
-Often systems are executed in different environments, e.g. development environment, test environment, production environment. In such cases you should document all relevant environments.
+Frecuentemente, los sistemas se ejecutan en diferentes entornos, por ejemplo, entorno de desarrollo, entorno de pruebas y entorno de producción. En estos casos, se deben documentar todos los entornos relevantes.
 
-Especially document a deployment view if your software is executed as distributed system with more than one computer, processor, server or container or when you design and construct your own hardware processors and chips.
+Documente especialmente una vista de despliegue si su software se ejecuta como un sistema distribuido con más de una computadora, procesador, servidor o contenedor, o cuando diseñe y construya sus propios procesadores o chips de hardware.
 
-From a software perspective it is sufficient to capture only those elements of an infrastructure that are needed to show a deployment of your building blocks. Hardware architects can go beyond that and describe an infrastructure to any level of detail they need to capture.
-
-.Motivation
-Software does not run without hardware.
-This underlying infrastructure can and will influence a system and/or some
-cross-cutting concepts. Therefore, there is a need to know the infrastructure.
-
-.Form
-
-Maybe a highest level deployment diagram is already contained in section 3.2. as
-technical context with your own infrastructure as ONE black box. In this section one can
-zoom into this black box using additional deployment diagrams:
-
-* UML offers deployment diagrams to express that view. Use it, probably with nested diagrams,
-when your infrastructure is more complex.
-* When your (hardware) stakeholders prefer other kinds of diagrams rather than a deployment diagram, let them use any kind that is able to show nodes and channels of the infrastructure.
+Desde una perspectiva de software, es suficiente capturar únicamente aquellos elementos de la infraestructura que sean necesarios para mostrar el despliegue de los bloques de construcción. Los arquitectos de hardware pueden ir más allá y describir una infraestructura con el nivel de detalle que necesiten.
 
 
-.Further Information
+.Motivación
+El software no funciona sin hardware.
+Esta infraestructura subyacente puede y va a influir en un sistema y/o en algunos
+conceptos transversales. Por lo tanto, existe la necesidad de conocer la infraestructura.
 
-See https://docs.arc42.org/section-7/[Deployment View] in the arc42 documentation.
 
+.Forma
+
+Puede que un diagrama de despliegue de alto nivel ya esté contenido en la sección 3.2 como
+contexto técnico, con su propia infraestructura como UNA caja negra. En esta sección se puede
+hacer zoom dentro de esa caja negra utilizando diagramas de despliegue adicionales:
+
+* UML ofrece diagramas de despliegue para expresar esta vista. Úselos, probablemente con diagramas anidados, cuando su infraestructura sea más compleja.
+* Cuando las partes interesadas de hardware prefieran otros tipos de diagramas en lugar de un diagrama de despliegue, permita que utilicen cualquier tipo que sea capaz de mostrar nodos y canales de la infraestructura.
+
+
+.Información Adicional
+
+Consulte https://docs.arc42.org/section-7/[Deployment View] en la documentación de arc42.
 ****
+
 endif::arc42help[]
 
-=== Infrastructure Level 1
+=== Infraestructura Nivel 1
 
 ifdef::arc42help[]
 [role="arc42help"]
-****
-Describe (usually in a combination of diagrams, tables, and text):
 
-* distribution of a system to multiple locations, environments, computers, processors, .., as well as physical connections between them
-* important justifications or motivations for this deployment structure
-* quality and/or performance features of this infrastructure
-* mapping of software artifacts to elements of this infrastructure
+image::DiagramaDespliegueNivel1.png["Diagrama de despliegue - Nivel 1"]
+image::DiagramaDespliegueNivel1.png["Diagrama de despliegue - Nivel 1"]
 
-For multiple environments or alternative deployments please copy and adapt this section of arc42 for all relevant environments.
-****
+*Motivacion* 
+* Escalabilidad: La infraestructura de Microsoft Azure permite escalar horizontalmente mediante la creación dinámica de instancias de contenedores según la demanda del sistema.
+
+* Disponibilidad: La plataforma de Azure facilita la alta disponibilidad a través de balanceadores de carga y múltiples zonas de disponibilidad.
+
+*Características de Calidad y Rendimiento*
+
+* Bajo tiempo de respuesta: La distribución geográfica de los servidores de Azure reduce la latencia y mejora la experiencia del usuario final.
+
+* Mantenibilidad: El uso de Docker facilita la gestión de versiones de los microservicios, su despliegue y la recuperación rápida ante fallos.
+
+*Asignación de Artefactos de Software a la Infraestructura*
+
+* Juego (Core): Implementado en Rust, donde se desarrolla la lógica principal y el motor del juego para maximizar rendimiento y seguridad.
+
+* Microservicios: Desplegados como contenedores Docker dentro de Azure.
+
+* Frontend (Web Browser): Ejecutado en el dispositivo del usuario e interactuando con la API del backend alojada en Azure.
+
+* Base de Datos MongoDB: Desplegada en un contenedor propio dentro de Azure utilizando MongoDB como sistema gestor de base de datos.
 endif::arc42help[]
 
-_**<Overview Diagram>**_
-
-Motivation::
-
-_<explanation in text form>_
-
-Quality and/or Performance Features::
-
-_<explanation in text form>_
-
-Mapping of Building Blocks to Infrastructure::
-_<description of the mapping>_
 
 
-=== Infrastructure Level 2
+=== Infraestructura Nivel 2
 
 ifdef::arc42help[]
 [role="arc42help"]
-****
-Here you can include the internal structure of (some) infrastructure elements from level 1.
 
-Please copy the structure from level 1 for each selected element.
-****
+image::DiagramaDespliegueNivel2.png["Diagrama de despliegue - Nivel 2"]
+image::DiagramaDespliegueNivel2.png["Diagrama de despliegue - Nivel 2"]
+
+
+*Microservicios*
+
+* WebApp: Servicio que sirve la aplicacion web y se cominica con el Gateway.
+* Gateway: Actúa como punto de entrada único para el fronted, enrutando las solicitudes a los microservicios correspondientes.
+* User: Gestiona la autenticación, el registro de usuarios y el historial de partidas.
+* Game: Maneja la lógica del juego, incluyendo la gestión de partidas, movimientos y estadísticas.
+
 endif::arc42help[]
 
-==== _<Infrastructure Element 1>_
-
-_<diagram + explanation>_
-
-==== _<Infrastructure Element 2>_
-
-_<diagram + explanation>_
-
-...
-
-==== _<Infrastructure Element n>_
-
-_<diagram + explanation>_

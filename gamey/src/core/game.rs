@@ -108,6 +108,18 @@ impl GameY {
         }
     }
 
+    pub fn player_at(&self, coord: &Coordinates) -> Option<PlayerId> {
+        self.board_map.get(coord).map(|(_, p)| *p)
+    }
+    
+    /// Returns the current board state as a vector of (Coordinates, player_id).
+    pub fn board_state(&self) -> Vec<(Coordinates, u32)> {
+        self.board_map
+            .iter()
+            .map(|(coords, (_, player_id))| (*coords, player_id.id()))
+            .collect()
+    }
+
     /// Loads a game state from a YEN format file.
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let filename = path.as_ref().display().to_string();
