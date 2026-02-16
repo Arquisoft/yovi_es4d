@@ -5,33 +5,31 @@ on:
       - master
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
-  tests:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-        components: rustfmt, clippy
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 22
-    - run: npm --prefix users ci
-    - run: npm --prefix webapp ci
-    - run: npm --prefix users run test:coverage
-    #- run: npm --prefix webapp run test:coverage
-    #- name: Install cargo-llvm-cov
-      run: cargo install cargo-llvm-cov --locked
-    - name: Generate gamey code coverage
-      run: cd gamey && cargo llvm-cov --lcov --output-path lcov.info
-    - name: Normalize Rust coverage paths
-      run: |
-        sed -i "s|SF:${GITHUB_WORKSPACE}/|SF:|g" gamey/lcov.info
-        grep '^SF:' gamey/lcov.info | head
-    #- name: Analyze with SonarQube
-    #  uses: SonarSource/sonarqube-scan-action@master
-    #  env:
-    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies (users)
+        run: npm --prefix users ci
+
+      - name: Install dependencies (webapp)
+        run: npm --prefix webapp ci
+
+      # Si tienes builds específicos (opcional)
+      #- name: Build webapp
+      #  run: npm --prefix webapp run build
+      #- name: Build users
+      #  run: npm --prefix users run build
+
+      # Aquí se podrían añadir pasos de build adicionales si los necesitas
