@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
                 <div className="user-info">
                     <p>Bienvenido, <strong>{name}</strong></p>
                     <p>Email: {email}</p>
-                    <button onClick={handleLogout}>Cerrar sesión</button>
+                    <button  onClick={() => navigate('/')}>Ir al juego</button>
 
 
                 </div>
