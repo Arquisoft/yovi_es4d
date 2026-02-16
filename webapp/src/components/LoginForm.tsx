@@ -1,0 +1,66 @@
+import React, { useState } from 'react';
+import { login } from '../services/userService';
+import { useNavigate } from "react-router-dom";
+
+
+
+const LoginForm: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      await login({ username, password });
+
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <h2>Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="form-group">
+          <label htmlFor="username">Email:</label>
+          <input
+            id="username"
+            type="text"
+            placeholder="Introduce tu email "
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="password">Contraseña:</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            placeholder="Introduce tu contraseña "
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Cargando...' : 'Entrar'}
+        </button>
+        {error && <p className="error-message">{error}</p>}
+      </form>
+    </div>
+  );
+};
+
+export default LoginForm;
