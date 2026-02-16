@@ -6,7 +6,7 @@ const app = express();
 const port = process.env.PORT || 8003;
 
 // URL del servidor bot de Rust/Gamey
-const GAMEY_BOT_URL = 'http://20.188.62.231' || 'http://localhost:3001';
+const GAMEY_BOT_URL = 'http://20.188.62.231:3001' || 'http://localhost:3001';
 
 
 app.use(cors());
@@ -24,7 +24,7 @@ app.post('/api/game/start', async (req, res) => {
     const boardSize = 11;
 
     // Inicializa juego en Rust (solo logging por ahora)
-    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize });
+    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
 
     // Crear estado del juego en Node
     const game = {
@@ -250,6 +250,6 @@ function sleep(ms) {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'Game Service is running' }));
 
-app.listen(port, () => console.log(`Game Service listening on port ${port}`));
+app.listen(port, "0.0.0.0", () => console.log(`Game Service listening on ${port}`));
 
 module.exports = app;
