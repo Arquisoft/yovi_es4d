@@ -12,121 +12,83 @@ env:
   IMAGE_TAG: ${{ github.event.release.tag_name }}
 
 jobs:
+  # Publicar imagen users
   docker-push-users:
     name: Publish users image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (users)
+      - uses: actions/checkout@v4
+      - name: Publish users image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-users
+          name: ${{ github.repository_owner }}/yovi_es4d-users
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: users
 
+  # Publicar imagen webapp
   docker-push-webapp:
     name: Publish webapp image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (webapp)
+      - uses: actions/checkout@v4
+      - name: Publish webapp image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-webapp
+          name: ${{ github.repository_owner }}/yovi_es4d-webapp
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: webapp
           buildargs: VITE_API_URL=http://${{ secrets.DEPLOY_HOST }}:3000
 
+  # Publicar imagen gamey
   docker-push-gamey:
     name: Publish gamey image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (gamey)
+      - uses: actions/checkout@v4
+      - name: Publish gamey image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gamey
+          name: ${{ github.repository_owner }}/yovi_es4d-gamey
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: gamey
 
-  deploy:
-    name: Deploy over SSH
-    runs-on: ubuntu-latest
-    name: Release — Build & Deploy
-
-on:
-  release:
-    types: [published]
-
-permissions:
-  contents: read
-  packages: write
-
-env:
-  IMAGE_TAG: ${{ github.event.release.tag_name }}
-
-jobs:
-  docker-push-users:
-    name: Publish users image
+  # Publicar imagen game
+  docker-push-game:
+    name: Publish game image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (users)
+      - uses: actions/checkout@v4
+      - name: Publish game image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-users
+          name: ${{ github.repository_owner }}/yovi_es4d-game
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
-          workdir: users
+          workdir: game
 
-  docker-push-webapp:
-    name: Publish webapp image
+  # Publicar imagen gateway
+  docker-push-gateway:
+    name: Publish gateway image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (webapp)
+      - uses: actions/checkout@v4
+      - name: Publish gateway image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-webapp
+          name: ${{ github.repository_owner }}/yovi_es4d-gateway
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
-          workdir: webapp
-          buildargs: VITE_API_URL=http://${{ secrets.DEPLOY_HOST }}:3000
+          workdir: gateway
 
-  docker-push-gamey:
-    name: Publish gamey image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (gamey)
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        with:
-          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gamey
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-          workdir: gamey
-
+  # Deploy sobre el servidor
   deploy:
     name: Deploy over SSH
     runs-on: ubuntu-latest
@@ -139,15 +101,6 @@ jobs:
           user: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           command: |
-            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.event.release.tag_name }}/docker-compose.yml -O docker-compose.yml            docker compose down
-            docker compose up -d --pull always
-    steps:
-      - name: Deploy over SSH
-        uses: fifsky/ssh-action@master
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          user: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          command: |
-            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.event.release.tag_name }}/docker-compose.yml -O docker-compose.yml            docker compose down
+            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.event.release.tag_name }}/docker-compose.yml -O docker-compose.yml
+            docker compose down
             docker compose up -d --pull always
