@@ -27,7 +27,7 @@ export default function Sidebar() {
         </li>
         <li><button className="navbar-button" onClick={() => navigate('/rules')}>{t('menu.rules')}</button></li>
         <li><button className="navbar-button">{t('menu.profile')}</button></li>
-        <li><button className="navbar-button" onClick={() => navigate('/logout')}>{t('menu.logout')}</button></li>
+        <li><button className="navbar-button" onClick={() => navigate('/login')}>{"Iniciar sesión"}</button></li>
       </ul>
     </nav>
   );
