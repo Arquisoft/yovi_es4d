@@ -1,37 +1,80 @@
 ifndef::imagesdir[:imagesdir: ../images]
-
 [[section-design-decisions]]
-== Architecture Decisions
 
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Important, expensive, large scale or risky architecture decisions including rationales.
-With "decisions" we mean selecting one alternative based on given criteria.
+.Contenido
+Decisiones arquitectónicas importantes, costosas, de gran escala o con riesgo,
+incluyendo sus justificaciones.
+Con "decisiones" nos referimos a seleccionar una alternativa basada en criterios dados.
 
-Please use your judgement to decide whether an architectural decision should be documented
-here in this central section or whether you better document it locally
-(e.g. within the white box template of one building block).
+Por favor, utiliza tu criterio para decidir si una decisión arquitectónica debe documentarse
+aquí en esta sección central o si es mejor documentarla localmente
+(por ejemplo, dentro de la plantilla de caja blanca de un bloque de construcción).
 
-Avoid redundancy. 
-Refer to section 4, where you already captured the most important decisions of your architecture.
+Evita redundancias.
+Haz referencia a la sección 4, donde ya has recogido las decisiones más importantes de tu arquitectura.
 
-.Motivation
-Stakeholders of your system should be able to comprehend and retrace your decisions.
+.Motivación
+Los stakeholders de tu sistema deben poder comprender y reconstruir tus decisiones.
 
-.Form
-Various options:
+.Forma
+Varias opciones:
 
-* ADR (https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions[Documenting Architecture Decisions]) for every important decision
-* List or table, ordered by importance and consequences or:
-* more detailed in form of separate sections per decision
+* ADR (https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions[Documenting Architecture Decisions]) para cada decisión importante
+* Lista o tabla, ordenada por importancia y consecuencias o:
+* Más detallado en forma de secciones separadas por decisión
 
-.Further Information
+.Más información
 
-See https://docs.arc42.org/section-9/[Architecture Decisions] in the arc42 documentation.
-There you will find links and examples about ADR.
+Consulta https://docs.arc42.org/section-9/[Architecture Decisions] en la documentación de arc42.
+Allí encontrarás enlaces y ejemplos sobre ADR.
 
 ****
 endif::arc42help[]
+
+== Decisiones arquitectónicas
+En este apartado se justifican las decisiones tomadas por el equipo en cuanto a decisiones arquitectónicas se refiere, justifcando detalladamente el porque de cada decisión a continuación.
+
+=== Resumen de decisiones
+
+[cols="2,2,4", options="header"]
+|===
+| Decisión | Tecnología seleccionada | Justificación principal
+
+| Control de versiones
+| Git
+| Hemos escogido Git para el control de versiones dado que es ampliamente utilizado en la industria, además de que ha sido empleado por todo el equipo lo que nos permite trabajar de manera cómoda y más eficiente.  
+
+| Base de datos
+| MongoDB
+| Base de datos sencilla, formato simple con un modelo flexible orientado a documentos, ideal para los datos de los usuarios que necesitamos almacenar.
+
+| Backend
+| Node.js
+| Alto rendimiento en I/O, ecosistema amplio y buena integración con frontend en JavaScript.
+
+| Frontend
+| React + Vite
+| Desarrollo rápido, sencillo de implementar y amplia cantidad bibliotecas.
+
+| Motor de estrategia y procesamiento
+| Rust
+| Lenguaje de alto rendimiento, eficiente para cálculos de estrategia del juego, seguridad de memoria.
+
+| Lenguaje principal web
+| Javascript / Typescript
+| Tecnologías ampliamente utilizadas en el desarrollo web, con una gran comunidad y ecosistema consolidado. Permiten una integración natural entre frontend y backend, facilitando el mantenimiento, la reutilización de código y la productividad del equipo.
+
+| Contenerización y despliegue
+| Docker
+| Se eligió Docker dado que permite de manera sencilla garantizar entornos consistentes entre desarrollo, pruebas y producción. Además es una herramienta que facilita la portabilidad, el aislamiento de dependencias y simplifica el proceso de despliegue.
+
+| Internacionalización
+| i18n
+| Incorporamos un sistema de internacionalización (i18n) que permite la adaptación de la aplicación a múltiples idiomas.
+|===
+
+

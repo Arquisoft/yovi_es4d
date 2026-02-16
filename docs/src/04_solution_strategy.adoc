@@ -1,29 +1,99 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-solution-strategy]]
-== Solution Strategy
+== Estrategia de Solución
+
+=== Deciciones tecnológicas
+==== Frontend
+* **Motivación**: Se eligió _**JavaScript**_ y _**React**_ para el desarrollo del frontend, dado que permite construir interfaces interactivas y dinámicas, fundamentales en un juego donde la experiencia del usuario y la fluidez son prioritarias. _**React**_ facilita la actualización eficiente de la interfaz ante acciones del jugador y mejora la mantenibilidad del código.
+* **Objetivos de calidad**: _Usabilidad_, _Mantenibilidad_, _Integrabilidad_
+* **Restricciones clave**: Debe funcionar correctamente en distintos navegadores y resoluciones.
+
+==== Backend
+* **Motivación**: 
+- _**Node.js**_ con _Express_ se utiliza para la gestión general del backend, como usuarios, estadísticas y almacenamiento, por su facilidad de desarrollo y ecosistema.
+- _**Rust**_ se utiliza para la lógica del juego debido a su alto rendimiento, seguridad de memoria y capacidad para manejar múltiples jugadores simultáneamente de manera eficiente. Esto permite que las partidas funcionen en tiempo real sin problemas de rendimiento.
+* **Objetivos de calidad**: _Rendimiento_, _Escalabilidad_, _Mantenibilidad_, _Seguridad_
+* **Restricciones clave**: El backend general debe integrarse con el módulo de juego en _**Rust**_ de manera fluida, garantizando que la experiencia del jugador no se vea afectada.
+
+==== Base de Datos
+* **Motivación**: Se optó por _**MongoDB**_ debido a su flexibilidad para almacenar datos de partidas, jugadores y progresos sin requerir un esquema rígido. Esto permite evolucionar el juego y agregar nuevas funcionalidades sin grandes cambios en la base de datos.
+* **Objetivos de calidad**: _Escalabilidad_, _Mantenibilidad_, _Disponibilidad_
+* **Restricciones clave**: Debe manejar grandes volúmenes de datos de partidas y jugadores de forma eficiente.
+
+
+==== Contenedores
+* **Motivación**: _**Docker**_ se eligió para estandarizar entornos de desarrollo, prueba y producción, asegurando que la aplicación funcione de manera consistente en todos ellos. Esto simplifica el despliegue y escalado del juego.
+* **Objetivos de calidad**: _Escalabilidad_, _Disponibilidad_, _Mantenibilidad_
+* **Restricciones clave**: Permitir replicar servicios según sea necesario sin complejidad adicional.
+
+==== Infraestructura
+* **Motivación**: Se utiliza _**Microsoft Azure**_   por su alta disponibilidad, facilidad para escalar recursos automáticamente según la demanda de jugadores y los servicios gestionados que facilitan el despliegue del backend y del motor de juego en _**Rust**_. Esto asegura que el juego se mantenga operativo incluso durante picos de tráfico.
+* **Objetivos de calidad**: _Disponibilidad_, _Escalabilidad_, _Fiabilidad_
+* **Restricciones clave**: Debe soportar múltiples jugadores simultáneos sin degradar la experiencia y garantizar que los servicios de _**Node.js**_ y _**Rust**_ funcionen de manera coordinada.
+
+==== Modelado
+* **Motivación**: _**PlantUML**_ se utiliza para crear diagramas de arquitectura y diseño debido a su simplicidad y la capacidad de generar diagramas automáticamente a partir de texto, lo que facilita la documentación continua y permite mantener actualizados los diagramas a lo largo del desarrollo.
+* **Objetivos de calidad**: _Comunicación_, _Claridad_, _Consistencia_
+* **Restricciones clave**:Los diagramas deben mantenerse actualizados durante el desarrollo.
+
+==== Control de Versiones
+* **Motivación**: _**GitHub**_ es la herramienta de control de versiones elegida debido a su popularidad y facilidad de uso, lo que permite la colaboración entre los miembros del equipo de desarrollo. Además, permite una gestión eficiente del código fuente, la revisión y el seguimiento de cambios, lo que es fundamental para mantener la calidad y la integridad del código.
+* **Objetivos de calidad**: _Colaboración_, _Integridad_, _Mantenibilidad_
+* **Restricciones clave**: Todos los desarrolladores deben poder acceder y colaborar eficientemente.
+
+=== Decisiones sobre la Descomposición de Alto Nivel
+==== Patrón Arquitectónico
+* **Motivación**: El sistema sigue un patrón de microservicios, donde cada componente del sistema se gestiona de manera independiente. El backend general corre en _**Node.js**_/_**Express**_, mientras que la lógica central del juego se ejecuta en un motor de _**Rust**_, especializado en manejar partidas y movimientos en tiempo real. Esta separación permite escalar cada parte según sea necesario y mantener la independencia de cada servicio.
+* **Objetivos de calidad**: _Escalabilidad_, _Mantenibilidad_, _Flexibilidad_, _Rendimiento_
+* **Restricciones clave**: Los microservicios deben comunicarse de manera eficiente (por ejemplo, _**Node.js**_ con el motor _**Rust**_) sin generar dependencias críticas que puedan afectar la disponibilidad o rendimiento del juego.
+
+==== Descomposición del Sistema
+* **Motivación**: El sistema se organiza en módulos que manejan la interfaz, la lógica del juego y el almacenamiento de datos. Esto facilita el mantenimiento y la expansión de funcionalidades a futuro.
+* **Objetivos de calidad**: _Escalabilidad_, _Mantenibilidad_, _Flexibilidad_
+* **Restricciones clave**: La comunicación entre módulos debe ser clara y sin cuellos de botella.
+
+=== Decisiones sobre cómo lograr los Objetivos Clave de Calidad
+==== Usabilidad
+* _**React**_ permite interfaces interactivas y reactivas, mejorando la experiencia del jugador y facilitando la interacción en tiempo real.
+
+==== Disponibilidad
+* _**Microsoft Azure**_ y _**Docker**_ aseguran que el juego esté disponible incluso en picos de tráfico o ante fallos parciales.
+
+==== Compatibilidad
+* Se seleccionaron tecnologías como _**React**_ y _**Node.js**_ por ser compatibles con múltiples navegadores y dispositivos, asegurando accesibilidad para todos los jugadores.
+
+==== Escalabilidad y Rendimiento
+* _**MongoDB**_ y _**Microsoft Azure**_  permiten escalar de manera flexible para soportar más jugadores y partidas simultáneas. _**Docker**_ facilita la replicación de servicios según la demanda.
+
+==== Seguridad
+* Se implementan medidas básicas como cifrado de contraseñas y protección ante accesos no autorizados para garantizar la seguridad de los datos de los jugadores.
+
+=== Decisiones Organizativas Relevantes
+* **Proceso de desarrollo**: Se utiliza un proceso ágil, con gestión de tareas y colaboración en _**GitHub**_, favoreciendo entregas incrementales y ajustes rápidos durante el desarrollo.
+
 
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
 .Contents
-A short summary and explanation of the fundamental decisions and solution strategies, that shape system architecture. It includes
+Un breve resumen y explicación de las decisiones fundamentales y estrategias de solución que dan forma a la arquitectura del sistema. Incluye:
 
-* technology decisions
-* decisions about the top-level decomposition of the system, e.g. usage of an architectural pattern or design pattern
-* decisions on how to achieve key quality goals
-* relevant organizational decisions, e.g. selecting a development process or delegating certain tasks to third parties.
+* decisiones tecnológicas
+* decisiones sobre la descomposición de alto nivel del sistema, por ejemplo, el uso de un patrón arquitectónico o de diseño
+* decisiones sobre cómo lograr los objetivos clave de calidad
+* decisiones organizativas relevantes, por ejemplo, la selección de un proceso de desarrollo o la delegación de ciertas tareas a terceros.
 
 .Motivation
-These decisions form the cornerstones for your architecture. They are the foundation for many other detailed decisions or implementation rules.
+Estas decisiones forman las piedras angulares de tu arquitectura. Son la base para muchas otras decisiones detalladas o reglas de implementación.
 
 .Form
-Keep the explanations of such key decisions short.
+Mantén las explicaciones de dichas decisiones clave breves.
 
-Motivate what was decided and why it was decided that way,
-based upon problem statement, quality goals and key constraints.
-Refer to details in the following sections.
+Motiva lo que se decidió y por qué se decidió de esa manera,
+basándote en la declaración del problema, los objetivos de calidad y las restricciones clave.
+Consulta los detalles en las secciones siguientes.
 
 
 .Further Information

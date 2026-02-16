@@ -1,80 +1,132 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-context-and-scope]]
-== Context and Scope
+== Contexto y alcance
 
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Context and scope - as the name suggests - delimits your system (i.e. your scope) from all its communication partners
-(neighboring systems and users, i.e. the context of your system). It thereby specifies the external interfaces.
+.Contenido
+El Contexto y Alcance, como su nombre indica, delimita tu sistema (es decir, tu alcance) respecto a todos sus interlocutores de comunicación (sistemas vecinos y usuarios, es decir, el contexto de tu sistema). De este modo, especifica las interfaces externas.
 
-If necessary, differentiate the business context (domain specific inputs and outputs) from the technical context (channels, protocols, hardware).
+Si es necesario, diferencia el contexto de negocio (entradas y salidas específicas del dominio) del contexto técnico (canales, protocolos, hardware).
 
-.Motivation
-The domain interfaces and technical interfaces to communication partners are among your system's most critical aspects. Make sure that you completely understand them.
+.Motivación
+Las interfaces de dominio y las interfaces técnicas con los interlocutores de comunicación son algunos de los aspectos más críticos de tu sistema. Asegúrate de comprenderlas completamente.
 
-.Form
-Various options:
+.Forma
+Varias opciones:
 
-* Context diagrams
-* Lists of communication partners and their interfaces.
+* Diagramas de contexto
+
+* Listas de interlocutores de comunicación y sus interfaces
 
 
-.Further Information
+.Más información
 
-See https://docs.arc42.org/section-3/[Context and Scope] in the arc42 documentation.
+Consulta https://docs.arc42.org/section-3/[Context and Scope] en la documentación de Arc42.
 
 ****
 endif::arc42help[]
 
-=== Business Context
+=== Contexto de negocio
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Specification of *all* communication partners (users, IT-systems, ...) with explanations of domain specific inputs and outputs or interfaces.
-Optionally you can add domain specific formats or communication protocols.
+.Contenido
+Especificación de *todos* los interlocutores de comunicación (usuarios, sistemas IT, etc.) con explicaciones de las entradas y salidas específicas del dominio o interfaces.
 
-.Motivation
-All stakeholders should understand which data are exchanged with the environment of the system.
+Opcionalmente, puedes añadir formatos específicos del dominio o protocolos de comunicación.
 
-.Form
-All kinds of diagrams that show the system as a black box and specify the domain interfaces to communication partners.
+.Motivación
+Todos los interesados (stakeholders) deben comprender qué datos se intercambian con el entorno del sistema.
 
-Alternatively (or additionally) you can use a table.
-The title of the table is the name of your system, the three columns contain the name of the communication partner, the inputs, and the outputs.
+.Forma
+Cualquier tipo de diagrama que muestre el sistema como una caja negra y especifique las interfaces de dominio con los interlocutores de comunicación.
+
+Alternativamente (o adicionalmente), puedes usar una tabla.
+El título de la tabla es el nombre de tu sistema y las tres columnas contienen:
+
+* Nombre del interlocutor de comunicación
+
+* Entradas
+
+* Salidas
 
 ****
 endif::arc42help[]
 
-**<Diagram or Table>**
+image::03_Contexto_de_negocio-ES.drawio.png["Diagrama de contexto de negocio de yovi"]
 
-**<optionally: Explanation of external domain interfaces>**
 
-=== Technical Context
+[cols="1,2", options="header"]
+|===
+| Elemento | Explicación detallada
+
+| Usuario
+| Actor externo que interactúa con el sistema. +
+Realiza acciones como iniciar sesión, jugar al juego, consultar el historial de partidas, entre otros.
+
+| UserDB
+| Base de datos de usuarios. +
+Gestiona registro, inicio y cierre de sesión.
+
+| Yovi
+| Aplicación principal para mostrar el juego.
+
+|===
+
+=== Contexto técnico
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
-.Contents
-Technical interfaces (channels and transmission media) linking your system to its environment. In addition a mapping of domain specific input/output to the channels, i.e. an explanation which I/O uses which channel.
+.Contenido
+Interfaces técnicas (canales y medios de transmisión) que conectan tu sistema con su entorno. Además, un mapeo de las entradas/salidas específicas del dominio hacia los canales, es decir, una explicación de qué entrada/salida utiliza qué canal.
 
-.Motivation
-Many stakeholders make architectural decision based on the technical interfaces between the system and its context. Especially infrastructure or hardware designers decide these technical interfaces.
+.Motivación
+Muchos interesados toman decisiones arquitectónicas basadas en las interfaces técnicas entre el sistema y su contexto. Especialmente los diseñadores de infraestructura o hardware definen estas interfaces técnicas.
 
-.Form
-E.g. UML deployment diagram describing channels to neighboring systems,
-together with a mapping table showing the relationships between channels and input/output.
+.Forma
+Por ejemplo, un diagrama de despliegue UML que describa los canales hacia los sistemas vecinos, junto con una tabla de mapeo que muestre las relaciones entre los canales y las entradas/salidas.
 
 ****
 endif::arc42help[]
 
-**<Diagram or Table>**
+image::03_Contexto_técnico-ES.drawio.png["Diagrama de contexto técnico de yovi"]
 
-**<optionally: Explanation of technical interfaces>**
+[cols="1,2", options="header"]
+|===
+| Elemento | Explicación detallada
 
-**<Mapping Input/Output to Channels>**
+| Usuario
+| Actor externo que interactúa con el sistema. +
+Se conecta a través del navegador web a la aplicación Yovi.
+
+| UserDB
+| Base de datos hecha en MondoDB, donde, por ahora, se guardan los datos de los usuarios.
+
+| Microservicios
+| Son los diferentes microservicios que componen el sistema, cada uno con su función específica.
+
+
+|===
+
+==== Mapeo de entradas/salidas a canales
+[cols="1,2,2", options="header"]
+|===
+| Canal específico | Entrada | Salida
+
+| Yovi microservicios
+| Cualquier petición o respuesta en formato HTTP.
+| Realiza peticiones HTTP tanto para redirigirse a servicios externos o para comunicarse con otros microservicios.
+
+| UserDB
+| Pueden ser consultas variadas, como pueden ser datos del usuario, o inserciones, como el registro de un nuevo usuario.
+| Los resultados de esas consultas o de las inserciones.
+
+
+
+|===
