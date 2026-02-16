@@ -21,7 +21,7 @@ jobs:
       - name: Publish users image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d-users
+          name: ${{ github.repository_owner }}/yovi_0-users
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -36,12 +36,12 @@ jobs:
       - name: Publish webapp image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d-webapp
+          name: ${{ github.repository_owner }}/yovi_0-webapp
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: webapp
-          buildargs: VITE_API_URL=http://${{ secrets.DEPLOY_HOST }}:3000
+          buildargs: VITE_API_URL=http://gateway:8000
 
   # Publicar imagen gamey
   docker-push-gamey:
@@ -52,7 +52,7 @@ jobs:
       - name: Publish gamey image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d-gamey
+          name: ${{ github.repository_owner }}/yovi_0-gamey
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -67,7 +67,7 @@ jobs:
       - name: Publish game image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d-game
+          name: ${{ github.repository_owner }}/yovi_0-game
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -82,7 +82,7 @@ jobs:
       - name: Publish gateway image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d-gateway
+          name: ${{ github.repository_owner }}/yovi_0-gateway
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
