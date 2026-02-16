@@ -1,1 +1,3 @@
-{"root":["./src/app.tsx","./src/env.d.ts","./src/main.tsx","./src/__tests__/registerform.test.tsx","./src/components/loginform.tsx","./src/components/registerform.tsx","./src/pages/loginpage.tsx","./src/pages/registerpage.tsx","./src/services/api.ts","./src/services/userservice.ts","./vite.config.ts"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/registerform.tsx","./src/env.d.ts","./src/main.tsx","./src/__tests__/registerform.test.tsx","./src/components/screem-game.tsx","./vite.config.ts", "./src/components/loginform.tsx","./src/components/registerform.tsx","./src/pages/loginpage.tsx","./src/pages/registerpage.tsx","./src/services/api.ts","./src/services/userservice.ts"],"version":"5.9.3"}
+
+

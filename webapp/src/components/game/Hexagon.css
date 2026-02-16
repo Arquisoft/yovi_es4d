@@ -1,0 +1,48 @@
+.hex {
+  /* Forma de hexágono */
+  clip-path: polygon(
+    25% 0%, 
+    75% 0%, 
+    100% 50%, 
+    75% 100%, 
+    25% 100%, 
+    0% 50%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #204274;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(32, 66, 116, 0.1);
+}
+
+/* Casilla hovereable (vacía) */
+.hex:not(.clicked):hover {
+  transform: scale(1.08);
+  background-color: #204274;
+  border-color: #432f8c;
+}
+
+/* Jugador 1 - Azul */
+.hex.clicked.j1 {
+  background: #64b898 ;
+  border-color: #64b898;
+  font-size: 1.5rem;
+  cursor: not-allowed;
+}
+
+/* Jugador 2 - Rojo */
+.hex.clicked.j2 {
+  background: #a04e84 ;
+  border-color: #a04e84;
+  font-size: 1.5rem;
+  cursor: not-allowed;
+}
+
+/* Deshabilitar interacción en casillas ocupadas */
+.hex:disabled {
+  pointer-events: none;
+}

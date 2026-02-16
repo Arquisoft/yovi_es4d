@@ -1,0 +1,56 @@
+.gameover-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* toda la altura de la ventana */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.gameover-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  flex: 0 0 auto; /* no se estira */
+}
+
+/* Contenido principal */
+.gameover-content {
+  display: flex;
+  flex: 1 1 auto; /* ocupa todo el espacio restante */
+  gap: 20px;
+  align-items: center; /* centra verticalmente */
+  justify-content: center;
+}
+
+/* Panel de jugadores a la izquierda */
+.gameover-players {
+  flex: 1; /* ocupa la mitad del ancho */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px; /* espacio entre los jugadores */
+  max-width: 50%;
+  box-sizing: border-box;
+}
+
+/* Tablero a la derecha */
+.gameover-board {
+  flex: 1; /* ocupa la otra mitad */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 50%;
+}
+
+/* Botón debajo centrado */
+.gameover-button {
+  flex: 0 0 auto; /* no se estira */
+  margin-top: 20px;
+  align-self: center;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  color: white;
+  background-color: #8A5CFF;
+  border: 1px solid rgba(20, 7, 86, 0.18);
+}

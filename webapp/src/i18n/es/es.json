@@ -1,0 +1,32 @@
+{
+  "startScreen": {
+    "title": "¡Bienvenido a yovi_es4d!",
+    "subtitle": "Disfruta el clásico juego Y",
+    "play": "Jugar",
+    "typing": "¡Hola! Somos los desarrolladores del juego yovi_es4d: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 y Sergio ◻️. ¡Que te diviertas!",
+    "goback": "Volver"
+  }
+  ,
+  "menu": {
+    "rules": "Reglas",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "spanish": "Español",
+    "english": "Inglés",
+    "team": "yovi_es4d",
+    "selectLanguage": "Seleccionar idioma"
+  },
+  "footer": {
+    "credits": "© 2026 yovi_es4d. Todos los derechos reservados."
+  },
+  "rules": {
+    "title": "Reglas del juego",
+    "description1": "Y es un juego de mesa para dos jugadores en el que los participantes colocan por turnos fichas de su color sobre un tablero triangular formado por casillas hexagonales.",
+    "description2": "El objetivo del juego es conectar los tres lados del tablero con una cadena continua de las fichas, y el primero que lo consiga gana la partida.",
+    "description3": "Las reglas básicas son muy simples: cada jugador coloca una ficha de su color en una casilla vacía en su turno, sin mover ni retirar fichas ya colocadas.",
+    "description4": "Las esquinas del tablero cuentan como pertenecientes a los dos lados adyacentes, por ejemplo una ficha en la punta del triángulo pertenece a su lado izquierdo y el lado derecho.",
+    "wikipedia": "Información sacada de ",
+    "wikipediaLink": "Wikipedia"
+  }
+}
+

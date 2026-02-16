@@ -1,0 +1,90 @@
+/* Contenedor del tablero */
+body {
+  margin: 0;
+  min-height: 100vh;
+
+  background: rgba(12, 44, 80, 0.95);
+
+  background-attachment: fixed;
+}
+.gameboard-container {
+  width: 80vw;
+  height: 80vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  margin: auto;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(7, 47, 93, 0.85),
+    rgba(11, 19, 34, 0.85)
+  );
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* Información del turno */
+.turn-info {
+  position: absolute;
+  top: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #194c70 0%, #042f68 100%);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #4f3a8a;
+  box-shadow: 0 4px 12px rgba(137, 107, 218, 0.4);
+  z-index: 100;
+}
+
+.turn-info h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #ffffff;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Posición jugadores */
+.player1 {
+  position: absolute;
+  top: 1vw;
+  left: 1vw;
+}
+
+.player2 {
+  position: absolute;
+  top: 1vw;
+  right: 1vw;
+}
+
+/* Botones centrados abajo */
+.board-buttons {
+  position: absolute;
+  bottom: 2vw;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2vw;
+}
+
+/* Botones adaptativos */
+.board-buttons button {
+  padding: 0.8em 1.5em;
+  font-size: clamp(0.8rem, 1vw, 1rem);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s;
+  color: white;
+  background-color: rgba(43, 0, 255, 0.18); /* igual que otros botones globales */
+}
+
+/* Hover de botones */
+.board-buttons button:hover {
+  border-color: #646cff;
+}
+
