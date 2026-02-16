@@ -16,9 +16,9 @@ const app = express();
 const port = 8000;
 
 // URLs for microservices NECESARIO CAMBIAR
-const authServiceUrl = 'http://20.188.62.231:8002' || 'http://localhost:8002';
-const userServiceUrl = 'http://20.188.62.231:8001' || 'http://localhost:8001';
-const gameServiceUrl = 'http://20.188.62.231:8003' || 'http://localhost:8003';
+const authServiceUrl = 'http://auth:8002' || 'http://localhost:8002';
+const userServiceUrl = 'http://users:8001' || 'http://localhost:8001';
+const gameServiceUrl = 'http://game:8003' || 'http://localhost:8003';
 
 
 app.use(cors());
