@@ -21,7 +21,7 @@ jobs:
       - name: Publish users image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_0-users
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-users
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -36,7 +36,7 @@ jobs:
       - name: Publish webapp image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_0-webapp
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-webapp
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -52,7 +52,7 @@ jobs:
       - name: Publish gamey image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_0-gamey
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gamey
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -67,7 +67,7 @@ jobs:
       - name: Publish game image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_0-game
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-game
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -82,7 +82,7 @@ jobs:
       - name: Publish gateway image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: ${{ github.repository_owner }}/yovi_0-gateway
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gateway
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
