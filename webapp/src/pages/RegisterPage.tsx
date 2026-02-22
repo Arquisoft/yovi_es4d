@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import RegisterForm from '../components/RegisterForm';
+import { useTranslation } from '../i18n';
 
 const RegisterPage: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="page-container">
       <RegisterForm />
       <p>
-        ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>
+        {t("users.haveaccount")} <Link to="/login">{t("users.login")}</Link>
       </p>
     </div>
   );

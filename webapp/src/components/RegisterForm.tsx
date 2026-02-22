@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { register } from '../services/userService';
+import { useTranslation } from '../i18n';
 
 const RegisterForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -8,6 +9,7 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +32,10 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <h2>Registro</h2>
+      <h2>{t("registerForm.title")}</h2>
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
-          <label htmlFor="username">Usuario:</label>
+          <label htmlFor="username">{t("registerForm.username")}:</label>
           <input
             id="username"
             type="text"
@@ -43,7 +45,7 @@ const RegisterForm: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="email">Email:</label>
+          <label htmlFor="email">{t("registerForm.email")}:</label>
           <input
             id="email"
             type="email"
@@ -53,7 +55,7 @@ const RegisterForm: React.FC = () => {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Contraseña:</label>
+          <label htmlFor="password">{t("registerForm.password")}:</label>
           <input
             id="password"
             type="password"
@@ -63,10 +65,10 @@ const RegisterForm: React.FC = () => {
           />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? 'Cargando...' : 'Registrarse'}
+          {loading ? t("registerForm.loading") : t("registerForm.register")}
         </button>
         {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">¡Usuario registrado con éxito!</p>}
+        {success && <p className="success-message">{t("registerForm.success")}</p>}
       </form>
     </div>
   );

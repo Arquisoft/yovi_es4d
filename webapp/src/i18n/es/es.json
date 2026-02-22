@@ -14,7 +14,8 @@
     "spanish": "Español",
     "english": "Inglés",
     "team": "yovi_es4d",
-    "selectLanguage": "Seleccionar idioma"
+    "selectLanguage": "Seleccionar idioma",
+    "initsession": "Iniciar sesión"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. Todos los derechos reservados."
@@ -27,6 +28,45 @@
     "description4": "Las esquinas del tablero cuentan como pertenecientes a los dos lados adyacentes, por ejemplo una ficha en la punta del triángulo pertenece a su lado izquierdo y el lado derecho.",
     "wikipedia": "Información sacada de ",
     "wikipediaLink": "Wikipedia"
+  }
+  ,"users": {
+    "dashboard": "Panel de control",
+    "welcome": "¡Bienvenido, {{name}}!",
+    "email": "Tu correo electrónico: {{email}}",
+    "game": "Ir al juego",
+    "panel": "Panel principal",
+    "auth": "Estás correctamente autenticado.",
+    "session": "Tu sesión se mantiene automáticamente en todas las pestañas.",
+    "account": "¿No tienes cuenta?",
+    "register": "Regístrate aquí",
+    "haveaccount": "¿Ya tienes cuenta?",
+    "login": "Inicia sesión aquí"
+  }, "registerForm": {
+    "title": "Registro",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "register": "Registrarse",
+    "success": "¡Registro exitoso! Ahora puedes iniciar sesión.",
+    "error": "Error al registrarse. Por favor, inténtalo de nuevo.",
+    "loading": "Cargando...",
+    "enter": "Entrar",
+    "enterEmail": "Introduce tu email",
+    "enterPassword": "Introduce tu contraseña"
+  }, "gameOver": {
+    "title": "¡Juego terminado!",
+    "winner": "El ganador es: {{winner}}",
+    "playAgain": "Jugar de nuevo",
+    "goHome": "Volver al inicio",
+    "noGame": "No hay juego disponible",
+    "hasWon": "ha ganado"
+  }, "gameBoard": {
+    "turn": "Turno",
+    "waiting": "Esperando al oponente...",
+    "yourTurn": "¡Es tu turno!",
+    "botPlaying": "El bot está jugando...",
+    "endGame": "¡Juego terminado! Ganador"
   }
 }
 

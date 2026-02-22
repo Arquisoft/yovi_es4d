@@ -13,7 +13,8 @@
     "spanish": "Spanish",
     "english": "English",
     "team": "yovi_es4d",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "initsession": "Log in"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. All rights reserved."
@@ -26,5 +27,44 @@
     "description4": "The corners of the board count as belonging to the two adjacent sides, for example, a piece at the tip of the triangle belongs to both its left and right sides.",
     "wikipedia": "Information taken from ",
     "wikipediaLink": "Wikipedia"
+  },
+  "users": {
+    "dashboard": "Dashboard",
+    "welcome": "Welcome, {{name}}!",
+    "email": "Your email: {{email}}",
+    "game": "Go to Game",
+    "panel": "Principal Panel",
+    "auth": "You are correctly authenticated.",
+    "session": "Your session is automatically maintained across all tabs.",
+    "account": "Don't have an account?",
+    "register": "Register here",
+    "haveaccount": "Already have an account?",
+    "login": "Log in here"  
+  }, "registerForm": {
+    "title": "Register",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "register": "Register",
+    "success": "Registration successful! You can now log in.",
+    "error": "Error registering. Please try again.",
+    "loading": "Loading...",
+    "enter": "Enter",
+    "enterEmail": "Enter your email",
+    "enterPassword": "Enter your password"
+  }, "gameOver": {
+    "title": "Game Over!",
+    "winner": "The winner is: {{winner}}",
+    "playAgain": "Play Again",
+    "goHome": "Go Home",
+    "noGame": "No game available",
+    "hasWon": "has won"
+  }, "gameBoard": {
+    "turn": "Turn",
+    "waiting": "Waiting for opponent...",
+    "yourTurn": "It's your turn!",
+    "botPlaying": "The bot is playing...",
+    "endGame": "End of the game! Winner"
   }
 }
