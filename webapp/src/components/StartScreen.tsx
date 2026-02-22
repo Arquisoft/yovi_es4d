@@ -8,7 +8,7 @@ export default function StartScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
  const handlePlayClick = () => {
-    navigate('/game'); // redirige a la ruta del juego
+    navigate('/game');
   };
   return (
     <>
@@ -27,7 +27,6 @@ export default function StartScreen() {
             <div
               className="typing-holder"
               aria-hidden={false}
-              // override CSS positioning locally so the typing box pushes content down
               style={{
                 position: 'relative',
                 display: 'flex',

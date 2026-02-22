@@ -26,5 +26,18 @@
     "description4": "The corners of the board count as belonging to the two adjacent sides, for example, a piece at the tip of the triangle belongs to both its left and right sides.",
     "wikipedia": "Information taken from ",
     "wikipediaLink": "Wikipedia"
+  },
+  "profile": {
+    "title": "User Profile",
+    "username": "Username",
+    "email": "Email",
+    "editProfile": "Edit Profile",
+    "saveChanges": "Save Changes",
+    "password": "Password",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "register": "Register",
+    "registerTitle": "Register",
+    "success": "User registered successfully!"
   }
 }
