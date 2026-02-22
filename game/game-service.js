@@ -16,7 +16,6 @@ mongoose.connect('mongodb://localhost:27017/gameDB')
 const gameSchema = new mongoose.Schema({
   gameId: { type: String, required: true, unique: true },
   userId: String,
-  role: String,
   gameMode: String,
   boardSize: Number,
   board: [{ position: String, player: String }],
@@ -27,7 +26,6 @@ const gameSchema = new mongoose.Schema({
     color: String,
     points: Number
   }],
-  currentPlayer: String,
   moves: [mongoose.Schema.Types.Mixed],
   status: String,
   winner: String,
@@ -98,35 +96,34 @@ app.post('/api/game/start', async (req, res) => {
  */
 app.post('/api/game/:gameId/validateMove', async (req, res) => {
   const { gameId } = req.params;
-  const { move, userId, role } = req.body; // <-- agregado role
+  const { move, userId, role } = req.body;
 
   const game = games.get(gameId);
   if (!game) return res.status(404).json({ error: 'Game not found' });
 
   const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
-    player: role === 'j1' ? 0 : 1 // <-- usar role en vez de userId
+    player: role === 'j1' ? 0 : 1
   });
 
-  // Actualizar Node.js con tablero completo
-  game.currentPlayer = 'j2'; // turno del bot
-  rustResponse.data.board.forEach(m => {
-    const cell = game.board.find(c => {
-      const [cx, cy, cz] = c.position.replace(/[()]/g,'').split(',').map(Number);
-      return cx === m.x && cy === m.y && cz === m.z;
-    });
-    if (cell) cell.player = m.player === 0 ? 'j1' : 'j2';
+  // ✅ GUARDAR MOVIMIENTO EN MEMORIA
+  game.moves.push({
+    position: move,
+    player: role,
+    userId: userId
   });
+
+  game.currentPlayer = 'j2';
 
   if (rustResponse.data.status === 'finished') {
-     
-        // Guardar automáticamente
-      await finishGameAndSave(game);
-    }
+    game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+    await finishGameAndSave(game);
+  }
+
   res.json({
     valid: true,
-    winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
     status: rustResponse.data.status
   });
 });
@@ -159,12 +156,21 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 
     // Actualizar solo la celda correspondiente
     rustResponse.data.board.forEach(m => {
-      const cell = game.board.find(c => {
-        const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
-        return x === m.x && y === m.y && z === m.z;
-      });
-      if (cell) cell.player = m.player === 0 ? 'j1' : 'j2';
+  const cell = game.board.find(c => {
+    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    return x === m.x && y === m.y && z === m.z;
+  });
+
+  if (cell && cell.player === null) {
+    cell.player = m.player === 0 ? 'j1' : 'j2';
+
+    game.moves.push({
+      position: `(${m.x},${m.y},${m.z})`,
+      player: 'j2',
+      userId: 'bot'
     });
+  }
+});
 
     game.currentPlayer = rustResponse.data.turn === 0 ? 'j1' : 'j2';
 
@@ -220,13 +226,24 @@ async function finishGameAndSave(game) {
   game.status = 'finished';
   game.finishedAt = new Date();
 
-  // Guardar en MongoDB
   try {
     await GameModel.findOneAndUpdate(
       { gameId: game.gameId },
-      game,
+      {
+        gameId: game.gameId,
+        userId: game.userId,
+        gameMode: game.gameMode,
+        boardSize: game.boardSize,
+        players: game.players,
+        moves: game.moves,
+        status: game.status,   
+        winner: game.winner,
+        createdAt: game.createdAt,
+        finishedAt: game.finishedAt
+      },
       { upsert: true, new: true }
     );
+
     console.log(`✅ Juego ${game.gameId} guardado en DB`);
   } catch (err) {
     console.error('❌ Error guardando juego:', err);
