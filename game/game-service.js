@@ -5,6 +5,38 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8003;
 
+const mongoose = require('mongoose');
+
+// Conexión a MongoDB
+mongoose.connect('mongodb://localhost:27017/gameDB')
+  .then(() => console.log('✅ Conectado a MongoDB'))
+  .catch(err => console.error('❌ Error conectando a MongoDB:', err));
+
+// Esquema de Game
+const gameSchema = new mongoose.Schema({
+  gameId: { type: String, required: true, unique: true },
+  userId: String,
+  role: String,
+  gameMode: String,
+  boardSize: Number,
+  board: [{ position: String, player: String }],
+  players: [{
+    id: String,
+    role: String,
+    name: String,
+    color: String,
+    points: Number
+  }],
+  currentPlayer: String,
+  moves: [mongoose.Schema.Types.Mixed],
+  status: String,
+  winner: String,
+  createdAt: Date,
+  finishedAt: Date
+});
+
+const GameModel = mongoose.model('Game', gameSchema);
+
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL =  'http://localhost:3001';
 
@@ -87,6 +119,11 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     if (cell) cell.player = m.player === 0 ? 'j1' : 'j2';
   });
 
+  if (rustResponse.data.status === 'finished') {
+     
+        // Guardar automáticamente
+      await finishGameAndSave(game);
+    }
   res.json({
     valid: true,
     winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
@@ -134,6 +171,8 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     if (rustResponse.data.status === 'finished') {
       game.status = 'finished';
       game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+        // Guardar automáticamente
+      await finishGameAndSave(game);
     }
 
     res.json({
@@ -177,29 +216,59 @@ app.get('/api/game/:gameId', (req, res) => {
   });
 });
 
+async function finishGameAndSave(game) {
+  game.status = 'finished';
+  game.finishedAt = new Date();
+
+  // Guardar en MongoDB
+  try {
+    await GameModel.findOneAndUpdate(
+      { gameId: game.gameId },
+      game,
+      { upsert: true, new: true }
+    );
+    console.log(`✅ Juego ${game.gameId} guardado en DB`);
+  } catch (err) {
+    console.error('❌ Error guardando juego:', err);
+  }
+}
+
 /**
  * Finalizar y guardar juego
- */
+ 
 app.post('/api/game/endAndSaveGame', async (req, res) => {
   const { gameId } = req.body;
   const game = games.get(gameId);
   if (!game) return res.status(404).json({ error: 'Game not found' });
 
   game.status = 'finished';
+  game.finishedAt = new Date();
 
-  await axios.post(`${GAMEY_BOT_URL}/v1/game/end`, { game_id: gameId });
+  try {
+    // Guardar en MongoDB
+    const savedGame = await GameModel.findOneAndUpdate(
+      { gameId },
+      game,
+      { upsert: true, new: true }
+    );
 
-  res.json({
-    gameId,
-    status: 'Game saved',
-    result: {
-      winner: game.winner || 'draw',
-      moves: game.moves.length,
-      duration: new Date() - game.createdAt
-    }
-  });
-});
+    // Notificar a Rust (opcional)
+    await axios.post(`${GAMEY_BOT_URL}/v1/game/end`, { game_id: gameId });
 
+    res.json({
+      gameId,
+      status: 'Game saved',
+      result: {
+        winner: game.winner || 'draw',
+        moves: game.moves.length,
+        duration: game.finishedAt - game.createdAt
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error saving game:', err);
+    res.status(500).json({ error: 'Error saving game' });
+  }
+});*/
 // ================= FUNCIONES AUXILIARES =================
 function initializeBoard(boardSize) {
   const total = (boardSize * (boardSize + 1)) / 2;
