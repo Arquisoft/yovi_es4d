@@ -45,6 +45,7 @@
     "username": "Username",
     "email": "Email",
     "password": "Password",
+    "repassword": "Confirm Password",
     "confirmPassword": "Confirm Password",
     "register": "Register",
     "success": "Registration successful! You can now log in.",
@@ -52,7 +53,9 @@
     "loading": "Loading...",
     "enter": "Enter",
     "enterEmail": "Enter your email",
-    "enterPassword": "Enter your password"
+    "enterPassword": "Enter your password",
+    "enterRepassword": "Confirm your password",
+    "errorPasswordMatch": "Passwords do not match"
   }, "gameOver": {
     "title": "Game Over!",
     "winner": "The winner is: {{winner}}",

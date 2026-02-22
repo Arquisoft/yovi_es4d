@@ -6,6 +6,7 @@ const RegisterForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [repassword, setRepassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,12 +24,20 @@ const RegisterForm: React.FC = () => {
       setUsername('');
       setEmail('');
       setPassword('');
+      setRepassword('');
+      checkPasswordMatch();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  function checkPasswordMatch() {
+    if (password !== repassword) {
+      setError(t("registerForm.errorPasswordMatch"));
+    }
+  }
 
   return (
     <div className="auth-container">
@@ -64,6 +73,16 @@ const RegisterForm: React.FC = () => {
             required
           />
         </div>
+        <div className="form-group">
+          <label htmlFor="repassword">{t("registerForm.repassword")}:</label>
+          <input
+            id="repassword"
+            type="password"
+            value={repassword}
+            onChange={(e) => setRepassword(e.target.value)}
+            required
+          />
+        </div>
         <button type="submit" disabled={loading}>
           {loading ? t("registerForm.loading") : t("registerForm.register")}
         </button>
@@ -75,3 +94,5 @@ const RegisterForm: React.FC = () => {
 };
 
 export default RegisterForm;
+
+

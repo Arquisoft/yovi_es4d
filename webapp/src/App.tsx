@@ -1,5 +1,4 @@
 import './components/StartScreen.css';
-import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import StartScreen from './components/StartScreen';
 import Rules from './components/Rules';

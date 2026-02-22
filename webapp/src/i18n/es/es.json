@@ -59,6 +59,7 @@
     "username": "Nombre de usuario",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "repassword": "Confirmar contraseña",
     "confirmPassword": "Confirmar contraseña",
     "register": "Registrarse",
     "success": "¡Registro exitoso! Ahora puedes iniciar sesión.",
@@ -66,7 +67,9 @@
     "loading": "Cargando...",
     "enter": "Entrar",
     "enterEmail": "Introduce tu email",
-    "enterPassword": "Introduce tu contraseña"
+    "enterPassword": "Introduce tu contraseña",
+    "enterRepassword": "Confirma tu contraseña",
+    "errorPasswordMatch": "Las contraseñas no coinciden"
   }, "gameOver": {
     "title": "¡Juego terminado!",
     "winner": "El ganador es: {{winner}}",
