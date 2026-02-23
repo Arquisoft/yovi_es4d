@@ -16,12 +16,15 @@ const app = express();
 const port = 8000;
 
 // URLs for microservices NECESARIO CAMBIAR
-const authServiceUrl = 'http://auth:8002' || 'http://localhost:8002';
-const userServiceUrl = 'http://users:8001' || 'http://localhost:8001';
-const gameServiceUrl = 'http://game:8003' || 'http://localhost:8003';
+const authServiceUrl =  'http://localhost:8002';
+const userServiceUrl = 'http://localhost:8001';
+const gameServiceUrl =  'http://localhost:8003';
 
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5174', // tu frontend
+  credentials: true               // permite enviar cookies o headers de auth
+}));
 app.use(express.json());
 
 // Prometheus metrics middleware
