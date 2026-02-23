@@ -7,24 +7,10 @@ import GameOver from './components/GameOver';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from "./pages/Dashboard";
-
+import { RouterProvider } from 'react-router-dom';
+import router from './routers/index';
 function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<StartScreen />} />
-          <Route path="/rules" element={<Rules />} />
-          <Route path="/game" element={<ScreenGame />} />
-          <Route path="/gameover" element={<GameOver />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </div>
-    </Router>
-
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
