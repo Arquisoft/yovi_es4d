@@ -15,12 +15,12 @@ const RegisterPage: React.FC = () => {
           <p className="auth-switch">
             {t("users.haveaccount")} <Link to="/login">{t("users.login")}</Link>
           </p>
+          </div>
         </div>
-        
         <footer className="start-footer">
           <a href='https://github.com/Arquisoft/yovi_es4d/tree/master' id = 'github-link' ><p>{t('footer.credits')}</p></a>
         </footer>
-      </div>
+      
     </>
     
   );

@@ -4,7 +4,14 @@
   --accent: #0066ff;
   --text: #0a0a0a;
 }
-
+.page-container {
+  display: flex;               /* activa flex */
+  flex-direction: column;      /* si quieres footer abajo */
+  justify-content: center;     /* centra verticalmente */
+  align-items: center;         /* centra horizontalmente */
+  padding: 16px;
+  box-sizing: border-box;
+}
 /* Full viewport wrapper */
 .start-screen {
   /* Use a public static GIF to avoid asset resolution issues and ensure it centers correctly */
@@ -337,25 +344,18 @@ html, body {
 /* ========================= */
 
 .auth-card {
-  position: relative;
-  z-index: 2;
   width: min(95%, 420px);
   padding: 40px 32px;
   border-radius: 20px;
-
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  align-items: center;      /* centra vertical */
-  justify-content: center;  /* centra horizontal */
   box-sizing: border-box;
-
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-
   animation: fadeUp 0.8s ease forwards;
   opacity: 0;
   transform: translateY(30px);
+  /* ya no poner flex-grow ni margin-top */
 }
 
 @keyframes fadeUp {
