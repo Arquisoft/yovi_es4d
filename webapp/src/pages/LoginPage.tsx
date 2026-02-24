@@ -16,10 +16,11 @@ const LoginPage: React.FC = () => {
             {t("users.account")} <Link to="/register">{t("users.register")}</Link>
           </p>
         </div>
-        <footer className="start-footer">
+       
+      </div>
+       <footer className="start-footer">
           <a href='https://github.com/Arquisoft/yovi_es4d/tree/master' id = 'github-link' ><p>{t('footer.credits')}</p></a>
         </footer>
-      </div>
     </>
   );
 };
