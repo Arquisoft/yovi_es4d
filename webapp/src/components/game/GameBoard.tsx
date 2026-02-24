@@ -5,6 +5,7 @@ import Triangle from "./Triangle";
 import Jugador from "./player";
 import "./GameBoard.css";
 import { API_URL } from "../../config";
+import { useTranslation } from "../../i18n";
 
 interface HexData {
   position: string;
@@ -40,6 +41,8 @@ const GameBoard: React.FC = () => {
     winner: null,
     botPlaying: false
   });
+
+  const { t } = useTranslation();
 
   // Inicia juego
   useEffect(() => {
@@ -155,11 +158,11 @@ const GameBoard: React.FC = () => {
       <div className="turn-info">
         <h2>
           {gameState.status === "finished" ? (
-            <>🏆 ¡Juego Terminado! Ganador: {gameState.winner === "j1" ? player1.name : player2.name}</>
+            <>🏆 {t("gameBoard.endGame")} {gameState.winner === "j1" ? player1.name : player2.name}</>
           ) : gameState.botPlaying ? (
-            <>🤖 Bot está jugando...</>
+            <>🤖 {t("gameBoard.botPlaying")}</>
           ) : (
-            <>Turno: {gameState.turn === "j1" ? player1.name : player2.name}</>
+            <>🏆 {t("gameBoard.turn")}: {gameState.turn === "j1" ? player1.name : player2.name}</>
           )}
         </h2>
       </div>

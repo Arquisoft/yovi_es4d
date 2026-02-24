@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { getProfile } from '../services/userService';
 import { useNavigate } from "react-router-dom";
 import { logout } from '../services/userService';
+import { useTranslation } from "../i18n";
 
 const Dashboard: React.FC = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -41,18 +43,18 @@ const Dashboard: React.FC = () => {
             <header className="dashboard-header">
                 <h1>Dashboard</h1>
                 <div className="user-info">
-                    <p>Bienvenido, <strong>{name}</strong></p>
-                    <p>Email: {email}</p>
-                    <button  onClick={() => navigate('/')}>Ir al juego</button>
+                    <p>{t("users.welcome", name)}</p>
+                    <p>{t("users.email", email)}</p>
+                    <button  onClick={() => navigate('/game')}>{t("users.game")}</button>
 
 
                 </div>
             </header>
 
             <main className="dashboard-content">
-                <h2>Panel Principal</h2>
-                <p>Estás autenticado correctamente.</p>
-                <p>Tu sesión se mantiene automáticamente en todas las pestañas.</p>
+                <h2>{t("users.panel")}</h2>
+                <p>{t("users.auth")}</p>
+                <p>{t("users.session")}</p>
             </main>
         </div>
     );

@@ -21,7 +21,10 @@ const userServiceUrl =  'http://localhost:8001';
 const gameServiceUrl = 'http://localhost:8003';
 
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5174', // tu frontend
+  credentials: true               // permite enviar cookies o headers de auth
+}));
 app.use(express.json());
 
 // Prometheus metrics middleware

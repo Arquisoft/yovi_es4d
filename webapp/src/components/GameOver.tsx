@@ -3,17 +3,19 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
 import Jugador from "./game/player";
 import "./GameOver.css";
+import { useTranslation } from "../i18n";
 
 const GameOver: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const gameState = location.state as any;
+  const { t }  = useTranslation();
 
   if (!gameState) {
     return (
       <div className="gameover-container">
-        <h2>No hay juego disponible</h2>
-        <button onClick={() => navigate("/")}>Volver a Inicio</button>
+        <h2>{t("gameOver.noGame")}</h2>
+        <button onClick={() => navigate("/")}>{t("gameOver.goHome")}</button>
       </div>
     );
   }
@@ -25,7 +27,7 @@ const GameOver: React.FC = () => {
     <div className="gameover-container">
       {/* Título */}
       <h1 className="gameover-title">
-        🏆 {gameState.winner === "j1" ? player1.name : player2.name} ha ganado!
+        🏆 {gameState.winner === "j1" ? player1.name : player2.name} {t("gameOver.hasWon")}!
       </h1>
 
       {/* Contenido principal: jugadores a la izquierda, tablero a la derecha */}
@@ -47,7 +49,7 @@ const GameOver: React.FC = () => {
         className="gameover-button"
         onClick={() => navigate("/")}
       >
-        Volver a Inicio
+        {t("gameOver.goHome")}
       </button>
     </div>
   );
