@@ -13,9 +13,10 @@ interface HexData {
 }
 
 interface PlayerData {
-  id: string;
+  id: string;      // userId real
   name: string;
   points: number;
+  role: "j1" | "j2";
 }
 
 interface GameState {
@@ -29,9 +30,9 @@ interface GameState {
 }
 
 const GameBoard: React.FC = () => {
-  
-  const navigate = useNavigate(); // ✅ aquí, dentro del componente, fuera de useEffect
-    const [gameState, setGameState] = useState<GameState>({
+  const navigate = useNavigate();
+
+  const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     hexData: [],
     players: [],
@@ -45,22 +46,27 @@ const GameBoard: React.FC = () => {
 
   // Inicia juego
   useEffect(() => {
-     if (gameState.status === "finished") {
-      
-    navigate("/gameover", { state: gameState });
-  }
+    if (gameState.status === "finished") {
+      navigate("/gameover", { state: gameState });
+    }
+
     const startGame = async () => {
       try {
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "jugador1", gameMode: "vsBot" }),
+          body: JSON.stringify({ userId: "usuario_real", gameMode: "vsBot" }), // userId real
         });
         const data = await res.json();
+
         setGameState({
           gameId: data.gameId,
           hexData: data.board,
-          players: data.players.map((p: PlayerData) => ({ ...p, points: 0 })), // Reiniciamos puntos
+          players: data.players.map((p: PlayerData, i: number) => ({
+            ...p,
+            points: 0,
+            role: i === 0 ? "j1" : "j2"  // asignamos roles
+          })),
           turn: data.turn || "j1",
           status: data.status || "active",
           winner: data.winner || null,
@@ -70,23 +76,24 @@ const GameBoard: React.FC = () => {
         console.error("Error starting game:", error);
       }
     };
+
     startGame();
   }, [gameState.status, navigate]);
 
   const handleHexClick = async (position: string) => {
-    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1" || gameState.status === "finished") return;
+    const currentPlayer = gameState.players.find(p => p.role === gameState.turn);
+    if (!gameState.gameId || gameState.botPlaying || !currentPlayer || gameState.status === "finished") return;
 
-    // Bloqueamos el tablero inmediatamente
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
-      // 1️⃣ Validamos el movimiento del usuario
+      // 1️⃣ Validar movimiento
       const validateRes = await fetch(
         `${API_URL}/api/game/${gameState.gameId}/validateMove`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "j1", move: position }),
+          body: JSON.stringify({ userId: currentPlayer.id, role: currentPlayer.role, move: position }),
         }
       );
       const validateData = await validateRes.json();
@@ -97,38 +104,36 @@ const GameBoard: React.FC = () => {
         return;
       }
 
-      // 2️⃣ Pintamos la jugada del usuario y sumamos 5 puntos
+      // 2️⃣ Actualizar tablero usuario
       setGameState(prev => ({
         ...prev,
         hexData: prev.hexData.map(h =>
-          h.position === position ? { ...h, player: "j1" } : h
+          h.position === position ? { ...h, player: currentPlayer.role } : h
         ),
-         players: prev.players.map(p =>
-    p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p
-  ),
-  winner: validateData.winner || prev.winner,
-  status: validateData.status || prev.status
+        players: prev.players.map(p =>
+          p.id === currentPlayer.id ? { ...p, points: p.points + 5 } : p
+        ),
+        winner: validateData.winner || prev.winner,
+        status: validateData.status || prev.status
       }));
 
-      // 3️⃣ Llamamos al endpoint /move para registrar el movimiento y mover al bot
+      // 3️⃣ Enviar movimiento y mover bot
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "j1", move: position, mode: "vsBot" }),
+        body: JSON.stringify({ userId: currentPlayer.id, role: currentPlayer.role, move: position, mode: "vsBot" }),
       });
       const moveData = await moveRes.json();
 
-      // 4️⃣ Actualizamos el tablero con la jugada del bot y sumamos puntos
+      // 4️⃣ Actualizar tablero con jugada del bot
       setGameState(prev => {
         let updatedPlayers = [...prev.players];
 
-        // Sumamos 5 puntos por la jugada del bot
+        // sumamos 5 puntos al bot si es su turno
         updatedPlayers = updatedPlayers.map(p =>
-          p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+          p.role === "j2" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
         );
 
-        // Si hay ganador, sumamos 100 puntos
-        
         return {
           ...prev,
           hexData: moveData.board,
@@ -145,8 +150,8 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  const player1 = gameState.players[0] || { id: "jugador1", name: "Jugador", points: 0 };
-  const player2 = gameState.players[1] || { id: "bot", name: "Bot", points: 0 };
+  const player1 = gameState.players.find(p => p.role === "j1") || { id: "usuario_real", name: "Jugador", points: 0, role: "j1" };
+  const player2 = gameState.players.find(p => p.role === "j2") || { id: "bot", name: "Bot", points: 0, role: "j2" };
 
   return (
     <div className="gameboard-container">
