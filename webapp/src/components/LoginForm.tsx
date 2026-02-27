@@ -6,7 +6,7 @@ import { useTranslation } from '../i18n';
 
 
 const LoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,11 +20,12 @@ const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ username, password });
+      await login({ email, password });
 
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -35,13 +36,13 @@ const LoginForm: React.FC = () => {
       <h2>{t("menu.initsession")}</h2>
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
-          <label htmlFor="username">{t("registerForm.email")}:</label>
+          <label htmlFor="email">{t("registerForm.email")}:</label>
           <input
-            id="username"
-            type="text"
+            id="email"
+            type="email"
             placeholder={t("registerForm.enterEmail")}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>

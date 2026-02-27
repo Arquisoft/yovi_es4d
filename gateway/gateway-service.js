@@ -22,7 +22,7 @@ const gameServiceUrl =  'http://localhost:8003';
 
 
 app.use(cors({
-  origin: 'http://localhost:5174', // tu frontend
+  origin: 'http://localhost:5173', // tu frontend
   credentials: true               // permite enviar cookies o headers de auth
 }));
 app.use(express.json());
@@ -72,6 +72,7 @@ app.post('/login', async (req, res) => {
     res.json(authResponse.data);
   } catch (error) {
     res.status(error.response.status).json({ error: error.response.data.error });
+    console.log(error);
   }
 });
 
@@ -90,6 +91,7 @@ app.post('/adduser', async (req, res) => {
     res.json(userResponse.data);
   } catch (error) {
     res.status(error.response.status).json({ error: error.response.data.error });
+    console.log(error);
   }
 });
 

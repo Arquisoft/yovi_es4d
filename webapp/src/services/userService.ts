@@ -1,12 +1,20 @@
 import { post } from './api';
 import { API_URL } from '../config'; // API_URL apunta al gateway (http://localhost:8000)
+import axios from "axios";
 
-export const login = async (userData: any) => {
-  return await post(`${API_URL}/login`, userData); // gateway login
+
+export const login = async (credentials: {email: string, password: string}) => {
+  const response = await axios.post(`${API_URL}/login`, credentials);
+  return response.data;
 };
 
 export const register = async (userData: any) => {
-  return await post('/adduser', userData); // gateway adduser
+  try {
+    const response = await axios.post(`${API_URL}/adduser`, userData);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export const getProfile = async () => {
