@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  users:
+    build: ./users
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/usersdb
+      - JWT_SECRET=mi_clave_secreta
+    depends_on:
+      - mongodb
+
+  gamey:
+    build: ./gamey
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    #command: ["--mode", "server", "--port", "4000"]
+
+  game:
+    build: ./game
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - GAMEY_BOT_URL=http://gamey:4000
+      - USERS_URL=http://users:3000
+    depends_on:
+      - users
+      - gamey
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - GAME_SERVICE_URL=http://game:8003
+      - USER_SERVICE_URL=http://users:3000
+      - TOKEN_SECRET_KEY=mi_clave_secreta
+    depends_on:
+      - game
+      - users
+
+  webapp:
+    build: ./webapp
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://gateway:8000
+    depends_on:
+      - gateway
+
+volumes:
+  mongo-data:

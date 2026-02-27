@@ -17,8 +17,8 @@ const port = 8000;
 
 // URLs for microservices NECESARIO CAMBIAR
 const authServiceUrl =  'http://localhost:8002';
-const userServiceUrl = 'http://localhost:8001';
-const gameServiceUrl =  'http://localhost:8003';
+const userServiceUrl =  'http://localhost:8001';
+const gameServiceUrl = 'http://localhost:8003';
 
 
 app.use(cors({
@@ -138,12 +138,13 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/validateMove', async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { move, userId } = req.body;
+    const { move, userId, role } = req.body;
 
     // Llamamos al game-service para comprobar la validez
     const validateResponse = await axios.post(`${gameServiceUrl}/api/game/${gameId}/validateMove`, {
       move,
-      userId
+      userId,
+      role
     });
 
     res.json(validateResponse.data);
@@ -165,7 +166,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 app.post('/api/game/:gameId/move', async (req, res) => {
   try {
     const { gameId } = req.params;
-    const { move, userId, mode } = req.body; // mode = 'vsBot' | 'multiplayer'
+    const { move, userId, mode, role } = req.body; // mode = 'vsBot' | 'multiplayer'
    
     if (!move || !userId) {
       return res.status(400).json({ error: 'Move and userId are required' });
@@ -185,6 +186,7 @@ app.post('/api/game/:gameId/move', async (req, res) => {
       userId,
       move,
       mode, // importante para que game-service sepa si es vsBot
+      role
     });
 
     // Devuelve el estado actualizado del tablero (incluyendo turno del bot si aplica)
