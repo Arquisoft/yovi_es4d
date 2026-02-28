@@ -8,7 +8,7 @@ export default function StartScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
  const handlePlayClick = () => {
-    navigate('/game'); // redirige a la ruta del juego
+    navigate('/select'); // redirige a la ruta del juego
   };
   return (
     <>
