@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8003;
 
-const GAMEY_BOT_URL = 'http://gamey:3001' || 'http://localhost:3001';
+const GAMEY_BOT_URL = 'http://localhost:3001'||'http://gamey:3001' ;
 
 app.use(cors());
 app.use(express.json());

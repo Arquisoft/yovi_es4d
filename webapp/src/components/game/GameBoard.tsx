@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Triangle from "./Triangle";
 import Jugador from "./player";
@@ -27,64 +27,88 @@ interface GameState {
   botPlaying: boolean;
 }
 
+// Etiquetas legibles para cada botMode
+const BOT_MODE_LABELS: Record<string, string> = {
+  random_bot:       "🎲 Aleatorio",
+  intermediate_bot: "🧠 Intermedio",
+  // hard_bot:      "💀 Difícil",   ← se añade automáticamente desde la API
+};
+
+interface LocationState {
+  gameMode?: string;
+  botMode?: string;
+}
+
 const GameBoard: React.FC = () => {
-  
-  const navigate = useNavigate(); // ✅ aquí, dentro del componente, fuera de useEffect
-    const [gameState, setGameState] = useState<GameState>({
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { gameMode = "vsBot", botMode = "random_bot" } =
+  (location.state as LocationState) ?? {};
+
+  const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     hexData: [],
     players: [],
     turn: null,
     status: null,
     winner: null,
-    botPlaying: false
+    botPlaying: false,
   });
 
-  // Inicia juego
+  // Redirige a gameover cuando termina la partida
   useEffect(() => {
-     if (gameState.status === "finished") {
-      
-    navigate("/gameover", { state: gameState });
-  }
+    if (gameState.status === "finished") {
+      navigate("/gameover", { state: gameState });
+    }
+  }, [gameState.status, navigate]);
+
+  // Inicia el juego al montar con los parámetros recibidos
+  useEffect(() => {
     const startGame = async () => {
       try {
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "jugador1", gameMode: "vsBot" }),
+          body: JSON.stringify({ userId: "jugador1", gameMode, botMode }),
         });
         const data = await res.json();
         setGameState({
           gameId: data.gameId,
           hexData: data.board,
-          players: data.players.map((p: PlayerData) => ({ ...p, points: 0 })), // Reiniciamos puntos
+          players: data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
           turn: data.turn || "j1",
           status: data.status || "active",
           winner: data.winner || null,
-          botPlaying: false
+          botPlaying: false,
         });
       } catch (error) {
         console.error("Error starting game:", error);
       }
     };
     startGame();
-  }, [gameState.status, navigate]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── Movimiento del jugador ────────────────────────────────────────────────
   const handleHexClick = async (position: string) => {
-    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1" || gameState.status === "finished") return;
+    if (
+        !gameState.gameId ||
+        gameState.botPlaying ||
+        gameState.turn !== "j1" ||
+        gameState.status === "finished"
+    ) return;
 
-    // Bloqueamos el tablero inmediatamente
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
-      // 1️⃣ Validamos el movimiento del usuario
+      // 1. Validar movimiento del usuario
       const validateRes = await fetch(
-        `${API_URL}/api/game/${gameState.gameId}/validateMove`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "j1", move: position }),
-        }
+          `${API_URL}/api/game/${gameState.gameId}/validateMove`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: "j1", move: position }),
+          }
       );
       const validateData = await validateRes.json();
 
@@ -94,38 +118,32 @@ const GameBoard: React.FC = () => {
         return;
       }
 
-      // 2️⃣ Pintamos la jugada del usuario y sumamos 5 puntos
+      // 2. Pintar jugada del usuario
       setGameState(prev => ({
         ...prev,
         hexData: prev.hexData.map(h =>
-          h.position === position ? { ...h, player: "j1" } : h
+            h.position === position ? { ...h, player: "j1" } : h
         ),
-         players: prev.players.map(p =>
-    p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p
-  ),
-  winner: validateData.winner || prev.winner,
-  status: validateData.status || prev.status
+        players: prev.players.map(p =>
+            p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p
+        ),
+        winner: validateData.winner || prev.winner,
+        status: validateData.status || prev.status,
       }));
 
-      // 3️⃣ Llamamos al endpoint /move para registrar el movimiento y mover al bot
+      // 3. Movimiento del bot
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "j1", move: position, mode: "vsBot" }),
+        body: JSON.stringify({ userId: "j1", move: position, mode: gameMode }),
       });
       const moveData = await moveRes.json();
 
-      // 4️⃣ Actualizamos el tablero con la jugada del bot y sumamos puntos
+      // 4. Actualizar tablero con jugada del bot
       setGameState(prev => {
-        let updatedPlayers = [...prev.players];
-
-        // Sumamos 5 puntos por la jugada del bot
-        updatedPlayers = updatedPlayers.map(p =>
-          p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+        const updatedPlayers = prev.players.map(p =>
+            p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
         );
-
-        // Si hay ganador, sumamos 100 puntos
-        
         return {
           ...prev,
           hexData: moveData.board,
@@ -133,7 +151,7 @@ const GameBoard: React.FC = () => {
           winner: moveData.winner,
           status: moveData.status,
           players: updatedPlayers,
-          botPlaying: false
+          botPlaying: false,
         };
       });
     } catch (error) {
@@ -146,40 +164,40 @@ const GameBoard: React.FC = () => {
   const player2 = gameState.players[1] || { id: "bot", name: "Bot", points: 0 };
 
   return (
-    <div className="gameboard-container">
-      <div className="turn-info">
-        <h2>
-          {gameState.status === "finished" ? (
-            <>🏆 ¡Juego Terminado! Ganador: {gameState.winner === "j1" ? player1.name : player2.name}</>
-          ) : gameState.botPlaying ? (
-            <>🤖 Bot está jugando...</>
-          ) : (
-            <>Turno: {gameState.turn === "j1" ? player1.name : player2.name}</>
-          )}
-        </h2>
-      </div>
+      <div className="gameboard-container">
+        <div className="turn-info">
+          <h2>
+            {gameState.status === "finished" ? (
+                <>🏆 ¡Juego Terminado! Ganador: {gameState.winner === "j1" ? player1.name : player2.name}</>
+            ) : gameState.botPlaying ? (
+                <>🤖 Bot está jugando...</>
+            ) : (
+                <>Turno: {gameState.turn === "j1" ? player1.name : player2.name}</>
+            )}
+          </h2>
+        </div>
 
-      <div className="player1">
-        <Jugador
-          name={player1.name}
-          imgSrc="logo.png"
-          points={player1.points}
-          isActive={gameState.turn === "j1" && !gameState.botPlaying}
-        />
-      </div>
+        <div className="player1">
+          <Jugador
+              name={player1.name}
+              imgSrc="logo.png"
+              points={player1.points}
+              isActive={gameState.turn === "j1" && !gameState.botPlaying}
+          />
+        </div>
 
-      <div className="player2">
-        <Jugador
-          name={player2.name}
-          imgSrc="logo.png"
-          points={player2.points}
-          isActive={gameState.turn === "j2" && !gameState.botPlaying}
-          isPlaying={gameState.botPlaying && gameState.turn === "j2"}
-        />
-      </div>
+        <div className="player2">
+          <Jugador
+              name={player2.name}
+              imgSrc="logo.png"
+              points={player2.points}
+              isActive={gameState.turn === "j2" && !gameState.botPlaying}
+              isPlaying={gameState.botPlaying && gameState.turn === "j2"}
+          />
+        </div>
 
-      <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} />
-    </div>
+        <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} />
+      </div>
   );
 };
 

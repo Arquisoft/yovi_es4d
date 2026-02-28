@@ -17,7 +17,7 @@ const port = 8000;
 
 const authServiceUrl = 'http://auth:8002' || 'http://localhost:8002';
 const userServiceUrl = 'http://users:8001' || 'http://localhost:8001';
-const gameServiceUrl = 'http://game:8003' || 'http://localhost:8003';
+const gameServiceUrl = 'http://localhost:8003' || 'http://game:8003' ;
 
 app.use(cors());
 app.use(express.json());
