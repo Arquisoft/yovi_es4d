@@ -1,0 +1,74 @@
+/* ── Fuentes ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Variables ───────────────────────────────────────────── */
+:root {
+    --violet: #7c6ff7;
+    --coral:  #f97058;
+    --bg:     #faf8f4;
+    --surface:#ffffff;
+    --muted:  #f0ece4;
+    --border: #e8e2d9;
+    --text:   #2d2a26;
+    --subtle: #9e9890;
+}
+
+/* ── Fondo con textura punteada suave ────────────────────── */
+.game-bg {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, #d6cfc4 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+/* ── Hexágono ────────────────────────────────────────────── */
+.hex-cell {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    transition: filter 0.15s ease, transform 0.15s ease, background 0.15s ease;
+    background: #ede8df;
+    border: none;
+    cursor: pointer;
+}
+.hex-cell:hover:not(:disabled) {
+    background: #c9c1f5;
+    filter: drop-shadow(0 4px 12px rgba(124, 111, 247, 0.35));
+    transform: scale(1.08);
+}
+.hex-cell:disabled {
+    cursor: default;
+}
+.hex-cell.j1 {
+    background: var(--violet);
+    filter: drop-shadow(0 4px 14px rgba(124, 111, 247, 0.5));
+}
+.hex-cell.j2 {
+    background: var(--coral);
+    filter: drop-shadow(0 4px 14px rgba(249, 112, 88, 0.5));
+}
+
+/* ── Pulso jugador activo ────────────────────────────────── */
+@keyframes pulse-violet {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(124,111,247,0.2), 0 8px 24px rgba(124,111,247,0.08); }
+    50%       { box-shadow: 0 0 0 3px rgba(124,111,247,0.5), 0 8px 32px rgba(124,111,247,0.2); }
+}
+@keyframes pulse-coral {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(249,112,88,0.2), 0 8px 24px rgba(249,112,88,0.08); }
+    50%       { box-shadow: 0 0 0 3px rgba(249,112,88,0.5), 0 8px 32px rgba(249,112,88,0.2); }
+}
+.active-j1 { animation: pulse-violet 1.6s ease-in-out infinite; }
+.active-j2 { animation: pulse-coral  1.6s ease-in-out infinite; }
+
+/* ── Entrada animada ─────────────────────────────────────── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s ease both; }
+
+/* ── Dots del bot pensando ───────────────────────────────── */
+@keyframes thinking {
+    0%, 100% { opacity: 0.25; transform: scale(0.8); }
+    50%       { opacity: 1;    transform: scale(1.2); }
+}
+.thinking-dot:nth-child(1) { animation: thinking 1.1s 0.0s infinite ease-in-out; }
+.thinking-dot:nth-child(2) { animation: thinking 1.1s 0.18s infinite ease-in-out; }
+.thinking-dot:nth-child(3) { animation: thinking 1.1s 0.36s infinite ease-in-out; }

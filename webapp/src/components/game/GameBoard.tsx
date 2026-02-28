@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 import Triangle from "./Triangle";
 import Jugador from "./player";
-import "./GameBoard.css";
 import { API_URL } from "../../config";
+import "./game.css";
 
 interface HexData {
   position: string;
@@ -26,13 +26,6 @@ interface GameState {
   winner: "j1" | "j2" | null;
   botPlaying: boolean;
 }
-
-// Etiquetas legibles para cada botMode
-const BOT_MODE_LABELS: Record<string, string> = {
-  random_bot:       "🎲 Aleatorio",
-  intermediate_bot: "🧠 Intermedio",
-  // hard_bot:      "💀 Difícil",   ← se añade automáticamente desde la API
-};
 
 interface LocationState {
   gameMode?: string;
@@ -56,14 +49,12 @@ const GameBoard: React.FC = () => {
     botPlaying: false,
   });
 
-  // Redirige a gameover cuando termina la partida
   useEffect(() => {
     if (gameState.status === "finished") {
       navigate("/gameover", { state: gameState });
     }
   }, [gameState.status, navigate]);
 
-  // Inicia el juego al montar con los parámetros recibidos
   useEffect(() => {
     const startGame = async () => {
       try {
@@ -73,6 +64,12 @@ const GameBoard: React.FC = () => {
           body: JSON.stringify({ userId: "jugador1", gameMode, botMode }),
         });
         const data = await res.json();
+
+        if (!res.ok || !data.players) {
+          console.error("Error en respuesta de start:", data);
+          return;
+        }
+
         setGameState({
           gameId: data.gameId,
           hexData: data.board,
@@ -89,19 +86,12 @@ const GameBoard: React.FC = () => {
     startGame();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Movimiento del jugador ────────────────────────────────────────────────
   const handleHexClick = async (position: string) => {
-    if (
-        !gameState.gameId ||
-        gameState.botPlaying ||
-        gameState.turn !== "j1" ||
-        gameState.status === "finished"
-    ) return;
+    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1" || gameState.status === "finished") return;
 
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
-      // 1. Validar movimiento del usuario
       const validateRes = await fetch(
           `${API_URL}/api/game/${gameState.gameId}/validateMove`,
           {
@@ -118,20 +108,14 @@ const GameBoard: React.FC = () => {
         return;
       }
 
-      // 2. Pintar jugada del usuario
       setGameState(prev => ({
         ...prev,
-        hexData: prev.hexData.map(h =>
-            h.position === position ? { ...h, player: "j1" } : h
-        ),
-        players: prev.players.map(p =>
-            p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p
-        ),
+        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: "j1" } : h),
+        players: prev.players.map(p => p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p),
         winner: validateData.winner || prev.winner,
         status: validateData.status || prev.status,
       }));
 
-      // 3. Movimiento del bot
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,21 +123,17 @@ const GameBoard: React.FC = () => {
       });
       const moveData = await moveRes.json();
 
-      // 4. Actualizar tablero con jugada del bot
-      setGameState(prev => {
-        const updatedPlayers = prev.players.map(p =>
+      setGameState(prev => ({
+        ...prev,
+        hexData: moveData.board,
+        turn: moveData.turn,
+        winner: moveData.winner,
+        status: moveData.status,
+        players: prev.players.map(p =>
             p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
-        );
-        return {
-          ...prev,
-          hexData: moveData.board,
-          turn: moveData.turn,
-          winner: moveData.winner,
-          status: moveData.status,
-          players: updatedPlayers,
-          botPlaying: false,
-        };
-      });
+        ),
+        botPlaying: false,
+      }));
     } catch (error) {
       console.error("Error during move:", error);
       setGameState(prev => ({ ...prev, botPlaying: false }));
@@ -161,42 +141,93 @@ const GameBoard: React.FC = () => {
   };
 
   const player1 = gameState.players[0] || { id: "jugador1", name: "Jugador", points: 0 };
-  const player2 = gameState.players[1] || { id: "bot", name: "Bot", points: 0 };
+  const player2 = gameState.players[1] || { id: "bot",      name: "Bot",     points: 0 };
 
   return (
-      <div className="gameboard-container">
-        <div className="turn-info">
-          <h2>
+      <div
+          className="game-bg min-h-screen flex flex-col"
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+      >
+        {/* ── Header ────────────────────────────────────────── */}
+        <header className="w-full bg-white/70 backdrop-blur border-b border-[#e8e2d9] px-8 py-3 flex items-center justify-between">
+          <span className="text-xs font-mono tracking-[0.4em] uppercase text-[#c4bdb4]">YOVI</span>
+
+          {/* Estado del turno */}
+          <div className="flex items-center gap-2 text-sm">
             {gameState.status === "finished" ? (
-                <>🏆 ¡Juego Terminado! Ganador: {gameState.winner === "j1" ? player1.name : player2.name}</>
+                <span className="font-semibold text-[#7c6ff7]">
+              🏆 {gameState.winner === "j1" ? player1.name : player2.name} gana
+            </span>
             ) : gameState.botPlaying ? (
-                <>🤖 Bot está jugando...</>
+                <span className="flex items-center gap-2 text-[#9e9890]">
+              <span className="text-xs tracking-wide">Bot pensando</span>
+              <span className="flex gap-1">
+                {[0,1,2].map(i => <span key={i} className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#f97058]" />)}
+              </span>
+            </span>
             ) : (
-                <>Turno: {gameState.turn === "j1" ? player1.name : player2.name}</>
+                <span className="text-[#9e9890] text-xs tracking-wide">
+              Turno:{" "}
+                  <span className={`font-semibold ${gameState.turn === "j1" ? "text-[#7c6ff7]" : "text-[#f97058]"}`}>
+                {gameState.turn === "j1" ? player1.name : player2.name}
+              </span>
+            </span>
             )}
-          </h2>
-        </div>
+          </div>
 
-        <div className="player1">
-          <Jugador
-              name={player1.name}
-              imgSrc="logo.png"
-              points={player1.points}
-              isActive={gameState.turn === "j1" && !gameState.botPlaying}
-          />
-        </div>
+          <span className="text-[10px] font-mono text-[#d6cfc4] tracking-widest">
+          #{gameState.gameId?.slice(-6) ?? "------"}
+        </span>
+        </header>
 
-        <div className="player2">
-          <Jugador
-              name={player2.name}
-              imgSrc="logo.png"
-              points={player2.points}
-              isActive={gameState.turn === "j2" && !gameState.botPlaying}
-              isPlaying={gameState.botPlaying && gameState.turn === "j2"}
-          />
-        </div>
+        {/* ── Área principal ────────────────────────────────── */}
+        <main className="flex flex-1 items-center justify-between px-8 py-6 gap-6">
 
-        <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} />
+          {/* Jugador 1 */}
+          <aside className="w-36 shrink-0">
+            <Jugador
+                name={player1.name}
+                imgSrc="logo.png"
+                points={player1.points}
+                isActive={gameState.turn === "j1" && !gameState.botPlaying}
+                color="violet"
+            />
+          </aside>
+
+          {/* Tablero */}
+          <section className="flex-1 flex items-center justify-center">
+            {gameState.gameId ? (
+                <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
+            ) : (
+                <div className="flex flex-col items-center gap-4 text-[#c4bdb4]">
+                  <div className="flex gap-2">
+                    {[0,1,2].map(i => <span key={i} className="thinking-dot w-2.5 h-2.5 rounded-full bg-[#7c6ff7]/40" />)}
+                  </div>
+                  <span className="text-xs font-mono tracking-[0.3em] uppercase">Iniciando partida</span>
+                </div>
+            )}
+          </section>
+
+          {/* Bot */}
+          <aside className="w-36 shrink-0">
+            <Jugador
+                name={player2.name}
+                imgSrc="logo.png"
+                points={player2.points}
+                isActive={gameState.turn === "j2" && !gameState.botPlaying}
+                isPlaying={gameState.botPlaying}
+                color="coral"
+            />
+          </aside>
+
+        </main>
+
+        {/* ── Footer ────────────────────────────────────────── */}
+        <footer className="w-full border-t border-[#e8e2d9] bg-white/50 py-2.5 flex justify-center">
+        <span className="text-[10px] font-mono text-[#c4bdb4] tracking-widest uppercase">
+          {botMode.replace("_", " ")} · {gameMode}
+        </span>
+        </footer>
       </div>
   );
 };
