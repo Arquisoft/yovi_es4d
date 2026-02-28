@@ -179,7 +179,7 @@ const ModeSelector: React.FC = () => {
         {/* Decoración */}
         <div className="fade-up mt-12 flex items-center gap-3" style={{ animationDelay: "500ms" }}>
           <div style={{ width: 32, height: 1, background: "#e8e2d9" }} />
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#c4bdb4", letterSpacing: "0.3em" }}>YEN</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#c4bdb4", letterSpacing: "0.3em" }}>YOVI</span>
           <div style={{ width: 32, height: 1, background: "#e8e2d9" }} />
         </div>
       </div>
