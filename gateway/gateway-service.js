@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const promBundle = require('express-prom-bundle');
+const cookieParser = require("cookie-parser");
 
 // OpenAPI-Swagger Libraries
 const swaggerUi = require('swagger-ui-express');
@@ -26,6 +27,7 @@ app.use(cors({
   credentials: true               // permite enviar cookies o headers de auth
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Prometheus metrics middleware
 const metricsMiddleware = promBundle({ includeMethod: true });
@@ -40,22 +42,20 @@ app.use(metricsMiddleware);
  * @param {Function} next - The callback function to move to the next middleware or route handler.
  */
 const verifyToken = (req, res, next) => {
-  if (!req.headers["authorization"]) {
-    req.body.userId = "guest" + Date.now();
-    next();
-  } else {
-    const token = req.headers["authorization"]?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "Token wasn't provided properly" });
-    }
-    jwt.verify(token, privateKey, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      req.body.userId = decoded.userId;
-      next();
-    });
+  const token = req.cookies.token; 
+
+  if (!token) {
+    return res.status(401).json({ message: "No autenticado" });
   }
+
+  jwt.verify(token, privateKey, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Token inválido" });
+    }
+
+    req.body.userId = decoded.userId;
+    next();
+  });
 };
 
 
@@ -68,11 +68,24 @@ const verifyToken = (req, res, next) => {
  */
 app.post('/login', async (req, res) => {
   try {
-    const authResponse = await axios.post(authServiceUrl + '/login', req.body);
+    const authResponse = await axios.post(
+      authServiceUrl + '/login',
+      req.body,
+      { withCredentials: true }
+    );
+
+    // reenviar cookie al frontend
+    const setCookie = authResponse.headers['set-cookie'];
+    if (setCookie) {
+      res.setHeader('Set-Cookie', setCookie);
+    }
+
     res.json(authResponse.data);
+
   } catch (error) {
-    res.status(error.response.status).json({ error: error.response.data.error });
-    console.log(error);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Login error'
+    });
   }
 });
 
@@ -95,6 +108,28 @@ app.post('/adduser', async (req, res) => {
   }
 });
 
+app.post('/logout', async (req, res) => {
+  try {
+    const authResponse = await axios.post(
+      authServiceUrl + '/logout',
+      {},
+      { withCredentials: true }
+    );
+
+    // reenviar cookie al frontend
+    const setCookie = authResponse.headers['set-cookie'];
+    if (setCookie) {
+      res.setHeader('Set-Cookie', setCookie);
+    }
+
+    res.json(authResponse.data);
+
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Logout error'
+    });
+  }
+});
 /**
  * Endpoint to edit an existing user's details.
  * Requires JWT token verification for user authentication.

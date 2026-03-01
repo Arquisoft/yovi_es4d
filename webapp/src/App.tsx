@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import { RouterProvider } from 'react-router-dom';
 import router from './routers/index';
 function App() {
+  
   return <RouterProvider router={router} />;
 }
 

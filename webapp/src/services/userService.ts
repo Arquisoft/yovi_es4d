@@ -4,13 +4,17 @@ import axios from "axios";
 
 
 export const login = async (credentials: {email: string, password: string}) => {
-  const response = await axios.post(`${API_URL}/login`, credentials);
+  const response = await axios.post(`${API_URL}/login`, credentials,{
+    withCredentials: true
+  });
   return response.data;
 };
 
 export const register = async (userData: any) => {
   try {
-    const response = await axios.post(`${API_URL}/adduser`, userData);
+    const response = await axios.post(`${API_URL}/adduser`, userData,{
+      withCredentials: true
+    });
     return response.data;
   } catch (error) {
     console.log(error);
@@ -31,7 +35,7 @@ export const getProfile = async () => {
 };
 
 export const logout = async () => {
-  const res = await fetch(`${API_URL}/api/users/logout`, {
+  const res = await fetch(`${API_URL}/logout`, {
     method: 'POST',
     credentials: "include",
     headers: {

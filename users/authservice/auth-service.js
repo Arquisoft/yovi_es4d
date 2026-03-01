@@ -68,8 +68,17 @@ app.post('/login', loginLimiter, [
         
       // Generate a JWT token
       const token = jwt.sign({ userId: user._id }, privateKey, { expiresIn: '1h' });
+
       // Respond with the token and user information
-      res.json({ token: token, email: email, createdAt: user.createdAt, id: user._id });
+      // Enviar cookie HttpOnly
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false, 
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1000 
+      });
+
+      res.json({ email: email, createdAt: user.createdAt, id: user._id });
     } else {
       // Increment failed attempts for the IP address
       const entry = failedAttempts.get(ip) || { count: 0, lastAttempt: Date.now() };
@@ -79,6 +88,15 @@ app.post('/login', loginLimiter, [
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false // true en producción
+  });
+  res.json({ message: 'Logged out' });
 });
 
 // Start the server

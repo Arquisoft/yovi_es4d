@@ -22,7 +22,7 @@ const LoginForm: React.FC = () => {
     try {
       await login({ email, password });
 
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
       console.log(err);

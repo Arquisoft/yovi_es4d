@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { register } from '../services/userService';
 import { useTranslation } from '../i18n';
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm: React.FC = () => {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const validateEmail = (email: string) => {
   // Chequea que tenga al menos un carácter antes del @,
@@ -63,6 +65,7 @@ const RegisterForm: React.FC = () => {
       setEmail('');
       setPassword('');
       setRepassword('');
+      navigate("/login");
     } catch (err: any) {
       setError(err.response?.data?.error || err.message);
     } finally {

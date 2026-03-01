@@ -1,11 +1,27 @@
 import './StartScreen.css';
 import { useTranslation } from '../i18n';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext.tsx';
 
 export default function Sidebar() {
   const { t, lang, setLang } = useTranslation();
   const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
 
+  console.log('Sidebar renderizado. Usuario');
+  console.log('user es: ' ,user);
+  const handleAuthClick = () => {
+    if (user) {
+      // Si hay sesión → cerrar sesión
+      logout();
+      console.log('Sesión cerrada');
+    } else {
+      // Si no hay sesión → ir a login
+      navigate('/login');
+      console.log('Redirigiendo a login');
+    }
+  };
   return (
     <nav className="navbar">
       <div className="navbar-brand">
@@ -27,7 +43,8 @@ export default function Sidebar() {
         </li>
         <li><button className="navbar-button" onClick={() => navigate('/rules')}>{t('menu.rules')}</button></li>
         <li><button className="navbar-button">{t('menu.profile')}</button></li>
-        <li><button className="navbar-button" onClick={() => navigate('/login')}>{t('menu.initsession')}</button></li>
+        
+        <li><button className="navbar-button" onClick={handleAuthClick}>{user ? t('menu.logout') : t('menu.initsession')}</button></li>
       </ul>
     </nav>
   );
