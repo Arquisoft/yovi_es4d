@@ -21,7 +21,7 @@ const games = new Map();
 const BOT_ROUTES = {
   random_bot:       '/v1/ybot/choose/random_bot',
   intermediate_bot: '/v1/ybot/choose/intermediate_bot',
-  // hard_bot:      '/v1/ybot/choose/hard_bot',   ← ejemplo futuro
+  hard_bot:      '/v1/ybot/choose/hard_bot',
 };
 
 const DEFAULT_BOT_MODE = 'random_bot';

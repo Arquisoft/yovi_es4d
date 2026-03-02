@@ -6,6 +6,7 @@ import "./game.css";
 const BOT_MODE_META: Record<string, { label: string; description: string; tag: string; emoji: string }> = {
   random_bot:       { label: "Aleatorio",  description: "El bot sigue ninguna estratégia, se comporta de manera aleatoria.", tag: "Fácil",  emoji: "" },
   intermediate_bot: { label: "Intermedio", description: "El bot evalúa el tablero y busca las mejores jugadas.",        tag: "Medio",  emoji: "" },
+    hard_bot : { label: "Difícil", description: "El bot hace todo lo posible para ganar, y busca evitar que el oponente gane a toda costa.",        tag: "Difícil",  emoji: "" },
 };
 
 const TAG_STYLE: Record<string, React.CSSProperties> = {
