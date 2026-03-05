@@ -30,6 +30,10 @@ const RegisterForm: React.FC = () => {
     return hasUpperCase && hasNumber && hasNoSpaces && password.length >= minLength;
   };
 
+  const validatePasswordMatch = (pwd: string, confirm: string) => {
+    return pwd === confirm;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -51,7 +55,7 @@ const RegisterForm: React.FC = () => {
       return;
     }
 
-    if (password !== repassword) {
+    if (!validatePasswordMatch(password, repassword)) {
       setError(t('registerForm.errorPasswordMatch'));
       return;
     }
@@ -103,6 +107,7 @@ const RegisterForm: React.FC = () => {
           <label htmlFor="password">{t("registerForm.password")}:</label>
           <input
             id="password"
+            data-testid="password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -114,6 +119,7 @@ const RegisterForm: React.FC = () => {
           <label htmlFor="repassword">{t("registerForm.repassword")}:</label>
           <input
             id="repassword"
+            data-testid="repassword-input"
             type="password"
             value={repassword}
             onChange={(e) => setRepassword(e.target.value)}
