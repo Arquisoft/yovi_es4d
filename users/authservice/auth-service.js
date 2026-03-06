@@ -39,7 +39,23 @@ function validateRequiredFields(req, requiredFields) {
     }
   }
 }
+app.get('/profile', async (req, res) => {
+  try {
 
+    const { userId } = req.query;
+
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
 // Route for user login
 app.post('/login', loginLimiter, [
   check('email').isLength({ min: 3 }).trim().escape(),
@@ -97,6 +113,17 @@ app.post('/logout', (req, res) => {
     secure: false // true en producción
   });
   res.json({ message: 'Logged out' });
+});
+
+app.post('/editUser', async (req, res) => {
+
+  const { userId, username } = req.body;
+
+  await User.findByIdAndUpdate(userId, {
+    username
+  });
+
+  res.json({ message: "Updated" });
 });
 
 // Start the server

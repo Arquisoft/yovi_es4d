@@ -86,6 +86,7 @@ app.post('/login', async (req, res) => {
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || 'Login error'
     });
+    console.log(error);
   }
 });
 
@@ -107,11 +108,33 @@ app.post('/adduser', async (req, res) => {
     console.log(error);
   }
 });
+app.post("/api/user/getUserProfile", async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: "Not authenticated" });
+
+    const payload = jwt.verify(token, privateKey); 
+    const userId = payload.userId;
+
+    // PASAR userId al microservicio
+    const response = await axios.post(`${userServiceUrl}/profile`, { userId }); 
+
+    res.json(response.data);
+
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || "Internal server error",
+    });
+  }
+});
 
 app.get('/api/auth/me', verifyToken, async (req, res) => {
   res.json({
     userId: req.body.userId
   });
+
+
 });
 
 app.post('/logout', async (req, res) => {
@@ -145,14 +168,45 @@ app.post('/logout', async (req, res) => {
  * @param {Object} req.body.userId - The authenticated user's information.
  * @returns {Object} The response from the user service.
  */
-app.post('/api/user/editUser', verifyToken, async (req, res) => {
-  try {
-    const editResponse = await axios.post(userServiceUrl + '/editUser', req.body);
-    res.json(editResponse.data);
-  } catch (error) {
-    res.status(error.response.status).json({ error: error.response.data.error });
-  }
+app.post('/api/user/editUsername', verifyToken, async (req, res) => {
+    const { username } = req.body;
+    const userId = req.body.userId;
+
+    if (!userId || !username) {
+        return res.status(400).json({ error: 'Missing userId or username' });
+    }
+
+    try {
+        const response = await axios.post(`${userServiceUrl}/editUser`, { userId, username });
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json({
+            error: error.response?.data?.error || 'Internal error'
+        });
+    }
 });
+
+app.post('/api/user/changePassword', verifyToken, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.body.userId;
+    if (!userId || !currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const response = await axios.post(`${userServiceUrl}/changePassword`, {
+            userId,
+            currentPassword,
+            newPassword
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json({
+            error: error.response?.data?.error || 'Internal error'
+        });
+    }
+});
+
 
 /**
  * Iniciar juego (nuevo)
