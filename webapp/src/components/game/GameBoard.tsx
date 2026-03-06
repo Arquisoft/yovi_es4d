@@ -75,12 +75,12 @@ const GameBoard: React.FC = () => {
         }
 
         setGameState({
-          gameId:   data.gameId,
-          hexData:  data.board,
-          players:  data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
-          turn:     data.turn   || "j1",
-          status:   data.status || "active",
-          winner:   data.winner || null,
+          gameId:     data.gameId,
+          hexData:    data.board,
+          players:    data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
+          turn:       data.turn   || "j1",
+          status:     data.status || "active",
+          winner:     data.winner || null,
           botPlaying: false,
         });
       } catch (error) {
@@ -116,8 +116,8 @@ const GameBoard: React.FC = () => {
         ...prev,
         hexData: prev.hexData.map(h => h.position === position ? { ...h, player: "j1" } : h),
         players: prev.players.map(p => p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p),
-        winner: validateData.winner || prev.winner,
-        status: validateData.status || prev.status,
+        winner:  validateData.winner || prev.winner,
+        status:  validateData.status || prev.status,
       }));
 
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
@@ -148,46 +148,43 @@ const GameBoard: React.FC = () => {
   const player2 = gameState.players[1] || { id: "bot",      name: "Bot",     points: 0 };
 
   return (
-      <div
-          className="game-bg min-h-screen flex flex-col"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
-      >
-        {/* ── Header ─────────────────────────────────────────── */}
-        <header className="w-full bg-white/70 backdrop-blur border-b border-[#e8e2d9] px-8 py-3 flex items-center justify-between">
-          <span className="text-xs font-mono tracking-[0.4em] uppercase text-[#c4bdb4]">YOVI</span>
+      <div className="game-bg min-h-screen flex flex-col">
 
-          <div className="flex items-center gap-2 text-sm">
+        {/* ── Header ─────────────────────────────────────── */}
+        <header className="gb-header">
+          <span className="gb-header-logo">YOVI</span>
+
+          <div className="gb-header-status">
             {gameState.status === "finished" ? (
-                <span className="font-semibold text-[#7c6ff7]">
+                <span className="gb-status-winner">
               🏆 {gameState.winner === "j1" ? player1.name : player2.name} gana
             </span>
             ) : gameState.botPlaying ? (
-                <span className="flex items-center gap-2 text-[#9e9890]">
-              <span className="text-xs tracking-wide">Bot pensando</span>
-              <span className="flex gap-1">
-                {[0,1,2].map(i => <span key={i} className="thinking-dot w-1.5 h-1.5 rounded-full bg-[#f97058]" />)}
+                <span className="gb-status-thinking">
+              <span>Bot pensando</span>
+              <span className="gb-thinking-dots">
+                {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />)}
               </span>
             </span>
             ) : (
-                <span className="text-[#9e9890] text-xs tracking-wide">
+                <span className="gb-status-turn">
               Turno:{" "}
-                  <span className={`font-semibold ${gameState.turn === "j1" ? "text-[#7c6ff7]" : "text-[#f97058]"}`}>
+                  <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
                 {gameState.turn === "j1" ? player1.name : player2.name}
               </span>
             </span>
             )}
           </div>
 
-          {/* Tamaño del tablero visible en header */}
-          <span className="text-[10px] font-mono text-[#c4bdb4] tracking-widest">
+          <span className="gb-header-meta">
           {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
         </span>
         </header>
 
-        {/* ── Área principal ─────────────────────────────────── */}
-        <main className="flex flex-1 items-center justify-between px-8 py-6 gap-6">
+        {/* ── Área principal ─────────────────────────────── */}
+        <main className="gb-main">
 
-          <aside className="w-36 shrink-0">
+          <aside className="gb-player-aside">
             <Jugador
                 name={player1.name}
                 imgSrc="logo.png"
@@ -197,20 +194,22 @@ const GameBoard: React.FC = () => {
             />
           </aside>
 
-          <section className="flex-1 flex items-center justify-center">
+          <section className="gb-board-section">
             {gameState.gameId ? (
                 <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
             ) : (
-                <div className="flex flex-col items-center gap-4 text-[#c4bdb4]">
-                  <div className="flex gap-2">
-                    {[0,1,2].map(i => <span key={i} className="thinking-dot w-2.5 h-2.5 rounded-full bg-[#7c6ff7]/40" />)}
+                <div className="gb-loading">
+                  <div className="gb-loading-dots">
+                    {[0,1,2].map(i => (
+                        <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
+                    ))}
                   </div>
-                  <span className="text-xs font-mono tracking-[0.3em] uppercase">Iniciando partida</span>
+                  <span className="gb-loading-text">Iniciando partida</span>
                 </div>
             )}
           </section>
 
-          <aside className="w-36 shrink-0">
+          <aside className="gb-player-aside">
             <Jugador
                 name={player2.name}
                 imgSrc="logo.png"
@@ -223,9 +222,9 @@ const GameBoard: React.FC = () => {
 
         </main>
 
-        {/* ── Footer ─────────────────────────────────────────── */}
-        <footer className="w-full border-t border-[#e8e2d9] bg-white/50 py-2.5 flex justify-center">
-        <span className="text-[10px] font-mono text-[#c4bdb4] tracking-widest uppercase">
+        {/* ── Footer ─────────────────────────────────────── */}
+        <footer className="gb-footer">
+        <span className="gb-footer-text">
           {botMode.replace("_", " ")} · tablero {boardSize}× · {gameMode}
         </span>
         </footer>
