@@ -28,16 +28,20 @@ interface GameState {
 }
 
 interface LocationState {
-  gameMode?: string;
-  botMode?: string;
+  gameMode?:  string;
+  botMode?:   string;
+  boardSize?: number;
 }
 
 const GameBoard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { gameMode = "vsBot", botMode = "random_bot" } =
-  (location.state as LocationState) ?? {};
+  const {
+    gameMode  = "vsBot",
+    botMode   = "random_bot",
+    boardSize = 11,
+  } = (location.state as LocationState) ?? {};
 
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
@@ -61,7 +65,7 @@ const GameBoard: React.FC = () => {
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "jugador1", gameMode, botMode }),
+          body: JSON.stringify({ userId: "jugador1", gameMode, botMode, boardSize }),
         });
         const data = await res.json();
 
@@ -71,12 +75,12 @@ const GameBoard: React.FC = () => {
         }
 
         setGameState({
-          gameId: data.gameId,
-          hexData: data.board,
-          players: data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
-          turn: data.turn || "j1",
-          status: data.status || "active",
-          winner: data.winner || null,
+          gameId:   data.gameId,
+          hexData:  data.board,
+          players:  data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
+          turn:     data.turn   || "j1",
+          status:   data.status || "active",
+          winner:   data.winner || null,
           botPlaying: false,
         });
       } catch (error) {
@@ -126,9 +130,9 @@ const GameBoard: React.FC = () => {
       setGameState(prev => ({
         ...prev,
         hexData: moveData.board,
-        turn: moveData.turn,
-        winner: moveData.winner,
-        status: moveData.status,
+        turn:    moveData.turn,
+        winner:  moveData.winner,
+        status:  moveData.status,
         players: prev.players.map(p =>
             p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
         ),
@@ -148,11 +152,10 @@ const GameBoard: React.FC = () => {
           className="game-bg min-h-screen flex flex-col"
           style={{ fontFamily: "'Outfit', sans-serif" }}
       >
-        {/* ── Header ────────────────────────────────────────── */}
+        {/* ── Header ─────────────────────────────────────────── */}
         <header className="w-full bg-white/70 backdrop-blur border-b border-[#e8e2d9] px-8 py-3 flex items-center justify-between">
           <span className="text-xs font-mono tracking-[0.4em] uppercase text-[#c4bdb4]">YOVI</span>
 
-          {/* Estado del turno */}
           <div className="flex items-center gap-2 text-sm">
             {gameState.status === "finished" ? (
                 <span className="font-semibold text-[#7c6ff7]">
@@ -175,15 +178,15 @@ const GameBoard: React.FC = () => {
             )}
           </div>
 
-          <span className="text-[10px] font-mono text-[#d6cfc4] tracking-widest">
-          #{gameState.gameId?.slice(-6) ?? "------"}
+          {/* Tamaño del tablero visible en header */}
+          <span className="text-[10px] font-mono text-[#c4bdb4] tracking-widest">
+          {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
         </span>
         </header>
 
-        {/* ── Área principal ────────────────────────────────── */}
+        {/* ── Área principal ─────────────────────────────────── */}
         <main className="flex flex-1 items-center justify-between px-8 py-6 gap-6">
 
-          {/* Jugador 1 */}
           <aside className="w-36 shrink-0">
             <Jugador
                 name={player1.name}
@@ -194,7 +197,6 @@ const GameBoard: React.FC = () => {
             />
           </aside>
 
-          {/* Tablero */}
           <section className="flex-1 flex items-center justify-center">
             {gameState.gameId ? (
                 <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
@@ -208,7 +210,6 @@ const GameBoard: React.FC = () => {
             )}
           </section>
 
-          {/* Bot */}
           <aside className="w-36 shrink-0">
             <Jugador
                 name={player2.name}
@@ -222,10 +223,10 @@ const GameBoard: React.FC = () => {
 
         </main>
 
-        {/* ── Footer ────────────────────────────────────────── */}
+        {/* ── Footer ─────────────────────────────────────────── */}
         <footer className="w-full border-t border-[#e8e2d9] bg-white/50 py-2.5 flex justify-center">
         <span className="text-[10px] font-mono text-[#c4bdb4] tracking-widest uppercase">
-          {botMode.replace("_", " ")} · {gameMode}
+          {botMode.replace("_", " ")} · tablero {boardSize}× · {gameMode}
         </span>
         </footer>
       </div>
