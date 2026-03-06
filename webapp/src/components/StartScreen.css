@@ -44,11 +44,17 @@
 }
 /* Footer that sits below the main content */
 .start-footer {
+  position: fixed;  /* Fija el footer */
+  bottom: 0;        /* Pegado al fondo de la ventana */
+  left: 0;
+  width: 100%;
   text-align: center;
   padding: 18px 16px;
   color: rgba(255,255,255,0.85);
   background: linear-gradient(90deg, rgba(116, 65, 186, 0.95), rgba(0, 149, 255, 0.85), rgba(0, 4, 255, 0.85));
+  z-index: 100; /* Siempre encima del contenido */
 }
+
 .start-footer p {
   margin: 0;
   font-size: 0.95rem;
@@ -120,12 +126,15 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 16px;
   padding: 32px;
+  padding-bottom: 80px; /* ⚡ Espacio igual al footer */
   position: relative;
-  min-width: 0; /* allow flex item to shrink properly inside .start-screen */
   width: 100%;
+  min-width: 0;
+  overflow-y: auto;   
+
 }
 
 /* When sidebar is collapsed, allow main content to use more space */
@@ -465,4 +474,28 @@ html, body {
   .auth-card {
     padding: 28px 20px;
   }
+}
+
+.error-message {
+  color: #ff6b6b;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.success-message {
+  color: #00ffae;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.auth-card label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.profile-page {
+  max-width: 500px;
+  margin: 60px auto;
 }

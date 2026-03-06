@@ -6,6 +6,7 @@ import GameOver from "../components/GameOver";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import Dashboard from "../pages/Dashboard";
+import EditProfile from "../pages/EditProfilePage";
 
 
 const router = createBrowserRouter([
@@ -41,7 +42,11 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: <Navigate to="/" replace />,
-  },
+  },{
+    path: "/edit",
+    element: <EditProfile />,
+  }
+
 ]);
 
 export default router;
