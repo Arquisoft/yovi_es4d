@@ -95,6 +95,12 @@
     "date": "Date: ",
     "opponent": "Opponent: ",
     "result": "Result: ",
-    "mode": "Mode: "
+    "mode": "Mode: ",
+    "draw": "Draw",
+    "player": "Player",
+    "loading": "Loading history...",
+    "movesNotAvailable": "Moves not available",
+    "table": "Board:",
+    "cells": "cells"
   }
 }

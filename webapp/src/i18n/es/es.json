@@ -109,7 +109,13 @@
     "date": "Fecha: ",
     "opponent": "Oponente: ",
     "result": "Resultado: ",
-    "mode": "Modo: "
+    "mode": "Modo: ",
+    "draw": "Empate",
+    "player": "Jugador",
+    "loading": "Cargando historial...",
+    "movesNotAvailable": "Movimientos no disponibles",
+    "table": "Tablero:",
+    "cells": "casillas"
   }
 }
 

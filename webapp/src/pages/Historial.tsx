@@ -50,9 +50,9 @@ const Historial: React.FC = () => {
   };
 
   const getWinnerName = (game: BackendGameRecord) => {
-    if (!game.winner) return 'Empate';
+    if (!game.winner) return t('historial.draw');
     const winner = game.players.find(p => p.role === game.winner);
-    return winner?.username || winner?.name || (game.winner === 'j1' ? 'Jugador' : 'Oponente');
+    return winner?.username || winner?.name || (game.winner === 'j1' ? t('historial.player') : t('historial.opponent'));
   };
 
   if (!user) return null;
@@ -62,7 +62,7 @@ const Historial: React.FC = () => {
     <Sidebar />
     <div className="historial-page">
       <header>
-        <h1>{t('historial.title') || 'Historial'}</h1>
+        <h1>{t('historial.title')}</h1>
       </header>
 
       {error && (
@@ -72,50 +72,50 @@ const Historial: React.FC = () => {
       )}
 
       {loading ? (
-        <div style={{textAlign: 'center', padding: 20}}>Cargando historial...</div>
+        <div style={{textAlign: 'center', padding: 20}}>{t('historial.loading')}</div>
       ) : (
         <>
           <section className="historial-summary" style={{border: '1px solid #ddd', padding: 12, marginBottom: 16}}>
-            <h2>{t('historial.summary') || 'Resumen general'}</h2>
+            <h2>{t('historial.summary')}</h2>
             <div style={{display: 'flex', gap: 16}}>
-              <div><strong>{t('historial.totalGames') || 'Partidas jugadas:'}</strong> {totalGames}</div>
-              <div><strong>{t('historial.totalWins') || 'Partidas ganadas:'}</strong> {totalWins}</div>
-              <div><strong>{t('historial.winPct') || 'Porcentaje victorias:'}</strong> {winPercentage}%</div>
+              <div><strong>{t('historial.totalGames')}</strong> {totalGames}</div>
+              <div><strong>{t('historial.totalWins')}</strong> {totalWins}</div>
+              <div><strong>{t('historial.winPct')}</strong> {winPercentage}%</div>
             </div>
           </section>
 
           <section className="historial-list">
-            <h2>{t('historial.games') || 'Partidas'}</h2>
+            <h2>{t('historial.games')}</h2>
 
             {history.length === 0 ? (
-              <p>{t('historial.noGames') || 'No hay partidas registradas.'}</p>
+              <p>{t('historial.noGames')}</p>
             ) : (
               <ul style={{listStyle: 'none', padding: 0}}>
                 {history.map(game => (
                   <li key={game._id || game.gameId} style={{border: '1px solid #eee', padding: 12, marginBottom: 12, borderRadius: 4}}>
                     <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
                       <div>
-                        <div><strong>{t('historial.date') || 'Fecha:'}</strong> {new Date(game.createdAt).toLocaleString('es-ES')}</div>
-                        <div><strong>{t('historial.opponent') || 'Contrincante:'}</strong> {getOpponentName(game)}</div>
+                        <div><strong>{t('historial.date')}</strong> {new Date(game.createdAt).toLocaleString('es-ES')}</div>
+                        <div><strong>{t('historial.opponent')}</strong> {getOpponentName(game)}</div>
                       </div>
 
                       <div>
-                        <div><strong>{t('historial.result') || 'Resultado:'}</strong> {getWinnerName(game)}</div>
-                        <div><strong>{t('historial.mode') || 'Modo:'}</strong> {game.gameMode}</div>
+                        <div><strong>{t('historial.result')}</strong> {getWinnerName(game)}</div>
+                        <div><strong>{t('historial.mode')}</strong> {game.gameMode}</div>
                       </div>
                     </div>
 
                     <div style={{marginTop: 12}}>
                       <details style={{cursor: 'pointer'}}>
-                        <summary style={{fontWeight: 'bold'}}>{t('historial.moves') || 'Detalles'}</summary>
+                        <summary style={{fontWeight: 'bold'}}>{t('historial.moves')}</summary>
                         <div style={{marginTop: 8, paddingTop: 8, borderTop: '1px solid #eee'}}>
-                          <div><strong>Tablero:</strong> {game.boardSize || 11} casillas</div>
+                          <div><strong>Tablero:</strong> {game.boardSize} casillas</div>
                           <div><strong>Estado:</strong> {game.status}</div>
 
                           {game.moves && game.moves.length > 0 ? (
-                            <div><strong>Movimientos:</strong> {game.moves.length} registrados</div>
+                            <div><strong>{t('historial.moves')}</strong> {game.moves.length} registrados</div>
                           ) : (
-                            <div style={{color: '#666', fontStyle: 'italic'}}>Movimientos no disponibles</div>
+                            <div style={{color: '#666', fontStyle: 'italic'}}>{t('historial.movesNotAvailable')}</div>
                           )}
                         </div>
                       </details>
