@@ -13,11 +13,16 @@
 //!    proportional to `min(x, y, z)`.
 //!
 //! 2. **Threat proximity bonus** – If an opponent piece is within 2 graph-
-//!    distance steps, empty cells near it receive an extra bonus. This
-//!    encourages the bot to block the opponent's chains before they extend.
+//!    distance steps, empty cells near it receive a strong bonus. Blocking
+//!    the opponent's chains is the top priority after stopping immediate wins.
 //!
-//! 3. **Own-piece continuity bonus** – Cells adjacent to the bot's own
-//!    pieces receive a bonus to encourage extending existing chains.
+//! 3. **Strategic bridge bonus** – Instead of filling directly adjacent to
+//!    own pieces, the bot prefers cells at distance-2 that form "skip"
+//!    connections, extending reach while leaving a virtual connection gap
+//!    that the opponent cannot easily break.
+//!
+//! 4. **Own-piece continuity bonus** – A mild bonus for cells adjacent to
+//!    the bot's own pieces, used only as a tiebreaker after the above.
 //!
 //! The cell with the highest combined score is chosen as the next move.
 
@@ -78,6 +83,30 @@ impl IntermediateBot {
         result
     }
 
+    /// Returns all empty cells at exactly graph-distance 2 from `coords`
+    /// that share exactly one common empty neighbour with `coords` (the
+    /// "skip" pattern). This is the preferred way to extend a chain: place
+    /// at distance 2, leaving a virtual connection the opponent cannot break
+    /// in one move.
+    fn skip_targets(coords: &Coordinates, board: &GameY) -> Vec<Coordinates> {
+        let mut result = Vec::new();
+        let direct_nbs: Vec<Coordinates> = Self::neighbors(coords)
+            .into_iter()
+            .filter(|nb| board.player_at(nb).is_none())
+            .collect();
+
+        for n1 in &direct_nbs {
+            for n2 in Self::neighbors(n1) {
+                // Must be empty, not the origin itself, and not a direct neighbour.
+                if n2 == *coords { continue; }
+                if board.player_at(&n2).is_some() { continue; }
+                if direct_nbs.contains(&n2) { continue; }
+                result.push(n2);
+            }
+        }
+        result
+    }
+
     /// Computes a heuristic score for placing a piece at `candidate`.
     ///
     /// Higher score → better move.
@@ -101,18 +130,10 @@ impl IntermediateBot {
             0.0
         };
 
-        // ── 2. Own-piece continuity ───────────────────────────────────────────
-        // Count direct neighbours that belong to us.
-        let own_adjacent = Self::neighbors(candidate)
-            .iter()
-            .filter(|nb| board.player_at(nb) == Some(my_id))
-            .count() as f64;
-
-        // ── 3. Opponent threat proximity ─────────────────────────────────────
-        // A cell within 2 hops of an opponent piece is strategically important
-        // (blocking or contesting). We give a bonus scaled by proximity:
-        //   - direct neighbour of opponent → weight 2.0
-        //   - 2-hop neighbour of opponent  → weight 1.0
+        // ── 2. Opponent threat proximity (PRIMARY DEFENCE) ────────────────────
+        // Blocking the opponent is now the main strategic concern after centrality.
+        //   - direct neighbour of opponent → weight 3.0 (high urgency)
+        //   - 2-hop neighbour of opponent  → weight 1.5 (preemptive block)
         let opp_adjacent = Self::neighbors(candidate)
             .iter()
             .filter(|nb| board.player_at(nb) == Some(opp_id))
@@ -123,24 +144,82 @@ impl IntermediateBot {
             .filter(|nb| board.player_at(nb) == Some(opp_id))
             .count() as f64;
 
-        let threat_score = 2.0 * opp_adjacent + 1.0 * opp_2hop;
+        // Extra urgency: if the opponent has 2+ adjacent pieces, this is a
+        // chain we must disrupt now.
+        let urgency_multiplier = if opp_adjacent >= 2.0 { 1.5 } else { 1.0 };
+        let threat_score = (3.0 * opp_adjacent + 1.5 * opp_2hop) * urgency_multiplier;
 
-        // ── 4. Side-touch bonus ───────────────────────────────────────────────
-        // Touching a side is valuable (helps towards the win condition), but
-        // only if we are already building toward it.  Give a small bonus.
+        // ── 3. Strategic skip bonus ───────────────────────────────────────────
+        // Prefer cells that are "skip" targets from our own pieces: place at
+        // distance-2 to extend reach while forming an unbreakable virtual
+        // connection. This is more efficient than filling adjacent gaps now.
+        let own_pieces_as_skip_sources = board.available_cells().iter()
+            .map(|&idx| Coordinates::from_index(idx, n))
+            // We need cells that are NOT available (i.e., occupied by us).
+            // Re-filter: count own pieces for which this candidate is a skip target.
+            .count(); // dummy — see corrected version below
+
+        // Correct: count how many of our own pieces have `candidate` as a skip target.
+        let _ = own_pieces_as_skip_sources; // discard dummy count
+        let skip_bonus: f64 = {
+            // Iterate over direct neighbours of candidate; for each that is ours,
+            // candidate is one hop away. Check if there is another own piece two
+            // hops away via candidate (i.e., candidate bridges two own pieces).
+            let own_nbs: Vec<Coordinates> = Self::neighbors(candidate)
+                .into_iter()
+                .filter(|nb| board.player_at(nb) == Some(my_id))
+                .collect();
+
+            // Also count how many of our own pieces list `candidate` in their
+            // skip_targets — i.e., candidate is at distance-2 from an own piece.
+            let own_skip_count = {
+                // A cell P has `candidate` as a skip target iff:
+                //   there exists an empty common neighbour between P and candidate.
+                // Equivalent check: candidate's direct empty neighbours ∩ P's direct neighbours ≠ ∅
+                let candidate_empty_nbs: std::collections::HashSet<_> = Self::neighbors(candidate)
+                    .into_iter()
+                    .filter(|nb| board.player_at(nb).is_none())
+                    .collect();
+
+                // Scan cells at distance-2 from candidate that are owned by us.
+                Self::neighbors_2(candidate)
+                    .iter()
+                    .filter(|far| {
+                        board.player_at(far) == Some(my_id)
+                            && Self::neighbors(far)
+                            .iter()
+                            .any(|nb| candidate_empty_nbs.contains(nb))
+                    })
+                    .count() as f64
+            };
+
+            // Also reward if placing here directly bridges two own chains.
+            let bridge_chains = if own_nbs.len() >= 2 { own_nbs.len() as f64 - 1.0 } else { 0.0 };
+
+            own_skip_count * 2.5 + bridge_chains * 1.5
+        };
+
+        // ── 4. Own-piece continuity (SECONDARY, mild tiebreaker) ─────────────
+        // Direct adjacency to own pieces is less important than forming skip
+        // bridges; it is now a weak tiebreaker only.
+        let own_adjacent = Self::neighbors(candidate)
+            .iter()
+            .filter(|nb| board.player_at(nb) == Some(my_id))
+            .count() as f64;
+
+        // ── 5. Side-touch bonus ───────────────────────────────────────────────
+        // Touching a side is valuable (helps towards the win condition).
         let side_touch = (candidate.touches_side_a() as u8
             + candidate.touches_side_b() as u8
             + candidate.touches_side_c() as u8) as f64;
 
         // ── Weighted combination ──────────────────────────────────────────────
-        // Weights are tunable; these defaults give a good balance between
-        // central play, chain extension, blocking, and edge capture.
-        let score = 3.0 * centrality_score   // strongly prefer centre
-            + 2.5 * own_adjacent       // extend our chains
-            + 2.0 * threat_score       // block / contest opponent
-            + 0.5 * side_touch;        // mild edge-capture incentive
-
-        score
+        // Priority order: block opponent > centrality > skip bridges > side touch > chain adj
+        3.0 * centrality_score   // strong centre preference
+            + 4.0 * threat_score       // blocking opponent is TOP priority
+            + 3.0 * skip_bonus         // extend via skip patterns
+            + 1.0 * own_adjacent       // mild: prefer being near our pieces
+            + 0.5 * side_touch         // mild edge-capture incentive
     }
 }
 

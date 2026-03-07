@@ -20,9 +20,9 @@
 //!
 //! 3. **Own win-path score** – Using a 0-1 BFS from each side, we compute how
 //!    many empty cells must be filled to reach every cell from side A, B, and C
-//!    respectively. The combined distance `dA + dB + dC` for the bot player
-//!    measures how "close to winning" placing here would be. Lower combined
-//!    distance → higher score.
+//!    respectively. The score penalises the *worst* individual distance
+//!    (minimax), ensuring the bot reduces its weakest side rather than
+//!    over-extending along one edge.
 //!
 //! 4. **Opponent win-path blocking score** – The same metric for the opponent.
 //!    Placing on a cell that is on the opponent's shortest path disrupts their
@@ -99,7 +99,7 @@ impl HardBot {
     // ── Side masks ────────────────────────────────────────────────────────────
 
     /// Returns a bitmask of which sides `coords` touches.
-    #[inline]       //Esta anotación inserta el código de la funcion en vez de ser llamada
+    #[inline]
     fn side_mask(coords: &Coordinates) -> u8 {
         let mut m = 0u8;
         if coords.touches_side_a() { m |= SIDE_A; }
@@ -162,7 +162,6 @@ impl HardBot {
     // ── Flood-fill ────────────────────────────────────────────────────────────
 
     /// BFS flood-fill of `player`'s connected component containing `start`.
-    /// Calcula las cadenas
     /// Returns `(set_of_cell_indices, side_bitmask_touched)`.
     fn flood_fill(start: &Coordinates, board: &GameY, player: PlayerId) -> (HashSet<usize>, u8) {
         let size = board.board_size();
@@ -194,10 +193,8 @@ impl HardBot {
     /// Returns `true` if placing `player`'s piece at `candidate` would
     /// immediately win the game (connect all three sides).
     fn is_winning_move(candidate: &Coordinates, board: &GameY, player: PlayerId) -> bool {
-        // Start with the sides the candidate itself touches.
         let mut sides = Self::side_mask(candidate);
 
-        // Merge sides from every adjacent friendly chain.
         for nb in Self::neighbors(candidate) {
             if board.player_at(&nb) == Some(player) {
                 let (_, s) = Self::flood_fill(&nb, board, player);
@@ -239,11 +236,6 @@ impl HardBot {
 
     /// Returns a bonus if `candidate` is a carrier of a virtual connection
     /// between two friendly pieces.
-    ///
-    /// Two friendly pieces form a virtual connection when they share exactly
-    /// **two** common empty neighbours (the "carriers").  Filling either
-    /// carrier secures the connection permanently.  This method checks all
-    /// pairs of friendly neighbours of `candidate` for this pattern.
     fn bridge_bonus(candidate: &Coordinates, board: &GameY, player: PlayerId) -> f64 {
         let friendly_nbs: Vec<Coordinates> = Self::neighbors(candidate)
             .into_iter()
@@ -257,7 +249,6 @@ impl HardBot {
                 let p1 = &friendly_nbs[i];
                 let p2 = &friendly_nbs[j];
 
-                // Common empty neighbours of p1 and p2, excluding `candidate`.
                 let p1_empty: HashSet<Coordinates> = Self::neighbors(p1)
                     .into_iter()
                     .filter(|c| c != candidate && board.player_at(c).is_none())
@@ -267,11 +258,9 @@ impl HardBot {
                     .filter(|c| c != candidate && p1_empty.contains(c))
                     .collect();
 
-                // Classic virtual connection: exactly one other carrier besides us.
                 if shared_empty.len() == 1 {
-                    bonus += 6.0; // half-secured bridge
+                    bonus += 6.0;
                 } else if shared_empty.is_empty() {
-                    // Placing here directly merges the two chains.
                     bonus += 2.0;
                 }
             }
@@ -305,6 +294,74 @@ impl HardBot {
         best
     }
 
+    // ── Skip-bridge bonus ────────────────────────────────────────────────────
+
+    /// Returns a bonus for cells that extend our network via a "skip" pattern.
+    fn skip_bridge_bonus(candidate: &Coordinates, board: &GameY, player: PlayerId) -> f64 {
+        let direct_nbs: HashSet<Coordinates> = Self::neighbors(candidate).into_iter().collect();
+
+        let mut skip_count = 0usize;
+        for mid in &direct_nbs {
+            if board.player_at(mid).is_some() { continue; }
+            for far in Self::neighbors(mid) {
+                if far == *candidate { continue; }
+                if direct_nbs.contains(&far) { continue; }
+                if board.player_at(&far) == Some(player) {
+                    skip_count += 1;
+                }
+            }
+        }
+
+        let own_nbs_count = direct_nbs
+            .iter()
+            .filter(|nb| board.player_at(nb) == Some(player))
+            .count();
+
+        skip_count as f64 * 3.0 + (own_nbs_count.saturating_sub(1)) as f64 * 2.0
+    }
+
+    // ── Near-win detection ────────────────────────────────────────────────────
+
+    /// Returns true if `player` can win in at most 2 moves from `candidate`.
+    fn is_near_win(candidate: &Coordinates, board: &GameY, player: PlayerId) -> bool {
+        let size = board.board_size();
+
+        let mut mask_after_candidate = Self::side_mask(candidate);
+        let mut seen: HashSet<usize> = HashSet::new();
+        for nb in Self::neighbors(candidate) {
+            if board.player_at(&nb) == Some(player) {
+                let root = nb.to_index(size) as usize;
+                if !seen.contains(&root) {
+                    let (cells, s) = Self::flood_fill(&nb, board, player);
+                    mask_after_candidate |= s;
+                    for c in cells { seen.insert(c); }
+                }
+            }
+        }
+
+        if mask_after_candidate.count_ones() < 2 {
+            return false;
+        }
+
+        for nb in Self::neighbors(candidate) {
+            if board.player_at(&nb).is_some() { continue; }
+
+            let mut combined = mask_after_candidate | Self::side_mask(&nb);
+            for nb2 in Self::neighbors(&nb) {
+                if nb2 == *candidate { continue; }
+                if board.player_at(&nb2) == Some(player) {
+                    let (_, s) = Self::flood_fill(&nb2, board, player);
+                    combined |= s;
+                }
+            }
+
+            if combined == 0b111 {
+                return true;
+            }
+        }
+        false
+    }
+
     // ── Main scoring function ─────────────────────────────────────────────────
 
     #[allow(clippy::too_many_arguments)]
@@ -313,7 +370,6 @@ impl HardBot {
         board: &GameY,
         my_id: PlayerId,
         opp_id: PlayerId,
-        // Pre-computed 0-1 BFS distances for each side / each player.
         da_me:  &[u32],
         db_me:  &[u32],
         dc_me:  &[u32],
@@ -326,24 +382,36 @@ impl HardBot {
         let (x, y, z) = (candidate.x(), candidate.y(), candidate.z());
 
         // ── Layer 1 & 2: immediate win / block ────────────────────────────────
-        // These are handled before calling score_cell in choose_move, but we
-        // include them here as a safety net with very high weights.
         if Self::is_winning_move(candidate, board, my_id)  { return  1_000_000.0; }
         if Self::is_winning_move(candidate, board, opp_id) { return    900_000.0; }
 
         // ── Layer 3: own win-path score ───────────────────────────────────────
-        // Lower combined distance → we are closer to winning.
+        //
+        // BUG FIX: the original code used the *sum* of the three distances,
+        // which a bot minimises by sprinting toward one nearby side while
+        // ignoring the other two — causing the "single-line" behaviour.
+        //
+        // Fix: penalise the *worst* individual side distance (minimax).
+        // The bot now reduces its weakest connection instead of over-extending
+        // along one edge.  The sum component is kept at lower weight to still
+        // reward overall proximity.
         let cap = (size * 3) as f64;
-        let my_a  = da_me[idx].min(size * 2) as f64;
-        let my_b  = db_me[idx].min(size * 2) as f64;
-        let my_c  = dc_me[idx].min(size * 2) as f64;
+        let my_a = da_me[idx].min(size * 2) as f64;
+        let my_b = db_me[idx].min(size * 2) as f64;
+        let my_c = dc_me[idx].min(size * 2) as f64;
         let my_combined = my_a + my_b + my_c;
-        // Normalise so that a cell on the direct shortest path scores near 1.
-        let my_path_score = (cap - my_combined).max(0.0);
+
+        // Minimax term: reward shrinking the worst-case side distance.
+        let my_worst = my_a.max(my_b).max(my_c);
+        let my_path_score = (cap - my_combined).max(0.0)
+            + 2.0 * (cap / 3.0 - my_worst).max(0.0);
 
         // Extra bonus when the cell lies on a short path to *all three* sides.
-        let all_paths_bonus = if my_a <= 3.0 && my_b <= 3.0 && my_c <= 3.0 {
-            20.0 * (6.0 - (my_a + my_b + my_c) / 3.0).max(0.0)
+        // Threshold is now relative to board size so it activates on large boards.
+        let side_thresh = (size as f64 * 0.6).max(3.0);
+        let all_paths_bonus = if my_a <= side_thresh && my_b <= side_thresh && my_c <= side_thresh {
+            30.0 * (side_thresh * 2.0 - (my_a + my_b + my_c) / 3.0).max(0.0)
+                / side_thresh
         } else {
             0.0
         };
@@ -354,24 +422,24 @@ impl HardBot {
         let opp_c  = dc_opp[idx].min(size * 2) as f64;
         let opp_combined = opp_a + opp_b + opp_c;
 
-        // Urgency: the closer the opponent is to winning, the harder we block.
         let urgency = if opp_combined <= 1.0 {
-            50.0  // they are one move away
+            80.0
         } else if opp_combined <= 3.0 {
-            15.0
-        } else if opp_combined <= 6.0 {
-            4.0
+            25.0
+        } else if opp_combined <= 5.0 {
+            8.0
+        } else if opp_combined <= 8.0 {
+            3.0
         } else {
             1.0
         };
         let blocking_score = (cap - opp_combined).max(0.0) * urgency;
 
         // ── Layer 5: junction / side-count bonus ──────────────────────────────
-        // Reward cells that bring us closer to touching all three sides.
         let sides = Self::sides_after_placement(candidate, board, my_id);
         let junction_score = match sides {
-            3 => 80.0,
-            2 => 15.0,
+            3 => 120.0,
+            2 => 30.0,  // raised: connecting two sides is strategically decisive
             1 => 2.0,
             _ => 0.0,
         };
@@ -379,11 +447,15 @@ impl HardBot {
         // ── Layer 6: virtual connection (bridge) bonus ────────────────────────
         let bridge = Self::bridge_bonus(candidate, board, my_id);
 
+        // ── Layer 6b: skip-bridge bonus ───────────────────────────────────────
+        let skip = Self::skip_bridge_bonus(candidate, board, my_id);
+
+        // ── Layer 6c: near-win bonus ──────────────────────────────────────────
+        let near_win_bonus = if Self::is_near_win(candidate, board, my_id) { 40.0 } else { 0.0 };
+
         // ── Layer 7: chain-size weighted adjacency ────────────────────────────
         let chain_len = Self::largest_adjacent_chain(candidate, board, my_id) as f64;
-        // Use log so that extending a 10-piece chain is a bit better than a
-        // 5-piece chain, but not twice as valuable.
-        let chain_score = (chain_len + 1.0).ln() * 3.0;
+        let chain_score = (chain_len + 1.0).ln() * 1.5;
 
         // ── Layer 8: centrality ───────────────────────────────────────────────
         let max_centrality = ((size - 1) as f64) / 3.0;
@@ -395,20 +467,24 @@ impl HardBot {
 
         // ── Weighted combination ──────────────────────────────────────────────
         //
-        // Weight rationale:
-        //   • my_path_score / all_paths_bonus → advancing our own win is primary
-        //   • blocking_score                  → urgency-scaled blocking is equally important
-        //   • junction_score                  → connecting our chain to more sides is crucial
-        //   • bridge                          → virtual connections guarantee future paths
-        //   • chain_score                     → prefer extending established chains
-        //   • centrality                      → good default when nothing else differentiates
-        5.0  * my_path_score
-            + 1.0  * all_paths_bonus
-            + 4.5  * blocking_score
-            + 1.0  * junction_score
-            + 1.0  * bridge
-            + 1.0  * chain_score
-            + 2.0  * centrality
+        // Weight rationale (updated vs original):
+        //   • my_path_score   → now includes minimax term, so weight kept at 5.0
+        //   • all_paths_bonus → raised weight: all-three-sides proximity is key
+        //   • blocking_score  → urgency-scaled; still top defensive priority
+        //   • junction_score  → raised weight: side-count progress is the goal
+        //   • skip/bridge     → virtual connections expand reach safely
+        //   • near_win_bonus  → close the game when possible
+        //   • chain_score     → secondary; mere adjacency is less important
+        //   • centrality      → tiebreaker
+        5.0 * my_path_score
+            + 2.0 * all_paths_bonus      // ↑ was 1.0 — all-sides proximity matters more
+            + 6.0 * blocking_score
+            + 3.0 * junction_score       // ↑ was 1.5 — side-count progress is the goal
+            + 1.2 * skip
+            + 1.0 * near_win_bonus
+            + 1.0 * bridge
+            + 0.8 * chain_score
+            + 2.0 * centrality
     }
 }
 
@@ -430,8 +506,7 @@ impl YBot for HardBot {
 
         let size = board.board_size();
 
-        // Fast-path: if there is exactly one winning move, play it immediately
-        // without computing all six BFS maps.
+        // Fast-path: immediate win.
         for &idx in available.iter() {
             let c = Coordinates::from_index(idx, size);
             if Self::is_winning_move(&c, board, my_id) {
@@ -439,9 +514,7 @@ impl YBot for HardBot {
             }
         }
 
-        // Fast-path: if the opponent has an immediate winning move, block it.
-        // (There may be more than one such cell in theory, but in Y the winning
-        // move is usually unique; we pick the first one found.)
+        // Fast-path: block opponent's immediate win.
         for &idx in available.iter() {
             let c = Coordinates::from_index(idx, size);
             if Self::is_winning_move(&c, board, opp_id) {
@@ -449,8 +522,7 @@ impl YBot for HardBot {
             }
         }
 
-        // Pre-compute six 0-1 BFS distance maps.  Each is O(N²) and computed
-        // once; reused for all cell evaluations.
+        // Pre-compute six 0-1 BFS distance maps.
         let da_me  = Self::win_distance(board, my_id,  SIDE_A);
         let db_me  = Self::win_distance(board, my_id,  SIDE_B);
         let dc_me  = Self::win_distance(board, my_id,  SIDE_C);
@@ -458,8 +530,6 @@ impl YBot for HardBot {
         let db_opp = Self::win_distance(board, opp_id, SIDE_B);
         let dc_opp = Self::win_distance(board, opp_id, SIDE_C);
 
-        // Score every available cell and pick the highest-scoring one.
-        // Ties are broken by the first occurrence (deterministic ordering).
         available
             .iter()
             .map(|&idx| {
@@ -484,8 +554,6 @@ mod tests {
     use crate::{Movement, PlayerId};
 
     fn bot() -> HardBot { HardBot }
-
-    // ── Basic sanity ──────────────────────────────────────────────────────────
 
     #[test]
     fn test_name() {
@@ -516,11 +584,8 @@ mod tests {
         assert!(game.available_cells().contains(&idx));
     }
 
-    // ── Positional preferences ────────────────────────────────────────────────
-
     #[test]
     fn test_prefers_centre_on_empty_board() {
-        // On a size-7 board the bot should not play on the edge immediately.
         let game = GameY::new(7);
         let coords = bot().choose_move(&game).unwrap();
         let min_coord = coords.x().min(coords.y()).min(coords.z());
@@ -531,15 +596,8 @@ mod tests {
         );
     }
 
-    // ── Winning move detection ────────────────────────────────────────────────
-
     #[test]
     fn test_takes_immediate_win() {
-        // Build a position where player 0 can win in one move.
-        //
-        // Board size 3.  Player 0 already has (0,2,0) and (0,0,2) on sides C
-        // and B.  Placing at (0,1,1) connects them through side A (x=0) and
-        // creates a chain touching all three sides.
         let mut game = GameY::new(3);
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
@@ -553,8 +611,6 @@ mod tests {
             player: PlayerId::new(0),
             coords: Coordinates::new(0, 0, 2),
         }).unwrap();
-        // It is now player 1's turn, but we test the win detector independently.
-        // Simulate it being player 0's turn by checking is_winning_move directly.
         let winning_cell = Coordinates::new(0, 1, 1);
         let p0 = PlayerId::new(0);
         assert!(
@@ -565,31 +621,24 @@ mod tests {
 
     #[test]
     fn test_plays_winning_move_when_available() {
-        // Player 0 has a forced win.  After player 1 plays a dummy move the
-        // bot (as player 0) must detect and play it.
         let mut game = GameY::new(3);
-        // p0 builds toward win
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
             coords: Coordinates::new(0, 2, 0),
         }).unwrap();
-        // p1 dummy
         game.add_move(Movement::Placement {
             player: PlayerId::new(1),
             coords: Coordinates::new(2, 0, 0),
         }).unwrap();
-        // p0 continues
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
             coords: Coordinates::new(0, 0, 2),
         }).unwrap();
-        // p1 dummy again
         game.add_move(Movement::Placement {
             player: PlayerId::new(1),
             coords: Coordinates::new(1, 1, 0),
         }).unwrap();
 
-        // Now it is player 0's turn; the bot should pick (0,1,1) to win.
         let chosen = bot().choose_move(&game).unwrap();
         assert_eq!(
             chosen,
@@ -598,12 +647,8 @@ mod tests {
         );
     }
 
-    // ── Blocking ──────────────────────────────────────────────────────────────
-
     #[test]
     fn test_blocks_opponent_immediate_win() {
-        // Mirror of the above: player 0 has set up a win; it is player 1's turn.
-        // The bot (player 1) must block (0,1,1).
         let mut game = GameY::new(3);
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
@@ -612,12 +657,11 @@ mod tests {
         game.add_move(Movement::Placement {
             player: PlayerId::new(1),
             coords: Coordinates::new(2, 0, 0),
-        }).unwrap(); // p1 irrelevant move
+        }).unwrap();
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
             coords: Coordinates::new(0, 0, 2),
         }).unwrap();
-        // It is now player 1's turn.
         let chosen = bot().choose_move(&game).unwrap();
         assert_eq!(
             chosen,
@@ -626,13 +670,10 @@ mod tests {
         );
     }
 
-    // ── Win-distance BFS ──────────────────────────────────────────────────────
-
     #[test]
     fn test_win_distance_own_piece_on_side_is_zero() {
         let mut game = GameY::new(5);
         let p0 = PlayerId::new(0);
-        // Place on side A (x == 0).
         game.add_move(Movement::Placement {
             player: p0,
             coords: Coordinates::new(0, 2, 2),
@@ -650,7 +691,6 @@ mod tests {
         let p0 = PlayerId::new(0);
         let da = HardBot::win_distance(&game, p0, SIDE_A);
         let size = game.board_size();
-        // (0,0,4) is on side A (x==0) and side B (y==0); empty.
         let idx = Coordinates::new(0, 0, 4).to_index(size) as usize;
         assert_eq!(da[idx], 1, "Empty cell on side A should have distance 1");
     }
@@ -661,40 +701,27 @@ mod tests {
         let p0 = PlayerId::new(0);
         let da = HardBot::win_distance(&game, p0, SIDE_A);
         let size = game.board_size();
-        // Centre-ish cell (2,1,1) should have a finite distance from side A.
         let idx = Coordinates::new(2, 1, 1).to_index(size) as usize;
         assert!(da[idx] < u32::MAX, "Interior cell should be reachable from side A");
     }
-
-    // ── Bridge detection ──────────────────────────────────────────────────────
 
     #[test]
     fn test_bridge_bonus_between_adjacent_friendlies() {
         let mut game = GameY::new(5);
         let p0 = PlayerId::new(0);
         let p1 = PlayerId::new(1);
-        // Place two p0 pieces adjacent to a common empty cell.
         game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(2, 1, 1) }).unwrap();
         game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(0, 0, 4) }).unwrap();
         game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(2, 2, 0) }).unwrap();
         game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(0, 4, 0) }).unwrap();
 
-        // Find a cell adjacent to both p0 pieces.
-        let candidate = Coordinates::new(2, 1, 1); // already placed; just test helper
-        // Test a truly empty candidate that is adjacent to both:
-        // neighbours of (2,1,1): includes (2,2,0) which is occupied.
-        // Use a neighbour shared by both — if it exists and is empty.
         let bonus = HardBot::bridge_bonus(&Coordinates::new(3, 1, 0), &game, p0);
-        // (3,1,0) is adjacent to (2,1,1) and (2,2,0) — both p0 → should get a bonus.
         assert!(bonus > 0.0, "Should detect a bridge-like pattern");
     }
-
-    // ── Junction side-count ───────────────────────────────────────────────────
 
     #[test]
     fn test_sides_after_placement_single_piece_on_corner() {
         let game = GameY::new(5);
-        // (4,0,0) touches sides B and C (y==0, z==0).
         let sides = HardBot::sides_after_placement(&Coordinates::new(4, 0, 0), &game, PlayerId::new(0));
         assert_eq!(sides, 2, "Corner touches 2 sides");
     }
@@ -705,14 +732,11 @@ mod tests {
         let p0 = PlayerId::new(0);
         let p1 = PlayerId::new(1);
 
-        // Give p0 a piece on side A and a piece on side B.
-        game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(0, 2, 2) }).unwrap(); // side A
-        game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(4, 0, 0) }).unwrap(); // dummy
-        game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(2, 0, 2) }).unwrap(); // side B
-        game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(0, 4, 0) }).unwrap(); // dummy
+        game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(0, 2, 2) }).unwrap();
+        game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(4, 0, 0) }).unwrap();
+        game.add_move(Movement::Placement { player: p0, coords: Coordinates::new(2, 0, 2) }).unwrap();
+        game.add_move(Movement::Placement { player: p1, coords: Coordinates::new(0, 4, 0) }).unwrap();
 
-        // A cell adjacent to both p0 pieces merges two chains → 2 sides minimum.
-        // (1,1,2) is adjacent to (0,2,2) [side A] and (2,0,2) [side B].
         let sides = HardBot::sides_after_placement(&Coordinates::new(1, 1, 2), &game, p0);
         assert!(sides >= 2, "Merging side-A and side-B chains should give ≥ 2 sides");
     }

@@ -6,6 +6,7 @@ import "./game.css";
 const BOT_MODE_META: Record<string, { label: string; description: string; tagClass: string; tag: string; emoji: string }> = {
     random_bot:       { label: "Aleatorio",  description: "El bot no sigue ninguna estrategia, se comporta de manera aleatoria.", tagClass: "ms-tag ms-tag-facil",   tag: "Fácil",  emoji: "" },
     intermediate_bot: { label: "Intermedio", description: "El bot evalúa el tablero y busca las mejores jugadas.",                tagClass: "ms-tag ms-tag-medio",   tag: "Medio",  emoji: "" },
+    hard_bot: { label: "Difícil", description: "El bot evalúa el tablero y busca ganar a toda costa.",                tagClass: "ms-tag ms-tag-dificil",   tag: "Difícil",  emoji: "" },
 };
 
 const BOARD_SIZES = [
