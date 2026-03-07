@@ -21,7 +21,7 @@ const games = new Map();
 const BOT_ROUTES = {
   random_bot:       '/v1/ybot/choose/random_bot',
   intermediate_bot: '/v1/ybot/choose/intermediate_bot',
-  hard_bot:      '/v1/ybot/choose/hard_bot',
+  // hard_bot:      '/v1/ybot/choose/hard_bot',   ← ejemplo futuro
 };
 
 const DEFAULT_BOT_MODE = 'random_bot';
@@ -51,15 +51,21 @@ app.post('/api/game/start', async (req, res) => {
   try {
     const {
       userId,
-      gameMode = 'vsBot',
-      botMode  = DEFAULT_BOT_MODE,
+      gameMode  = 'vsBot',
+      botMode   = DEFAULT_BOT_MODE,
+      boardSize: rawBoardSize = 11,
     } = req.body;
 
     // Validar botMode antes de crear el juego
     if (gameMode === 'vsBot') getBotRoute(botMode); // lanza si es inválido
 
+    // Solo se permiten tamaños predefinidos; cualquier otro cae a 11
+    const ALLOWED_BOARD_SIZES = [11, 15, 19];
+    const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
+        ? Number(rawBoardSize)
+        : 11;
+
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const boardSize = 11;
 
     await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
 

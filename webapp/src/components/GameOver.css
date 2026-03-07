@@ -1,56 +1,267 @@
-.gameover-container {
+/* ── GameOver ────────────────────────────────────────────── */
+
+.go-container {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* toda la altura de la ventana */
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.gameover-title {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 2rem;
-  flex: 0 0 auto; /* no se estira */
-}
-
-/* Contenido principal */
-.gameover-content {
-  display: flex;
-  flex: 1 1 auto; /* ocupa todo el espacio restante */
-  gap: 20px;
-  align-items: center; /* centra verticalmente */
-  justify-content: center;
-}
-
-/* Panel de jugadores a la izquierda */
-.gameover-players {
-  flex: 1; /* ocupa la mitad del ancho */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 40px; /* espacio entre los jugadores */
-  max-width: 50%;
-  box-sizing: border-box;
-}
-
-/* Tablero a la derecha */
-.gameover-board {
-  flex: 1; /* ocupa la otra mitad */
-  display: flex;
-  justify-content: center;
   align-items: center;
-  max-width: 50%;
+  justify-content: center;
+  padding: 48px 24px;
+  background-color: #faf8f4;
+  background-image: radial-gradient(circle, #d6cfc4 1px, transparent 1px);
+  background-size: 28px 28px;
+  font-family: 'Outfit', sans-serif;
 }
 
-/* Botón debajo centrado */
-.gameover-button {
-  flex: 0 0 auto; /* no se estira */
-  margin-top: 20px;
-  align-self: center;
-  padding: 12px 24px;
-  font-size: 16px;
+/* ── Entrada animada ─────────────────────────────────────── */
+@keyframes goFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes goPop {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes goShine {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.go-fade-up { animation: goFadeUp 0.55s ease both; }
+.go-pop     { animation: goPop    0.6s ease both; }
+
+/* ── Trofeo ──────────────────────────────────────────────── */
+.go-trophy {
+  font-size: 4rem;
+  line-height: 1;
+  margin-bottom: 16px;
+  animation: goPop 0.7s ease both;
+}
+
+/* ── Badge "Partida finalizada" ──────────────────────────── */
+.go-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #e8e2d9;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+  animation: goFadeUp 0.5s 0.1s ease both;
+}
+.go-badge span {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: #7c6ff7;
+  text-transform: uppercase;
+}
+
+/* ── Título ganador ──────────────────────────────────────── */
+.go-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #2d2a26;
+  line-height: 1.1;
+  margin: 0 0 6px;
+  text-align: center;
+  animation: goFadeUp 0.55s 0.15s ease both;
+}
+.go-title .go-winner-name {
+  background: linear-gradient(90deg, #7c6ff7, #a89af9, #7c6ff7);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goShine 2.5s linear infinite;
+}
+.go-title.winner-j2 .go-winner-name {
+  background: linear-gradient(90deg, #f97058, #ffaa90, #f97058);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goShine 2.5s linear infinite;
+}
+
+.go-subtitle {
+  font-size: 1rem;
+  color: #9e9890;
+  margin: 0 0 40px;
+  text-align: center;
+  animation: goFadeUp 0.55s 0.2s ease both;
+}
+
+/* ── Contenido principal ─────────────────────────────────── */
+.go-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  margin-bottom: 40px;
+  animation: goFadeUp 0.55s 0.25s ease both;
+  width: 100%;
+  max-width: 900px;
+  justify-content: center;
+}
+
+/* ── Panel de jugadores ──────────────────────────────────── */
+.go-players {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 160px;
+}
+
+.go-player-card {
+  background: #ffffff;
+  border: 2px solid #e8e2d9;
+  border-radius: 16px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.go-player-card.winner-card {
+  border-color: #7c6ff7;
+  box-shadow: 0 4px 24px rgba(124,111,247,0.18);
+}
+.go-player-card.winner-card.coral-winner {
+  border-color: #f97058;
+  box-shadow: 0 4px 24px rgba(249,112,88,0.18);
+}
+
+.go-winner-crown {
+  position: absolute;
+  top: -14px;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.go-player-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #e8e2d9;
+}
+.go-player-card.winner-card .go-player-avatar { border-color: #7c6ff7; }
+.go-player-card.winner-card.coral-winner .go-player-avatar { border-color: #f97058; }
+.go-player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.go-player-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2d2a26;
+  letter-spacing: 0.03em;
+}
+
+.go-score-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #c4bdb4;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.go-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #c4bdb4;
+}
+.go-player-card.winner-card .go-score       { color: #7c6ff7; }
+.go-player-card.winner-card.coral-winner .go-score { color: #f97058; }
+
+/* ── Tablero final ───────────────────────────────────────── */
+.go-board {
+  background: #ffffff;
+  border: 1px solid #e8e2d9;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Botones ─────────────────────────────────────────────── */
+.go-actions {
+  display: flex;
+  gap: 12px;
+  animation: goFadeUp 0.55s 0.35s ease both;
+}
+
+.go-btn-primary {
+  padding: 14px 32px;
+  border-radius: 14px;
+  border: none;
+  background: #7c6ff7;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  color: white;
-  background-color: #8A5CFF;
-  border: 1px solid rgba(20, 7, 86, 0.18);
+  box-shadow: 0 4px 20px rgba(124,111,247,0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+  font-family: 'Outfit', sans-serif;
+}
+.go-btn-primary:hover  { background: #6a5ee8; }
+.go-btn-primary:active { transform: scale(0.97); }
+
+.go-btn-secondary {
+  padding: 14px 32px;
+  border-radius: 14px;
+  border: 2px solid #e8e2d9;
+  background: #ffffff;
+  color: #9e9890;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  font-family: 'Outfit', sans-serif;
+}
+.go-btn-secondary:hover  { border-color: #c8bffc; color: #7c6ff7; }
+.go-btn-secondary:active { transform: scale(0.97); }
+
+/* ── Decoración ──────────────────────────────────────────── */
+.go-decoration {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+  animation: goFadeUp 0.55s 0.4s ease both;
+}
+.go-decoration-line {
+  width: 32px;
+  height: 1px;
+  background: #e8e2d9;
+}
+.go-decoration-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #c4bdb4;
+  letter-spacing: 0.3em;
+}
+
+/* ── Sin estado ──────────────────────────────────────────── */
+.go-empty {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background-color: #faf8f4;
+  font-family: 'Outfit', sans-serif;
+}
+.go-empty p {
+  color: #9e9890;
+  font-size: 1rem;
 }
