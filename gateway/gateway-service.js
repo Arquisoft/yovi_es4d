@@ -104,7 +104,9 @@ app.post('/adduser', async (req, res) => {
     const userResponse = await axios.post(userServiceUrl + '/adduser', req.body);
     res.json(userResponse.data);
   } catch (error) {
-    res.status(error.response.status).json({ error: error.response.data.error });
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.error || error.message || 'Internal server error';
+    res.status(status).json({ error: message });
     console.log(error);
   }
 });
