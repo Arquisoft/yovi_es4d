@@ -19,9 +19,6 @@ const Historial: React.FC = () => {
   useEffect(() => {
     const userId = user?.id || user?.userId || user?._id;
 
-    console.log("Usuario desde contexto:", user);
-    console.log("userId usado:", user?.id || user?.userId);
-
     if (!userId) {
       navigate('/login');
       return;

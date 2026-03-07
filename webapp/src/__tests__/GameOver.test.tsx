@@ -113,4 +113,28 @@ test('click rules button navigates to /profile', async () => {
     expect(mockNavigate).toHaveBeenCalledWith('/')
   })
 
+
+  test('winner is undefined or invalid', () => {
+    const mockState = {
+      winner: 'unknown',
+      players: [
+        { name: 'Alice', points: 5 },
+        { name: 'Bot', points: 3 }
+      ],
+      hexData: []
+    }
+
+    vi.spyOn(reactRouter, 'useLocation').mockReturnValue({ state: mockState } as any)
+
+    render(
+      <I18nProvider defaultLang="es" resources={resources}>
+        <GameOver />
+      </I18nProvider>
+    )
+
+    const title = screen.getByRole('heading', { level: 1 })
+    expect(title.textContent).toContain('Bot')
+    expect(title.textContent).toContain('ha ganado')
+  })
+  
 })

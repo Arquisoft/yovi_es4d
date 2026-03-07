@@ -4,6 +4,7 @@ import { API_URL } from "../config";
 import { useTranslation } from "../i18n";
 import Sidebar from "../components/Sidebar";
 import './EditProfilePage.css'; // <-- Nuevo CSS completo
+import { useNavigate } from 'react-router-dom';
 
 export default function EditUserPage() {
   const { t } = useTranslation();
@@ -17,6 +18,8 @@ export default function EditUserPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProfile();
@@ -99,11 +102,16 @@ export default function EditUserPage() {
             />
           </div>
 
-          <label>{t("editUser.email")}</label>
-          <input value={user.email} disabled />
-
-          <label>{t("editUser.username")}</label>
+          <label htmlFor="email-input">{t("editUser.email")}</label>
           <input
+            id="email-input"
+            value={user.email}
+            disabled
+          />
+
+          <label htmlFor="username-input">{t("editUser.username")}</label>
+          <input
+            id = "username-input"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -114,22 +122,25 @@ export default function EditUserPage() {
 
           <hr />
 
-          <label>{t("editUser.currentPassword")}</label>
+          <label htmlFor="current-password-input" >{t("editUser.currentPassword")}</label>
           <input
+            id = "current-password-input"
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
           />
 
-          <label>{t("editUser.newPassword")}</label>
+          <label htmlFor="new-password-input">{t("editUser.newPassword")}</label>
           <input
+            id = "new-password-input"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
 
-          <label>{t("editUser.confirmPassword")}</label>
+          <label htmlFor="confirm-password-input">{t("editUser.confirmPassword")}</label>
           <input
+            id = "confirm-password-input"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -142,8 +153,17 @@ export default function EditUserPage() {
           {error && <p className="error-message">{error}</p>}
           {success && <p className="success-message">{success}</p>}
 
+
+          <div className="action-row">
+              <button className="play-button" onClick={() => navigate('/')}>
+                {t('startScreen.goback')}
+              </button>
+          </div>
+
         </div>
+
       </div>
+
     </>
   );
 }

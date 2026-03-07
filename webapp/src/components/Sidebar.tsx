@@ -42,7 +42,7 @@ export default function Sidebar() {
           </select>
         </li>
         <li><button className="navbar-button" onClick={() => navigate('/rules')}>{t('menu.rules')}</button></li>
-        <li><button className="navbar-button" onClick={() => navigate('/profile')}>{t('menu.profile')}</button></li>
+        <li><button className="navbar-button" onClick={() => navigate('/edit')}>{t('menu.profile')}</button></li>
         <li><button className="navbar-button" onClick={() => navigate('/historial')}>{t('menu.historial')}</button></li>
         
         <li><button className="navbar-button" onClick={handleAuthClick}>{user ? t('menu.logout') : t('menu.initsession')}</button></li>

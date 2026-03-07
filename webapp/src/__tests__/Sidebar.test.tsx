@@ -48,12 +48,12 @@ describe('Sidebar', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/rules')
   })
 
-  test('click rules button navigates to /profile', async () => {
+  test('click rules button navigates to /edit', async () => {
     const user = userEvent.setup()
     renderSidebar()
     const profileButton = screen.getByRole('button', { name: resources.es.menu.profile })
     await user.click(profileButton)
-    expect(mockNavigate).toHaveBeenCalledWith('/profile')
+    expect(mockNavigate).toHaveBeenCalledWith('/edit')
   })
 
   test('click rules button navigates to /historial', async () => {

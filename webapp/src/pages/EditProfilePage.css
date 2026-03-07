@@ -95,6 +95,12 @@
   border: 0.1vh solid rgba(255,255,255,0.4);
 }
 
+.edit-profile-card .action-row {
+  margin-top: 3vh; /* aumenta la separación del botón anterior */
+  display: flex;
+  justify-content: center;
+}
+
 /* Mensajes */
 .error-message, .success-message {
   text-align: center;
