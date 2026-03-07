@@ -476,15 +476,15 @@ impl HardBot {
         //   • near_win_bonus  → close the game when possible
         //   • chain_score     → secondary; mere adjacency is less important
         //   • centrality      → tiebreaker
-        5.0 * my_path_score
+        4.0 * my_path_score
             + 2.0 * all_paths_bonus      // ↑ was 1.0 — all-sides proximity matters more
-            + 6.0 * blocking_score
-            + 3.0 * junction_score       // ↑ was 1.5 — side-count progress is the goal
+            + 4.0 * blocking_score
+            + 1.0 * junction_score       // ↑ was 1.5 — side-count progress is the goal
             + 1.2 * skip
             + 1.0 * near_win_bonus
             + 1.0 * bridge
             + 0.8 * chain_score
-            + 2.0 * centrality
+            + 1.5 * centrality
     }
 }
 
