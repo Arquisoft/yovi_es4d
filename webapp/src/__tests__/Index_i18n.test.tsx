@@ -166,4 +166,26 @@ describe("I18nProvider", () => {
     expect(screen.getByText("home.title.text")).toBeInTheDocument()
     })
 
+  test("covers if (!cur) inside loop", () => {
+
+    const resources = {
+      en: {
+        home: {}
+      }
+    }
+
+    function Test() {
+      const { t } = useTranslation()
+      return <span>{t("home.missing.key", "fallback")}</span>
+    }
+
+    render(
+      <I18nProvider defaultLang="en" resources={resources}>
+        <Test />
+      </I18nProvider>
+    )
+
+    expect(screen.getByText("fallback")).toBeInTheDocument()
+ })
+
 })

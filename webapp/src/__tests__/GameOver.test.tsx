@@ -15,6 +15,14 @@ vi.mock('react-router-dom', async () => ({
   useLocation: () => ({ state: null })
 }))
 
+vi.mock('../components/game/Triangle', () => ({
+  default: ({ onHexClick }: any) => (
+    <button data-testid="triangle" onClick={onHexClick}>
+      Triangle
+    </button>
+  )
+}))
+
 describe('GameOver', () => {
 
   test('renders noGame message when location.state is undefined', async () => {
@@ -136,5 +144,29 @@ test('click rules button navigates to /profile', async () => {
     expect(title.textContent).toContain('Bot')
     expect(title.textContent).toContain('ha ganado')
   })
+
+  test('triangle click triggers onHexClick', async () => {
+  const user = userEvent.setup()
+
+  const mockState = {
+    winner: 'j1',
+    players: [
+      { name: 'Alice', points: 5 },
+      { name: 'Bot', points: 3 }
+    ],
+    hexData: []
+  }
+
+  vi.spyOn(reactRouter, 'useLocation').mockReturnValue({ state: mockState } as any)
+
+  render(
+    <I18nProvider defaultLang="es" resources={resources}>
+      <GameOver />
+    </I18nProvider>
+  )
+
+  const triangle = screen.getByTestId("triangle")
+  await user.click(triangle)
+})
   
 })
