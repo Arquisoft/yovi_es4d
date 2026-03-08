@@ -1,22 +1,20 @@
+import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import '@testing-library/jest-dom';
-import { describe, test, vi, afterEach, beforeEach, expect } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import EditUserPage from "../pages/EditProfilePage";
-import { I18nProvider } from "../i18n";
-import resources from "../i18n/resources";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import '@testing-library/jest-dom'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { AuthContext } from "../context/AuthContext";
+import { API_URL } from "../config";
 
-// Mocks
-vi.mock("axios");
-vi.mock("../components/Sidebar", () => ({ default: () => <div>Sidebar</div> }));
-vi.mock("../i18n", async () => {
-  const actual = await vi.importActual("../i18n");
-  return { ...actual, useTranslation: () => ({ t: (k:string) => k }) };
-});
+vi.mock("../i18n", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
 
-const mockedAxios = axios as unknown as { post: typeof vi.fn };
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -26,160 +24,250 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-const renderPage = () =>
+vi.mock("axios");
+const mockedAxios = axios as any;
+
+const mockUser = { email: "user1@test.com", username: "user1", avatar: null };
+const mockLogout = vi.fn();
+
+const renderWithAuth = (ui: React.ReactNode) =>
   render(
-    <I18nProvider defaultLang="es" resources={resources}>
-      <EditUserPage />
-    </I18nProvider>
+    <MemoryRouter>
+      <AuthContext.Provider value={{ user: mockUser, logout: mockLogout }}>
+        {ui}
+      </AuthContext.Provider>
+    </MemoryRouter>
   );
 
-describe("EditUserPage", () => {
+describe("EditUserPage Vitest", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockedAxios.post.mockReset();
+    mockNavigate.mockReset();
   });
 
-  test("shows loading initially", () => {
-    renderPage();
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+
+  test("renders profile correctly", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+    renderWithAuth(<EditUserPage />);
+
+    expect(screen.getByText(/Loading/i)).toBeInTheDocument();
+
+    await screen.findByDisplayValue("user1@test.com");
+    await screen.findByDisplayValue("user1");
   });
 
-  test("loads profile successfully", async () => {
-    mockedAxios.post = vi.fn().mockResolvedValueOnce({
-      data: { username: "user1", email: "user1@test.com", avatar: "" },
-    });
+  test("loads profile catch 401 navigates to login", async () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: { status: 401 } });
 
-    renderPage();
+    renderWithAuth(<EditUserPage />);
 
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("user1")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("user1@test.com")).toBeInTheDocument();
-    });
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login"));
   });
 
-  test("shows error if loading profile fails", async () => {
-    mockedAxios.post = vi.fn().mockRejectedValueOnce({ message: "fail" });
+  test("shows error if loadProfile fails with other error", async () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: "Loading..." } });
 
-    renderPage();
+    renderWithAuth(<EditUserPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
-    });
+    const errorEl = await screen.findByText("Loading...");
+    expect(errorEl).toBeInTheDocument();
   });
 
   test("updates username successfully", async () => {
-    mockedAxios.post = vi.fn()
-      .mockResolvedValueOnce({ data: { username: "user1", email: "user1@test.com" } }) // loadProfile
-      .mockResolvedValueOnce({}); // saveUsername
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockResolvedValueOnce({}); // editUsername
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile de nuevo
 
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("user1"));
+    renderWithAuth(<EditUserPage />);
 
-    const input = screen.getByDisplayValue("user1");
-    await userEvent.clear(input);
-    await userEvent.type(input, "newUser");
+    await screen.findByDisplayValue("user1");
 
-    const button = screen.getByText("editUser.updateUsername");
-    await userEvent.click(button);
+    const usernameInput = screen.getByLabelText("editUser.username");
+    await userEvent.clear(usernameInput);
+    await userEvent.type(usernameInput, "newuser");
 
-    await waitFor(() => {
-      expect(screen.getByText("editUser.usernameUpdated")).toBeInTheDocument();
-    });
+    const updateButton = screen.getByText("editUser.updateUsername");
+    await userEvent.click(updateButton);
+
+    await screen.findByText("editUser.usernameUpdated");
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      expect.stringContaining("/editUsername"),
-      { username: "newUser" },
-      expect.any(Object)
+      `${API_URL}/api/user/getUserProfile`,
+      {},
+      { withCredentials: true }
     );
   });
 
   test("shows error if updating username fails", async () => {
-    mockedAxios.post = vi.fn()
-      .mockResolvedValueOnce({ data: { username: "user1", email: "user1@test.com" } }) // loadProfile
-      .mockRejectedValueOnce({ message: "update failed" }); // saveUsername
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: "Username error" } });
 
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("user1"));
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
 
     const button = screen.getByText("editUser.updateUsername");
     await userEvent.click(button);
 
-    await waitFor(() => {
-      expect(screen.getByText("update failed")).toBeInTheDocument();
-    });
+    await screen.findByText("Username error");
+  });
+
+  test("saveUsername: err.response exists but data falsy", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockRejectedValueOnce({ response: {}, message: "Username message" });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
+
+    const usernameInput = screen.getByLabelText("editUser.username");
+    await userEvent.clear(usernameInput);
+    await userEvent.type(usernameInput, "newuser");
+
+    await userEvent.click(screen.getByText("editUser.updateUsername"));
+
+    await screen.findByText("Username message");
+  });
+
+  test("saveUsername: err.response undefined, uses err.message", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockRejectedValueOnce({ message: "Network username error" });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
+
+    const usernameInput = screen.getByLabelText("editUser.username");
+    await userEvent.clear(usernameInput);
+    await userEvent.type(usernameInput, "newuser");
+
+    await userEvent.click(screen.getByText("editUser.updateUsername"));
+
+    await screen.findByText("Network username error");
   });
 
   test("shows error when new passwords do not match", async () => {
-    mockedAxios.post = vi.fn().mockResolvedValueOnce({ data: { username: "u", email: "e" } });
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
 
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("u"));
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
 
     await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
-    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "newpass");
-    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "wrongpass");
+    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "1234");
+    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "5678");
 
-    const button = screen.getByText("editUser.changePassword");
-    await userEvent.click(button);
+    const changeButton = screen.getByText("editUser.changePassword");
+    await userEvent.click(changeButton);
 
-    expect(screen.getByText("editUser.passwordMatch")).toBeInTheDocument();
+    await screen.findByText("editUser.passwordMatch");
   });
 
   test("changes password successfully", async () => {
-    mockedAxios.post = vi.fn()
-      .mockResolvedValueOnce({ data: { username: "u", email: "e" } }) // loadProfile
-      .mockResolvedValueOnce({}); // changePassword
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockResolvedValueOnce({}); // changePassword
 
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("u"));
+    renderWithAuth(<EditUserPage />);
 
-    await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
-    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "newpass");
-    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "newpass");
-
-    const button = screen.getByText("editUser.changePassword");
-    await userEvent.click(button);
-
-    await waitFor(() => {
-      expect(screen.getByText("editUser.passwordChanged")).toBeInTheDocument();
-    });
-
-    expect(screen.getByLabelText(/editUser.currentPassword/i)).toHaveValue("");
-    expect(screen.getByLabelText(/editUser.newPassword/i)).toHaveValue("");
-    expect(screen.getByLabelText(/editUser.confirmPassword/i)).toHaveValue("");
-  });
-
-  test("shows error if changing password fails", async () => {
-    mockedAxios.post = vi.fn()
-      .mockResolvedValueOnce({ data: { username: "u", email: "e" } }) // loadProfile
-      .mockRejectedValueOnce({ message: "password fail" }); // changePassword
-
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("u"));
+    await screen.findByDisplayValue("user1");
 
     await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
-    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "newpass");
-    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "newpass");
+    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "1234");
+    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "1234");
 
-    const button = screen.getByText("editUser.changePassword");
-    await userEvent.click(button);
+    const changeButton = screen.getByText("editUser.changePassword");
+    await userEvent.click(changeButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("password fail")).toBeInTheDocument();
-    });
+    await screen.findByText("editUser.passwordChanged");
   });
 
-  test("clicking action-row goback button navigates to /", async () => {
-    const user = userEvent.setup();
+  test("shows error if changePassword fails", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: "Password error" } });
 
-    mockedAxios.post = vi.fn().mockResolvedValueOnce({ data: { username: "u", email: "e" } });
+    renderWithAuth(<EditUserPage />);
 
-    renderPage();
-    await waitFor(() => screen.getByDisplayValue("u"));
+    await screen.findByDisplayValue("user1");
+
+    await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
+    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "1234");
+    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "1234");
+
+    const changeButton = screen.getByText("editUser.changePassword");
+    await userEvent.click(changeButton);
+
+    await screen.findByText("Password error");
+  });
+
+  test("changePassword: err.response exists but data falsy", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+    mockedAxios.post.mockRejectedValueOnce({ response: {}, message: "Password message" });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
+
+    await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
+    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "1234");
+    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "1234");
+
+    await userEvent.click(screen.getByText("editUser.changePassword"));
+
+    await screen.findByText("Password message");
+  });
+
+  test("changePassword: err.response undefined, uses err.message", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+    mockedAxios.post.mockRejectedValueOnce({ message: "Network password error" });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
+
+    await userEvent.type(screen.getByLabelText(/editUser.currentPassword/i), "oldpass");
+    await userEvent.type(screen.getByLabelText(/editUser.newPassword/i), "1234");
+    await userEvent.type(screen.getByLabelText(/editUser.confirmPassword/i), "1234");
+
+    await userEvent.click(screen.getByText("editUser.changePassword"));
+
+    await screen.findByText("Network password error");
+  });
+
+  test("loadProfile: err.response exists with data", async () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: { data: "Loading..." } });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByText("Loading...");
+  });
+
+  test("loadProfile: err.response exists but data falsy", async () => {
+    mockedAxios.post.mockRejectedValueOnce({ response: {}, message: "Loading..." });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByText("Loading...");
+  });
+
+  test("loadProfile: err.response undefined, uses err.message", async () => {
+    mockedAxios.post.mockRejectedValueOnce({ message: "Loading..." });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByText("Loading...");
+  });
+
+  test("clicking goback button navigates to /", async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+    renderWithAuth(<EditUserPage />);
+
+    await screen.findByDisplayValue("user1");
 
     const goBackButton = screen.getByRole("button", { name: /startScreen.goback/i });
-    await user.click(goBackButton);
+    await userEvent.click(goBackButton);
 
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });
-
 });

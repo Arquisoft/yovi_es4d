@@ -22,23 +22,28 @@ export default function EditUserPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+  loadProfile();
+}, []);
 
-  const loadProfile = async () => {
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/user/getUserProfile`,
-        {},
-        { withCredentials: true }
-      );
+const loadProfile = async () => {
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/user/getUserProfile`,
+      {},
+      { withCredentials: true }
+    );
 
-      setUser(res.data);
-      setUsername(res.data.username);
-    } catch (err: any) {
-      setError(err.response?.data || err.message);
+    setUser(res.data);
+    setUsername(res.data.username);
+  } catch (err: any) {
+    if (err.response?.status === 401) {
+      navigate("/login");
+      return;
     }
-  };
+
+    setError(err.response?.data || err.message);
+  }
+};
 
   const saveUsername = async () => {
     setError(null);
