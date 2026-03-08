@@ -78,7 +78,7 @@ En este apartado se justifican las decisiones tomadas por el equipo en cuanto a 
 
 | Frameword de Estilo
 | Tailwind
-| Hemos decidido utilizar Tailwind porque presenta un estilo moderno que es muy sencillo de implementar y utlizar en las plantillas del frontend.
+| Hemos decidido utilizar Tailwind porque presenta un estilo moderno que es muy sencillo de implementar y utilizar en las plantillas del frontend.
 |===
 
 
