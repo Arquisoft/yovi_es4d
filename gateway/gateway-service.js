@@ -104,6 +104,7 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
       userId:   req.body.userId,
       gameMode: req.body.gameMode || 'vsBot',
       botMode:  req.body.botMode  || 'random_bot', // ← propagamos al game-service
+      boardSize: req.body.boardSize || 11, // <- tamaño del tablero
     });
     res.json(startResponse.data);
   } catch (error) {
