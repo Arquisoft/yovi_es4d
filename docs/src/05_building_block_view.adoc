@@ -66,6 +66,11 @@ Yovi permite interactuar con el sistema, hace que los usuarios se puedan registr
 | Usuario | Cliente/Usuario de la aplicación que interactúa con Yovi.
 | Yovi | Sistema principal que permite a los usuarios hacer uso del juego.
 | WebApp | Contiene la interfaz de usuario de la aplicación.
+| Gateway | Microservicio que se encarga de delegar a otros microservicios según la petición.
+| AuthService | Valida la autenticación de los usuarios.
+| Game Service | Interfaz API que valida las acciones de la partida.
+| Gamey Bot | Implementación del juego en Rust.
+| Users Service | Intermediario de acceso a la base de datos de usuarios.
 | Backend (Microservicios) | Conjunto de microservicios que gestionan la lógica de negocio del sistema, incluyendo la gestión de usuarios, partidas y estadísticas.
 | Base de Datos | Sistema de almacenamiento donde se persisten los usuarios y las estadísticas de las partidas.
 |===
