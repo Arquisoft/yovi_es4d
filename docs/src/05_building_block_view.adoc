@@ -54,7 +54,7 @@ La vista de bloques muestra el comportamiento interno de la aplicación haciendo
 
 
 === Representación del sistema general
-image::diagrama_componentes_vista_bloques_yovi_V0_1.png[]
+image::diagramaDeBloquesV0.3.png[]
 Motivación::
 Yovi permite interactuar con el sistema, hace que los usuarios se puedan registrar y hacer uso del juego. Por otro lado, de manera interna, tenemos los microservicios los cuales interactuan con la aplicación web. Finalmente, el microservicio de usuarios se conecta con la base de datos para persistir la información.
 
