@@ -75,6 +75,10 @@ En este apartado se justifican las decisiones tomadas por el equipo en cuanto a 
 | Internacionalización
 | i18n
 | Incorporamos un sistema de internacionalización (i18n) que permite la adaptación de la aplicación a múltiples idiomas.
+
+| Frameword de Estilo
+| Tailwind
+| Hemos decidido utilizar Tailwind porque presenta un estilo moderno que es muy sencillo de implementar y utlizar en las plantillas del frontend.
 |===
 
 
