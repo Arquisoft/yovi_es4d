@@ -265,7 +265,7 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
  *
  * @route POST /api/game/:gameId/validateMove
  */
-app.post('/api/game/:gameId/validateMove', async (req, res) => {
+app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
     const validateResponse = await axios.post(

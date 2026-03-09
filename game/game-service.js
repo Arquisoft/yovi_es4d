@@ -137,7 +137,7 @@ app.post('/api/game/start', async (req, res) => {
  */
 app.post('/api/game/:gameId/validateMove', async (req, res) => {
   const { gameId } = req.params;
-  const { move, userId, role } = req.body;
+  const { move, userId } = req.body;
 
   const game = games.get(gameId);
   if (!game) return res.status(404).json({ error: 'Game not found' });
@@ -146,13 +146,12 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
-    player: role === 'j1' ? 0 : 1
+    player: userId === 'j1' ? 0 : 1
   });
 
   // ✅ GUARDAR MOVIMIENTO EN MEMORIA
   game.moves.push({
     position: move,
-    player: role,
     userId: userId
   });
 
@@ -162,11 +161,17 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
     await finishGameAndSave(game);
   }
-
-  res.json({
-    valid: true,
-    status: rustResponse.data.status
+ rustResponse.data.board.forEach(move => {
+  const cell = game.board.find(c => {
+    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    return x === move.x && y === move.y && z === move.z;
   });
+  if (cell) cell.player = move.player === 0 ? 'j1' : 'j2';
+});
+  res.json({ valid: true,
+    winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
+    status: rustResponse.data.status
+   });
 });
 
 /**

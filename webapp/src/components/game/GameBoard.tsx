@@ -67,6 +67,7 @@ const GameBoard: React.FC = () => {
       try {
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
+          credentials: 'include',
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: "jugador1", gameMode, botMode, boardSize }),
         });
