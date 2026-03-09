@@ -8,6 +8,7 @@ import RegisterPage from "../pages/RegisterPage";
 import Dashboard from "../pages/Dashboard";
 import EditProfile from "../pages/EditProfilePage";
 import Historial from "../pages/Historial";
+import ModeSelector from "../components/game/ModeSelector";
 
 
 const router = createBrowserRouter([
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
   {
     path: "/historial",
     element: <Historial />,
+  },
+  {
+    path: "/select",
+    element: <ModeSelector />
   }
 
 ]);
