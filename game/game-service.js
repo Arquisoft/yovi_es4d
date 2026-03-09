@@ -10,10 +10,12 @@ const mongoose = require('mongoose');
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
 
-// Conexión a MongoDB
-mongoose.connect(mongoUri)
-  .then(() => console.log('✅ Conectado a MongoDB'))
-  .catch(err => console.error('❌ Error conectando a MongoDB:', err));
+// Conexión a MongoDB (se salta en tests con SKIP_MONGO=true)
+if (process.env.SKIP_MONGO !== 'true') {
+  mongoose.connect(mongoUri)
+    .then(() => console.log('✅ Conectado a MongoDB'))
+    .catch(err => console.error('❌ Error conectando a MongoDB:', err));
+}
 
 // Esquema de Game
 const gameSchema = new mongoose.Schema({
@@ -144,9 +146,12 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
 
+  // player 0 = j1 (humano), player 1 = j2 (bot)
+  // Comparamos userId con el id del jugador 1 guardado en el juego
+  const isPlayer1 = game.players[0].id === userId;
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
-    player: userId === 'j1' ? 0 : 1
+    player: isPlayer1 ? 0 : 1
   });
 
   //  GUARDAR MOVIMIENTO EN MEMORIA
@@ -382,6 +387,8 @@ function sleep(ms) {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'Game Service is running' }));
 
-app.listen(port, "0.0.0.0", () => console.log(`Game Service listening on ${port}`));
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', () => console.log(`Game Service listening on ${port}`));
+}
 
 module.exports = app;

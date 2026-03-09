@@ -43,8 +43,7 @@ const GameBoard: React.FC = () => {
     boardSize = 11,
   } = (location.state as LocationState) ?? {};
 
-
-
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
@@ -65,11 +64,24 @@ const GameBoard: React.FC = () => {
   useEffect(() => {
     const startGame = async () => {
       try {
+        // 1. Obtener userId real del JWT
+        const meRes = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
+        if (!meRes.ok) {
+          navigate("/login");
+          return;
+        }
+        const meData = await meRes.json();
+        const resolvedUserId = meData.userId;
+        setUserId(resolvedUserId);
+
+        // 2. Iniciar partida con el userId real
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
-          credentials: 'include',
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: "jugador1", gameMode, botMode, boardSize }),
+          body: JSON.stringify({ userId: resolvedUserId, gameMode, botMode, boardSize }),
         });
         const data = await res.json();
 
@@ -100,14 +112,16 @@ const GameBoard: React.FC = () => {
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
+      // userId real — el gateway lo sobreescribe desde el JWT de todas formas,
+      // pero lo mandamos para que game-service pueda identificar al jugador 1
       const validateRes = await fetch(
-          `${API_URL}/api/game/${gameState.gameId}/validateMove`,
-          {
-            method: "POST",
-            credentials: 'include',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: "j1", move: position }),
-          }
+        `${API_URL}/api/game/${gameState.gameId}/validateMove`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, move: position }),
+        }
       );
       const validateData = await validateRes.json();
 
@@ -127,9 +141,9 @@ const GameBoard: React.FC = () => {
 
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "j1", move: position, mode: gameMode }),
+        body: JSON.stringify({ userId, move: position, mode: gameMode }),
       });
       const moveData = await moveRes.json();
 
@@ -140,7 +154,7 @@ const GameBoard: React.FC = () => {
         winner:  moveData.winner,
         status:  moveData.status,
         players: prev.players.map(p =>
-            p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+          p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
         ),
         botPlaying: false,
       }));
@@ -154,87 +168,87 @@ const GameBoard: React.FC = () => {
   const player2 = gameState.players[1] || { id: "bot",      name: "Bot",     points: 0 };
 
   return (
-      <div className="game-bg min-h-screen flex flex-col">
+    <div className="game-bg min-h-screen flex flex-col">
 
-        {/* ── Header ─────────────────────────────────────── */}
-        <header className="gb-header">
-          <span className="gb-header-logo">YOVI</span>
+      {/* ── Header ─────────────────────────────────────── */}
+      <header className="gb-header">
+        <span className="gb-header-logo">YOVI</span>
 
-          <div className="gb-header-status">
-            {gameState.status === "finished" ? (
-                <span className="gb-status-winner">
+        <div className="gb-header-status">
+          {gameState.status === "finished" ? (
+            <span className="gb-status-winner">
               🏆 {gameState.winner === "j1" ? player1.name : player2.name} gana
             </span>
-            ) : gameState.botPlaying ? (
-                <span className="gb-status-thinking">
+          ) : gameState.botPlaying ? (
+            <span className="gb-status-thinking">
               <span>Bot pensando</span>
               <span className="gb-thinking-dots">
                 {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />)}
               </span>
             </span>
-            ) : (
-                <span className="gb-status-turn">
+          ) : (
+            <span className="gb-status-turn">
               Turno:{" "}
-                  <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
+              <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
                 {gameState.turn === "j1" ? player1.name : player2.name}
               </span>
             </span>
-            )}
-          </div>
+          )}
+        </div>
 
-          <span className="gb-header-meta">
+        <span className="gb-header-meta">
           {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
         </span>
-        </header>
+      </header>
 
-        {/* ── Área principal ─────────────────────────────── */}
-        <main className="gb-main">
+      {/* ── Área principal ─────────────────────────────── */}
+      <main className="gb-main">
 
-          <aside className="gb-player-aside">
-            <Jugador
-                name={player1.name}
-                imgSrc="logo.png"
-                points={player1.points}
-                isActive={gameState.turn === "j1" && !gameState.botPlaying}
-                color="violet"
-            />
-          </aside>
+        <aside className="gb-player-aside">
+          <Jugador
+            name={player1.name}
+            imgSrc="logo.png"
+            points={player1.points}
+            isActive={gameState.turn === "j1" && !gameState.botPlaying}
+            color="violet"
+          />
+        </aside>
 
-          <section className="gb-board-section">
-            {gameState.gameId ? (
-                <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
-            ) : (
-                <div className="gb-loading">
-                  <div className="gb-loading-dots">
-                    {[0,1,2].map(i => (
-                        <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
-                    ))}
-                  </div>
-                  <span className="gb-loading-text">Iniciando partida</span>
-                </div>
-            )}
-          </section>
+        <section className="gb-board-section">
+          {gameState.gameId ? (
+            <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
+          ) : (
+            <div className="gb-loading">
+              <div className="gb-loading-dots">
+                {[0,1,2].map(i => (
+                  <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
+                ))}
+              </div>
+              <span className="gb-loading-text">Iniciando partida</span>
+            </div>
+          )}
+        </section>
 
-          <aside className="gb-player-aside">
-            <Jugador
-                name={player2.name}
-                imgSrc="logo.png"
-                points={player2.points}
-                isActive={gameState.turn === "j2" && !gameState.botPlaying}
-                isPlaying={gameState.botPlaying}
-                color="coral"
-            />
-          </aside>
+        <aside className="gb-player-aside">
+          <Jugador
+            name={player2.name}
+            imgSrc="logo.png"
+            points={player2.points}
+            isActive={gameState.turn === "j2" && !gameState.botPlaying}
+            isPlaying={gameState.botPlaying}
+            color="coral"
+          />
+        </aside>
 
-        </main>
+      </main>
 
-        {/* ── Footer ─────────────────────────────────────── */}
-        <footer className="gb-footer">
+      {/* ── Footer ─────────────────────────────────────── */}
+      <footer className="gb-footer">
         <span className="gb-footer-text">
           {botMode.replace("_", " ")} · tablero {boardSize}× · {gameMode}
         </span>
-        </footer>
-      </div>
+      </footer>
+    </div>
   );
 };
 
