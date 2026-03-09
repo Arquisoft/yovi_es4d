@@ -130,6 +130,14 @@ app.post("/api/user/getUserProfile", async (req, res) => {
 
     res.json(response.data);
 
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || "Internal server error",
+    });
+  }
+});
+s
 
 // ================= GAME =================
 
