@@ -95,7 +95,7 @@ describe('GameBoard', () => {
 
     test('muestra el botMode y gameMode en el footer', async () => {
         renderGame()
-        expect(await screen.findByText(/random bot · vsbot/i)).toBeInTheDocument()
+        expect(await screen.findByText(/random bot · tablero 11× · vsbot/i)).toBeInTheDocument()
     })
 
     // ── Turno ────────────────────────────────────────────────
