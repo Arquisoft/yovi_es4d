@@ -45,6 +45,16 @@ app.use(cors());
 app.use(express.json());
 const games = new Map();
 
+const BOT_ROUTES = {
+  random_bot:       '/v1/ybot/choose/random_bot',
+  intermediate_bot: '/v1/ybot/choose/intermediate_bot',
+  hard_bot:      '/v1/ybot/choose/hard_bot',
+};
+
+app.get('/api/game/bot-modes', (req, res) => {
+  res.json({ botModes: Object.keys(BOT_ROUTES) });
+});
+
 /**
  * Endpoint for the history of games of a user.
  * @route {GET} /api/game/history?userId=...
