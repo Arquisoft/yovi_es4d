@@ -45,6 +45,7 @@ app.use(cors());
 app.use(express.json());
 const games = new Map();
 
+// Rutas de bots disponibles
 const BOT_ROUTES = {
   random_bot:       '/v1/ybot/choose/random_bot',
   intermediate_bot: '/v1/ybot/choose/intermediate_bot',
