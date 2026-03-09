@@ -40,16 +40,10 @@ ifndef::imagesdir[:imagesdir: ../images]
 |===
 | Deuda | Explicación detallada
 
-| Deuda técnica 1
-| Explicación detallada de la deuda técnica 1.
-
-| Deuda técnica 2
-| Explicación detallada de la deuda técnica 2.
-
+| Authuser y userService comparten base de datos
+| Actualmente, tanto authuser como userService comparten la misma base de datos, lo que podría generar problemas de seguridad y escalabilidad en el futuro.
 
 |===
-
-En desarrollo...
 
 
 ifdef::arc42help[]

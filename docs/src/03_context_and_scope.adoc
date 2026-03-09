@@ -73,6 +73,10 @@ Realiza acciones como iniciar sesión, jugar al juego, consultar el historial de
 | Base de datos de usuarios. +
 Gestiona registro, inicio y cierre de sesión.
 
+| GameDB
+| Base de datos de las partidas. +
+Gestiona los datos cuando se juega una partida.
+
 | Yovi
 | Aplicación principal para mostrar el juego.
 
@@ -108,6 +112,9 @@ Se conecta a través del navegador web a la aplicación Yovi.
 | UserDB
 | Base de datos hecha en MondoDB, donde, por ahora, se guardan los datos de los usuarios.
 
+| GameDB
+| Base de datos hecha en MondoDB, donde, se guardan los datos de las partidas.
+
 | Microservicios
 | Son los diferentes microservicios que componen el sistema, cada uno con su función específica.
 
@@ -125,6 +132,10 @@ Se conecta a través del navegador web a la aplicación Yovi.
 
 | UserDB
 | Pueden ser consultas variadas, como pueden ser datos del usuario, o inserciones, como el registro de un nuevo usuario.
+| Los resultados de esas consultas o de las inserciones.
+
+| GameDB
+| Pueden ser consultas variadas, como pueden ser datos de las partidas, o inserciones, como el registro de una nueva partida.
 | Los resultados de esas consultas o de las inserciones.
 
 
