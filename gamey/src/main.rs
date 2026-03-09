@@ -8,7 +8,7 @@ use gamey::core::movement::Movement;
 use gamey::core::game::GameStatus;
 use std::sync::{Arc, Mutex};
 mod bot;
-use crate::bot::{RandomBot, IntermediateBot, YBotRegistry, YBot};
+use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
 
 /* =========================
    STRUCTS (lo que recibimos)
@@ -313,6 +313,14 @@ pub async fn bot_move_intermediate(
     execute_bot_move("intermediate_bot", state, registry).await
 }
 
+// 🧠 Movimiento del HardBot
+pub async fn bot_move_hard(
+    state: web::Data<Mutex<Option<GameY>>>,
+    registry: web::Data<Arc<YBotRegistry>>,
+) -> HttpResponse {
+    execute_bot_move("hard_bot", state, registry).await
+}
+
 /* =========================
    MAIN
    ========================= */
@@ -326,7 +334,8 @@ async fn main() -> std::io::Result<()> {
     let registry = Arc::new(
         YBotRegistry::new()
             .with_bot(Arc::new(RandomBot))
-            .with_bot(Arc::new(IntermediateBot)),  // ← nuevo bot registrado
+            .with_bot(Arc::new(IntermediateBot))  // ← nuevo bot registrado
+            .with_bot(Arc::new(HardBot)),
     );
     let shared_registry = web::Data::new(registry);
 
@@ -341,6 +350,7 @@ async fn main() -> std::io::Result<()> {
             // Bots
             .route("/v1/ybot/choose/random_bot",       web::post().to(bot_move_random))
             .route("/v1/ybot/choose/intermediate_bot", web::post().to(bot_move_intermediate))
+            .route("/v1/ybot/choose/hard_bot", web::post().to(bot_move_hard))
     })
         .bind("0.0.0.0:3001")?
         .run()
