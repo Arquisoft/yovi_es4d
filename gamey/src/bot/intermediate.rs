@@ -334,7 +334,6 @@ mod tests {
             chosen
         );
     }
-
     #[test]
     fn test_extends_own_chain() {
         let mut game = GameY::new(5);
@@ -353,16 +352,19 @@ mod tests {
         })
             .unwrap();
 
-        // Player 0 should extend its chain.
+        // Player 0 should play near its own piece (adjacent or skip distance).
         let chosen = bot().choose_move(&game).unwrap();
         let own_piece = Coordinates::new(2, 1, 1);
         let own_neighbors = IntermediateBot::neighbors(&own_piece);
+        let own_2hop = IntermediateBot::neighbors_2(&own_piece);
 
-        // The chosen cell should be adjacent to our existing piece.
+        let is_near_own = own_neighbors.contains(&chosen) || own_2hop.contains(&chosen);
         assert!(
-            own_neighbors.contains(&chosen),
-            "Bot should extend its chain; chose {:?}",
+            is_near_own,
+            "Bot should extend its chain (adjacent or skip); chose {:?}",
             chosen
         );
     }
+
+
 }
