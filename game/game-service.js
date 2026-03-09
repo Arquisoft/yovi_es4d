@@ -60,7 +60,7 @@ app.post('/api/game/start', async (req, res) => {
     if (gameMode === 'vsBot') getBotRoute(botMode); // lanza si es inválido
 
     // Solo se permiten tamaños predefinidos; cualquier otro cae a 11
-    const ALLOWED_BOARD_SIZES = [11, 15, 19];
+    const ALLOWED_BOARD_SIZES = [8, 11, 15, 19];
     const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
         ? Number(rawBoardSize)
         : 11;

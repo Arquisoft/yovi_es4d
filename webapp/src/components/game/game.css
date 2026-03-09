@@ -66,7 +66,7 @@
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.fade-up { animation: fadeUp 0.5s ease both; }
+.fade-up { animation:fadeUp 0s ease both; }
 
 /* ── Dots bot pensando ───────────────────────────────────── */
 @keyframes thinking {
@@ -145,7 +145,7 @@
     padding: 14px 18px;
     border-radius: 14px;
     border: 2px solid var(--border);
-    background: var(--surface);
+    background: #ffffff !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     cursor: pointer;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -153,12 +153,14 @@
     align-items: center;
     gap: 14px;
 }
-.ms-mode-card:hover {
-    border-color: var(--border-hover);
-    box-shadow: 0 4px 16px rgba(124,111,247,0.10);
+.ms-mode-card:hover:not(.selected) {
+    border-color: transparent;
+    background: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 .ms-mode-card.selected {
     border-color: var(--violet);
+    background: #ffffff !important;
     box-shadow: 0 4px 20px rgba(124,111,247,0.15);
 }
 
@@ -226,7 +228,7 @@
 /* ── Grid de tamaños de tablero ── */
 .ms-size-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     margin-bottom: 32px;
 }
@@ -236,17 +238,19 @@
     padding: 14px 10px;
     border-radius: 14px;
     border: 2px solid var(--border);
-    background: var(--surface);
+    background: #ffffff !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     cursor: pointer;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.ms-size-card:hover {
-    border-color: var(--border-hover);
-    box-shadow: 0 4px 16px rgba(124,111,247,0.10);
+.ms-size-card:hover:not(.selected) {
+    border-color: transparent;
+    background: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 .ms-size-card.selected {
     border-color: var(--violet);
+    background: #ffffff !important;
     box-shadow: 0 4px 20px rgba(124,111,247,0.15);
 }
 
@@ -505,3 +509,18 @@
 .player-score.active-coral  { color: var(--coral); }
 
 .player-thinking { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+
+/* ── Bloqueo definitivo de estilos globales en nuestras cards ── */
+.ms-mode-card,
+.ms-mode-card:hover,
+.ms-mode-card:focus,
+.ms-mode-card:active,
+.ms-mode-card.selected,
+.ms-size-card,
+.ms-size-card:hover,
+.ms-size-card:focus,
+.ms-size-card:active,
+.ms-size-card.selected {
+    background-color: #ffffff !important;
+    outline: none !important;
+}

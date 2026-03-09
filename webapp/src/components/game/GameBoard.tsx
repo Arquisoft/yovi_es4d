@@ -43,6 +43,9 @@ const GameBoard: React.FC = () => {
     boardSize = 11,
   } = (location.state as LocationState) ?? {};
 
+
+
+
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     hexData: [],
