@@ -7,10 +7,11 @@ import GameOver from './components/GameOver';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from "./pages/Dashboard";
+import ModeSelector from "./components/game/ModeSelector";
+
 import { RouterProvider } from 'react-router-dom';
 import router from './routers/index';
 function App() {
-  
   return <RouterProvider router={router} />;
 }
 

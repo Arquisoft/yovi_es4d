@@ -25,26 +25,26 @@ const GameOver: React.FC = () => {
 
   return (
     <div className="gameover-container">
-      {/* Título */}
+      {/* Título /}
       <h1 className="gameover-title">
         🏆 {gameState.winner === "j1" ? player1.name : player2.name} {t("gameOver.hasWon")}!
       </h1>
 
-      {/* Contenido principal: jugadores a la izquierda, tablero a la derecha */}
+      {/ Contenido principal: jugadores a la izquierda, tablero a la derecha /}
       <div className="gameover-content">
-        {/* Panel de jugadores */}
+        {/ Panel de jugadores /}
         <div className="gameover-players">
           <Jugador name={player1.name} imgSrc="logo.png" points={player1.points} />
           <Jugador name={player2.name} imgSrc="logo.png" points={player2.points} />
         </div>
 
-        {/* Tablero */}
+        {/ Tablero /}
         <div className="gameover-board">
           <Triangle hexData={gameState.hexData} onHexClick={() => {}} scale={1} />
         </div>
       </div>
 
-      {/* Botón */}
+      {/ Botón */}
       <button
         className="gameover-button"
         onClick={() => navigate("/")}

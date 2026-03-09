@@ -13,7 +13,7 @@ export default function StartScreen() {
 
   const handlePlayClick = () => {
     if (user && (user.id || user.userId || user._id)) {
-      navigate('/game');
+      navigate('/select');
     } else {
       navigate('/login');
     }
