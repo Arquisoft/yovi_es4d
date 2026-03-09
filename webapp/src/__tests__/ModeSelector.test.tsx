@@ -30,7 +30,7 @@ describe('ModeSelector', () => {
     // ── Renderizado ──────────────────────────────────────────
     test('muestra el título de la pantalla', async () => {
         renderSelector()
-        expect(await screen.findByText('Elige la dificultad')).toBeInTheDocument()
+        expect(await screen.findByText('Configura la partida')).toBeInTheDocument()
     })
 
     test('muestra el badge "Nueva partida"', async () => {
@@ -40,7 +40,7 @@ describe('ModeSelector', () => {
 
     test('muestra el subtítulo de selección', async () => {
         renderSelector()
-        expect(await screen.findByText(/selecciona el nivel de dificultad/i)).toBeInTheDocument()
+        expect(await screen.findByText(/elige dificultad y tamaño del tablero/i)).toBeInTheDocument()
     })
 
     // ── Carga de bot modes ───────────────────────────────────
@@ -50,10 +50,10 @@ describe('ModeSelector', () => {
         expect(screen.getByText('Intermedio')).toBeInTheDocument()
     })
 
-    test('muestra los tags de dificultad de cada modo', async () => {
+    test('muestra las descripciones de cada modo', async () => {
         renderSelector()
-        expect(await screen.findByText('Fácil')).toBeInTheDocument()
-        expect(screen.getByText('Medio')).toBeInTheDocument()
+        expect(await screen.findByText(/se comporta de manera aleatoria/i)).toBeInTheDocument()
+        expect(screen.getByText(/evalúa el tablero/i)).toBeInTheDocument()
     })
 
     test('muestra random_bot como fallback si la API falla', async () => {
@@ -65,11 +65,11 @@ describe('ModeSelector', () => {
     test('muestra el nombre del modo si no tiene meta definida', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ botModes: ['random_bot', 'intermediate_bot', 'hard_bot'] }),
+            json: async () => ({ botModes: ['random_bot', 'intermediate_bot', 'unknown_bot'] }),
         } as Response)
         renderSelector()
-        // hard_bot no tiene meta en BOT_MODE_META, se muestra la key directamente
-        expect(await screen.findByText('hard_bot')).toBeInTheDocument()
+        // unknown_bot no tiene meta en BOT_MODE_META, se muestra la key directamente
+        expect(await screen.findByText('unknown_bot')).toBeInTheDocument()
     })
 
     // ── Estado de carga ──────────────────────────────────────
@@ -95,17 +95,16 @@ describe('ModeSelector', () => {
         expect(botonesMode[0]).toBeInTheDocument()
     })
 
-    test('selecciona intermediate_bot al hacer click y cambia el estilo del radio', async () => {
+    test('selecciona intermediate_bot al hacer click y aplica la clase selected', async () => {
         const user = userEvent.setup()
         renderSelector()
 
         await screen.findByText('Intermedio')
-        await user.click(screen.getByText('Intermedio').closest('button')!)
+        const btn = screen.getByText('Intermedio').closest('button')!
+        await user.click(btn)
 
-        // Tras el click, el nombre del modo seleccionado aparece en color violeta (#7c6ff7)
         await waitFor(() => {
-            const label = screen.getByText('Intermedio')
-            expect(label).toHaveStyle({ color: 'rgb(124, 111, 247)' })
+            expect(btn).toHaveClass('selected')
         })
     })
 
@@ -119,7 +118,7 @@ describe('ModeSelector', () => {
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/game', {
-                state: { gameMode: 'vsBot', botMode: 'random_bot' },
+                state: { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11 },
             })
         })
     })
@@ -134,7 +133,7 @@ describe('ModeSelector', () => {
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/game', {
-                state: { gameMode: 'vsBot', botMode: 'intermediate_bot' },
+                state: { gameMode: 'vsBot', botMode: 'intermediate_bot', boardSize: 11 },
             })
         })
     })
