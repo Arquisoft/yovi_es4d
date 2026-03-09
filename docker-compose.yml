@@ -1,73 +1,143 @@
+version: "3.9"
+
 services:
   mongodb:
+    container_name: mongodb_es4d
     image: mongo:latest
-    container_name: mongodb
+    profiles: ["dev", "prod"]
+    volumes:
+      - mongodb_data:/data/db
     ports:
       - "27017:27017"
     networks:
-      - monitor-net
-    volumes:
-      - mongo-data:/data/db
+      - es4d-net
 
-  users:
-    build: ./users
-    container_name: users
-    image: ghcr.io/arquisoft/yovi_0-users:latest
-    environment:
-      - MONGODB_URI=mongodb://mongodb:27017/usersdb
-    ports:
-      - "3000:3000"
+  authservice:
+    container_name: authservice_es4d
+    build: ./users/authservice
+    profiles: ["dev", "prod"]
+    env_file:
+      - .env
     depends_on:
       - mongodb
-    networks:
-      - monitor-net
-
-  webapp:
-    build:
-      context: ./webapp
-      args:
-        - VITE_API_URL=http://localhost:3000
-    container_name: webapp
-    image: ghcr.io/arquisoft/yovi_0-webapp:latest
     ports:
-      - "80:80"
-    depends_on:
-      - users
+      - "8002:8002"
     networks:
-      - monitor-net
+      - es4d-net
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/authdb
+      JWT_SECRET: mi_clave_secreta
+
+  userservice:
+    container_name: userservice_es4d
+    build: ./users/userservice
+    profiles: ["dev", "prod"]
+    depends_on:
+      - mongodb
+    ports:
+      - "8001:8001"
+    networks:
+      - es4d-net
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/usersdb
 
   gamey:
+    container_name: gamey_es4d
     build: ./gamey
-    container_name: gamey
-    image: ghcr.io/arquisoft/yovi_0-gamey:latest
+    profiles: ["dev", "prod"]
     ports:
       - "4000:4000"
     networks:
-      - monitor-net
+      - es4d-net
+    environment:
+      PORT: 4000
+
+  game:
+    container_name: game_es4d
+    build: ./game
+    profiles: ["dev", "prod"]
+    ports:
+      - "8003:8003"
+    networks:
+      - es4d-net
+    environment:
+      PORT: 8003
+      MONGODB_URI: mongodb://mongodb:27017/gamedb
+      GAMEY_BOT_URL: http://gamey:4000
+      USERS_URL: http://userservice:8001
+    depends_on:
+      - userservice
+      - gamey
+
+  gateway:
+    container_name: gateway_es4d
+    build: ./gateway
+    profiles: ["dev", "prod"]
+    depends_on:
+      - authservice
+      - userservice
+      - game
+    ports:
+      - "8000:8000"
+    networks:
+      - es4d-net
+    environment:
+      AUTH_SERVICE_URL: http://authservice:8002
+      USER_SERVICE_URL: http://userservice:8001
+      GAME_SERVICE_URL: http://game:8003
+      TOKEN_SECRET_KEY: mi_clave_secreta
+
+  webapp:
+    container_name: webapp_es4d
+    build: ./webapp
+    profiles: ["dev", "prod"]
+    depends_on:
+      - gateway
+    ports:
+      - "5173:80"
+    networks:
+      - es4d-net
+    environment:
+      VITE_API_URL: http://gateway:8000
 
   prometheus:
     image: prom/prometheus
-    container_name: prometheus
+    container_name: prometheus_es4d
+    profiles: ["dev"]
+    networks:
+      - es4d-net
+    volumes:
+      - ./gateway/monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
-    volumes:
-      - ./users/monitoring/prometheus:/etc/prometheus
-    networks:
-      - monitor-net
+    depends_on:
+      - gateway
 
   grafana:
     image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "9091:3000"
-    volumes:
-      - ./users/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    container_name: grafana_es4d
+    profiles: ["dev"]
     networks:
-      - monitor-net
-
-networks:
-  monitor-net:
-    driver: bridge
+      - es4d-net
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./gateway/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SERVER_HTTP_PORT=9091
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "9091:9091"
+    depends_on:
+      - prometheus
 
 volumes:
-  mongo-data:
+  mongodb_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  es4d-net:
+    driver: bridge

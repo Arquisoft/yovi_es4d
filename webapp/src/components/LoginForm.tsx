@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { login } from '../services/userService';
 import { useNavigate } from "react-router-dom";
-
+import { useTranslation } from '../i18n';
+import { AuthContext } from "../context/AuthContext";
 
 
 const LoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
+  const { checkAuth } = useContext(AuthContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +20,12 @@ const LoginForm: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ username, password });
-
-      navigate("/dashboard");
+      await login({ email, password });
+      await checkAuth(); // Actualiza el contexto con la nueva sesión
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -30,32 +33,32 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <h2>Iniciar Sesión</h2>
+      <h2>{t("menu.initsession")}</h2>
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
-          <label htmlFor="username">Email:</label>
+          <label htmlFor="email">{t("registerForm.email")}:</label>
           <input
-            id="username"
-            type="text"
-            placeholder="Introduce tu email "
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            type="email"
+            placeholder={t("registerForm.enterEmail")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Contraseña:</label>
+          <label htmlFor="password">{t("registerForm.password")}:</label>
           <input
             id="password"
             type="password"
             value={password}
-            placeholder="Introduce tu contraseña "
+            placeholder={t("registerForm.enterPassword")}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? 'Cargando...' : 'Entrar'}
+          {loading ? t("registerForm.loading") : t("registerForm.enter")}
         </button>
         {error && <p className="error-message">{error}</p>}
       </form>

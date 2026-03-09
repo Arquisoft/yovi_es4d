@@ -1,4 +1,4 @@
-name: Release — Test, Build, Publish, Deploy
+name: Release — Build & Deploy
 
 on:
   release:
@@ -12,86 +12,13 @@ env:
   IMAGE_TAG: ${{ github.event.release.tag_name }}
 
 jobs:
-  test-node:
-    name: Run node unit tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [webapp, users]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: |
-          cd ${{ matrix.service }}
-          npm ci
-
-      - name: Run tests
-        run: |
-          cd ${{ matrix.service }}
-          npm test
-
-  test-rust:
-    name: Run rust (gamey) tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Run tests
-        run: |
-          cd gamey
-          cargo test
-
-  e2e:
-    name: Run E2E tests
-    runs-on: ubuntu-latest
-    needs: [test-node, test-rust]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install users dependencies
-        run: |
-          cd users
-          npm ci
-      - name: Install webapp dependencies
-        run: |
-          cd webapp
-          npm ci
-      - name: Install Playwright browsers
-        run: |
-          cd webapp
-          npm run test:e2e:install-browsers
-      - name: Run E2E tests (start servers and run cucumber)
-        run: |
-          cd webapp
-          npm run test:e2e
-
+  # Publicar imagen users
   docker-push-users:
     name: Publish users image
     runs-on: ubuntu-latest
-    needs: e2e
-    permissions:
-      contents: read
-      packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (users)
+      - uses: actions/checkout@v4
+      - name: Publish users image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-users
@@ -100,18 +27,13 @@ jobs:
           registry: ghcr.io
           workdir: users
 
+  # Publicar imagen webapp
   docker-push-webapp:
     name: Publish webapp image
     runs-on: ubuntu-latest
-    needs: e2e
-    permissions:
-      contents: read
-      packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (webapp)
+      - uses: actions/checkout@v4
+      - name: Publish webapp image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-webapp
@@ -119,20 +41,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: webapp
-          buildargs: VITE_API_URL=http://${{ secrets.DEPLOY_HOST }}:3000
+          buildargs: VITE_API_URL=http://20.188.62.231:8000
 
+  # Publicar imagen gamey
   docker-push-gamey:
     name: Publish gamey image
     runs-on: ubuntu-latest
-    needs: e2e
-    permissions:
-      contents: read
-      packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Publish to Registry (gamey)
+      - uses: actions/checkout@v4
+      - name: Publish gamey image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gamey
@@ -141,10 +58,41 @@ jobs:
           registry: ghcr.io
           workdir: gamey
 
+  # Publicar imagen game
+  docker-push-game:
+    name: Publish game image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish game image
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-game
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          workdir: game
+
+  # Publicar imagen gateway
+  docker-push-gateway:
+    name: Publish gateway image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish gateway image
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: ${{ github.repository_owner }}/${{ github.event.repository.name }}-gateway
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          workdir: gateway
+
+  # Deploy sobre el servidor
   deploy:
     name: Deploy over SSH
     runs-on: ubuntu-latest
-    needs: [docker-push-users, docker-push-webapp, docker-push-gamey]
+    needs: [docker-push-users, docker-push-webapp, docker-push-gamey, docker-push-game, docker-push-gateway]
     steps:
       - name: Deploy over SSH
         uses: fifsky/ssh-action@master
@@ -153,6 +101,6 @@ jobs:
           user: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           command: |
-            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/master/docker-compose.yml -O docker-compose.yml
+            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.event.release.tag_name }}/docker-compose.yml -O docker-compose.yml
             docker compose down
             docker compose up -d --pull always

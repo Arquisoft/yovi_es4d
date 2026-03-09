@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 type Props = {
   text: string;
-  speed?: number; // ms per character
+  speed?: number;
   tag?: string;
   className?: string;
 };
@@ -22,7 +22,7 @@ export default function Typing({ text, speed = 60, tag = 'h2', className = 'typi
     <Tag
       className={className}
       aria-live="polite"
-      // Add inline wrapping styles so the component never overflows the viewport
+
       style={{
         whiteSpace: 'pre-wrap',
         overflowWrap: 'anywhere',

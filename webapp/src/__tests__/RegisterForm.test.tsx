@@ -1,46 +1,257 @@
-import { render, screen,  waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RegisterForm from '../components/RegisterForm'
-import { afterEach, describe, expect, test, vi } from 'vitest' 
+import resources from '../i18n/resources'
+import { I18nProvider } from '../i18n'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import '@testing-library/jest-dom'
+import * as userService from '../services/userService'
 
+// mock the navigation hook so we can assert redirection
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  ...vi.importActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}))
+
+// mock the register service
+vi.mock('../services/userService', () => ({
+  register: vi.fn(),
+}))
+
+// after mocking we can grab the mock reference
+const mockedRegister = userService.register as unknown as ReturnType<typeof vi.fn>
+
+const renderForm = () =>
+  render(
+    <I18nProvider defaultLang="es" resources={resources}>
+      <RegisterForm />
+    </I18nProvider>
+  )
 
 describe('RegisterForm', () => {
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.clearAllMocks()
   })
 
-  test('shows validation error when username is empty', async () => {
-    render(<RegisterForm />)
+  test('renders register form correctly', () => {
+      renderForm()
+  
+      expect(screen.getByLabelText(/Nombre de usuario:/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Correo electrónico:/i)).toBeInTheDocument()
+      expect(screen.getByTestId('password-input')).toBeInTheDocument()
+      expect(screen.getByTestId('repassword-input')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeInTheDocument()
+    })
+
+    test('shows error message when register fails', async () => {
+      mockedRegister.mockRejectedValue({
+        response: { data: { error: 'Usuario ya existe' } },
+      });
+
+      renderForm();
+      const user = userEvent.setup();
+
+      await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'pablo');
+      await user.type(screen.getByLabelText(/Correo electrónico:/i), 'pablo@example.com');
+      await user.type(screen.getByTestId('password-input'), 'Password1');
+      await user.type(screen.getByTestId('repassword-input'), 'Password1');
+
+      await user.click(screen.getByRole('button', { name: /registrarse/i }));
+
+      const errorMessage = await screen.findByText('Usuario ya existe');
+      expect(errorMessage).toBeInTheDocument();
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    test('shows error message when register fails with err.message', async () => {
+      mockedRegister.mockRejectedValue(new Error('Error de red'));
+
+      renderForm();
+      const user = userEvent.setup();
+
+      await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'pablo');
+      await user.type(screen.getByLabelText(/Correo electrónico:/i), 'pablo@example.com');
+      await user.type(screen.getByTestId('password-input'), 'Password1');
+      await user.type(screen.getByTestId('repassword-input'), 'Password1');
+
+      await user.click(screen.getByRole('button', { name: /registrarse/i }));
+
+      const errorMessage = await screen.findByText('Error de red');
+      expect(errorMessage).toBeInTheDocument();
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+  
+    test('allows user to type email and password', async () => {
+      renderForm()
+      const user = userEvent.setup()
+  
+      const usernameInput = screen.getByLabelText(/Nombre de usuario:/i)
+      const emailInput = screen.getByLabelText(/Correo electrónico:/i)
+      const passwordInput = screen.getByTestId('password-input')
+      const repasswordInput = screen.getByTestId('repassword-input')
+  
+      await user.type(usernameInput, 'prueba')
+      await user.type(emailInput, 'test@example.com')
+      await user.type(passwordInput, 'Password1')
+      await user.type(repasswordInput, 'Password1')
+  
+      expect(usernameInput).toHaveValue('prueba')
+      expect(emailInput).toHaveValue('test@example.com')
+      expect(passwordInput).toHaveValue('Password1')
+      expect(repasswordInput).toHaveValue('Password1')
+    })
+
+  test('shows username validation error if username is too short', async () => {
+    renderForm()
     const user = userEvent.setup()
 
-    const submitButton = screen.getByRole('button', { name: /registrarse/i })
-    await user.click(submitButton)
-    // In current implementation, HTML5 'required' might prevent submission if empty, 
-    // but the test expects an error message if it were submitted.
-    // However, the current RegisterForm doesn't have custom client-side validation for empty fields beyond 'required'.
-    // If 'required' is present, the browser handles it.
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'ab')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password1')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorUsername/i)).toBeInTheDocument()
   })
 
-  test('submits registration and displays success message', async () => {
+  test('shows username validation error if username is empty', async () => {
+    renderForm()
     const user = userEvent.setup()
 
-    // Mock fetch to resolve automatically
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ message: '¡Usuario registrado con éxito!' }),
-    } as Response)
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), ' ')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password1')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    render(<RegisterForm />)
+    expect(await screen.findByText(/registerForm\.errorUsername/i)).toBeInTheDocument()
+  })
 
-    await user.type(screen.getByLabelText(/usuario:/i), 'Pablo')
-    await user.type(screen.getByLabelText(/email:/i), 'pablo@example.com')
-    await user.type(screen.getByLabelText(/contraseña:/i), 'password123')
-    
+  test('shows email validation error', async () => {
+    renderForm()
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'invalidemail')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password1')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorEmail/i)).toBeInTheDocument()
+  })
+
+  test('shows email validation error when the email is empty', async () => {
+    renderForm()
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), ' ')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password1')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorEmail/i)).toBeInTheDocument()
+  })
+
+  test('shows password content validation error when it is too short', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'aa')
+    await user.type(screen.getByTestId('repassword-input'), 'aa')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+  })
+
+  test('shows password content validation error when it does not have UpperCase && not Numbers', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'pruebasinmayusculas')
+    await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+  })
+
+  test('shows password content validation error when it does not have Numbers', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'pruebasinmayusculasAAA')
+    await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculasAAA')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+  })
+
+  test('shows password content validation error when it does not have UperCase', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'pruebasinmayusculas123')
+    await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas123')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+  })
+
+  test('shows password content validation error when it does have white spaces', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'pruebasinmayusculas AAA123')
+    await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas AAA123')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+  })
+
+  test('shows mismatch error when passwords differ', async () => {
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'test@example.com')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password123445')
+    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+
+    expect(await screen.findByText(/contraseñas no coinciden/i)).toBeInTheDocument()
+  })
+
+  test('calls register and navigates on successful submit', async () => {
+    mockedRegister.mockResolvedValue({})
+
+    renderForm()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'pablo')
+    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'pablo@example.com')
+    await user.type(screen.getByTestId('password-input'), 'Password1')
+    await user.type(screen.getByTestId('repassword-input'), 'Password1')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/¡usuario registrado con éxito!/i)).toBeInTheDocument()
+      expect(mockedRegister).toHaveBeenCalledWith({
+        username: 'pablo',
+        email: 'pablo@example.com',
+        password: 'Password1',
+      })
+      expect(mockNavigate).toHaveBeenCalledWith('/login')
+      expect(screen.getByText(/registro exitoso/i)).toBeInTheDocument()
     })
   })
 })

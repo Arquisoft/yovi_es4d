@@ -1,0 +1,171 @@
+/* ========================= */
+/* HISTORIAL PAGE (Scroll general + Glass) */
+/* ========================= */
+.historial-page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  color: rgba(255,255,255,0.95);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  /* Scroll general */
+  min-height: 100vh;          /* ocupa al menos toda la altura de la ventana */
+  overflow-y: auto;           /* activa scroll cuando el contenido excede */
+  scrollbar-width: thin;       /* Firefox */
+  scrollbar-color: rgba(0,149,255,0.6) rgba(255,255,255,0.05);
+}
+
+/* Scrollbar Chrome, Edge, Safari */
+.historial-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.historial-page::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+
+.historial-page::-webkit-scrollbar-thumb {
+  background: rgba(0,149,255,0.6);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.historial-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,149,255,0.8);
+}
+
+/* Header */
+.historial-page header h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(90deg,#ffffff 0%, #0095ff 45%, #0004ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+  animation: hero-move 4.5s ease-in-out infinite;
+}
+
+/* Summary box */
+.historial-summary {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.historial-summary h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.historial-summary div {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Games list */
+.historial-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historial-list li {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  backdrop-filter: blur(12px);
+}
+
+.historial-list li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+  background: rgba(255,255,255,0.09);
+}
+
+/* Grid inside each game item */
+.historial-list li > div:first-child {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Details section */
+.historial-list details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.historial-list details[open] summary::after {
+  content: "▲";
+  float: right;
+  margin-left: 8px;
+}
+
+.historial-list details summary::after {
+  content: "▼";
+  float: right;
+  margin-left: 8px;
+}
+
+.historial-list details div {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Error and loading states */
+.historial-page .error-message {
+  color: #ff6b6b;
+  background: rgba(255, 0, 0, 0.08);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,0,0,0.2);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.historial-page .loading-message {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255,255,255,0.85);
+  font-size: 1.1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  .historial-summary div {
+    flex-direction: column;
+  }
+
+  .historial-list li > div:first-child {
+    grid-template-columns: 1fr;
+  }
+}

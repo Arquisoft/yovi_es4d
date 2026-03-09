@@ -14,7 +14,9 @@
     "spanish": "Español",
     "english": "Inglés",
     "team": "yovi_es4d",
-    "selectLanguage": "Seleccionar idioma"
+    "selectLanguage": "Seleccionar idioma",
+    "initsession": "Iniciar sesión",
+    "historial": "Historial"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. Todos los derechos reservados."
@@ -27,6 +29,93 @@
     "description4": "Las esquinas del tablero cuentan como pertenecientes a los dos lados adyacentes, por ejemplo una ficha en la punta del triángulo pertenece a su lado izquierdo y el lado derecho.",
     "wikipedia": "Información sacada de ",
     "wikipediaLink": "Wikipedia"
+  },
+  "profile": {
+    "title": "Perfil de usuario",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "editProfile": "Editar perfil",
+    "password": "Contraseña",
+    "saveChanges": "Guardar cambios",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "register": "Registrarse",
+    "registerTitle": "Registrar",
+    "success": "¡Usuario registrado con éxito!"
+  }
+  ,"users": {
+    "dashboard": "Panel de control",
+    "welcome": "¡Bienvenido, {{name}}!",
+    "email": "Tu correo electrónico: {{email}}",
+    "game": "Ir al juego",
+    "panel": "Panel principal",
+    "auth": "Estás correctamente autenticado.",
+    "session": "Tu sesión se mantiene automáticamente en todas las pestañas.",
+    "account": "¿No tienes cuenta?",
+    "register": "Regístrate aquí",
+    "haveaccount": "¿Ya tienes cuenta?",
+    "login": "Inicia sesión aquí"
+  }, "registerForm": {
+    "title": "Registro",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "repassword": "Confirmar contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "register": "Registrarse",
+    "success": "¡Registro exitoso! Ahora puedes iniciar sesión.",
+    "error": "Error al registrarse. Por favor, inténtalo de nuevo.",
+    "loading": "Cargando...",
+    "enter": "Entrar",
+    "enterEmail": "Introduce tu email",
+    "enterPassword": "Introduce tu contraseña",
+    "enterRepassword": "Confirma tu contraseña",
+    "errorPasswordMatch": "Las contraseñas no coinciden"
+  }, "gameOver": {
+    "title": "¡Juego terminado!",
+    "winner": "El ganador es: {{winner}}",
+    "playAgain": "Jugar de nuevo",
+    "goHome": "Volver al inicio",
+    "noGame": "No hay juego disponible",
+    "hasWon": "ha ganado"
+  }, "gameBoard": {
+    "turn": "Turno",
+    "waiting": "Esperando al oponente...",
+    "yourTurn": "¡Es tu turno!",
+    "botPlaying": "El bot está jugando...",
+    "endGame": "¡Juego terminado! Ganador"
+  }, "editUser": {
+    "title": "Editar Perfil",
+    "email": "Correo electrónico",
+    "username": "Nombre de usuario",
+    "updateUsername": "Actualizar nombre de usuario",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "changePassword": "Cambiar contraseña",
+    "usernameUpdated": "Nombre de usuario actualizado correctamente",
+    "passwordChanged": "Contraseña cambiada correctamente",
+    "passwordMatch": "Las contraseñas no coinciden"
+  }, "historial": {
+    "title": "Historial de partidas",
+    "noGames": "Aún no se han jugado partidas.",
+    "game": "Partida {{index}}: {{result}} contra {{opponent}} el {{date}} ",
+    "moves": "Movimientos: ",
+    "games": "Partidas",
+    "summary": "Resumen de partidas",
+    "totalGames": "Total de partidas: ",
+    "totalWins": "Total de victorias: ",
+    "winPct": "Porcentaje de victorias: ",
+    "date": "Fecha: ",
+    "opponent": "Oponente: ",
+    "result": "Resultado: ",
+    "mode": "Modo: ",
+    "draw": "Empate",
+    "player": "Jugador",
+    "loading": "Cargando historial...",
+    "movesNotAvailable": "Movimientos no disponibles",
+    "table": "Tablero:",
+    "cells": "casillas"
   }
 }
 

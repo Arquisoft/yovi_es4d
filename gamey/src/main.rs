@@ -295,7 +295,7 @@ pub async fn bot_move(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("🚀 Servidor Rust escuchando en http://127.0.0.1:3001");
+    println!("Servidor Rust escuchando en el puerto 3001");
 
     // Usamos Option<GameY> para inicializar vacío
     let shared_game = web::Data::new(Mutex::new(None::<GameY>));
@@ -311,7 +311,7 @@ async fn main() -> std::io::Result<()> {
             .route("/v1/game/end", web::post().to(end_game))
             .route("/v1/ybot/choose/random_bot", web::post().to(bot_move))
     })
-    .bind("127.0.0.1:3001")?
+    .bind("0.0.0.0:3001")?
     .run()
     .await
 }
