@@ -18,9 +18,9 @@ const port = 8000;
 
 
 // URLs for microservices NECESARIO CAMBIAR
-const authServiceUrl =  process.env.authServiceUrl || 'http://localhost:8002';
-const userServiceUrl =  process.env.userServiceUrl || 'http://localhost:8001';
-const gameServiceUrl = process.env.gameServiceUrl || 'http://localhost:8003';
+const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:8002';
+const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8001';
+const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
 
 
 app.use(cors({

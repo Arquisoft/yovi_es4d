@@ -27,7 +27,6 @@ describe('ModeSelector', () => {
         vi.restoreAllMocks()
     })
 
-    // ── Renderizado ──────────────────────────────────────────
     test('muestra el título de la pantalla', async () => {
         renderSelector()
         expect(await screen.findByText('Configura la partida')).toBeInTheDocument()
@@ -74,7 +73,7 @@ describe('ModeSelector', () => {
 
     // ── Estado de carga ──────────────────────────────────────
     test('el botón Jugar está deshabilitado mientras carga', () => {
-        global.fetch = vi.fn(() => new Promise(() => {}))
+        global.fetch = vi.fn(() => new Promise(() => {})) as unknown as typeof fetch
         renderSelector()
         expect(screen.getByRole('button', { name: /jugar/i })).toBeDisabled()
     })

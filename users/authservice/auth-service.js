@@ -11,7 +11,7 @@ const port = 8002;
 app.use(express.json());
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/userdb';
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/usersdb';
 mongoose.connect(mongoUri);
 
 const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
@@ -60,17 +60,21 @@ app.post('/login', loginLimiter, [
       });
     }
 
+    console.log(req.body.email);
     const email = req.body.email.toString();
     const password = req.body.password.toString();
-
+    console.log(email);
     // Find the user by email in the database
     const user = await User.findOne({ email });
-
+    console.log("la que mete el user" + password);
+    console.log("AAAAAAAAAAAAAAAAAAA" + user);
+    console.log("la de la bd de mierda" + user.password);
+    
     // Check if the user exists and verify the password
     if (user && await bcrypt.compare(password, user.password)) {
       // Reset failed attempts on successful login
       failedAttempts.delete(ip);
-
+      
       // Generate a JWT token
       const token = jwt.sign({ userId: user._id }, privateKey, { expiresIn: '1h' });
 
@@ -87,10 +91,12 @@ app.post('/login', loginLimiter, [
       // Increment failed attempts for the IP address
       const entry = failedAttempts.get(ip) || { count: 0, lastAttempt: Date.now() };
       failedAttempts.set(ip, { count: entry.count + 1, lastAttempt: Date.now() });
-      res.status(401).json({ error: 'Invalid credentials' });
+      console.log(res.status(401).json({ error: 'Invalid credentials' }));
+      
     }
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -105,7 +111,9 @@ app.post('/logout', (req, res) => {
 });
 
 // Start the server
-const server = app.listen(port, () => {});
+const server = app.listen(port, () => {
+  console.log(`User service running on ${port}`);
+});
 
 server.on('close', () => {
   // Close the Mongoose connection

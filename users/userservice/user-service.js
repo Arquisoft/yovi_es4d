@@ -14,7 +14,7 @@ app.use(express.json());
 
 const mongoUri =
   process.env.MONGODB_URI ||
-  'mongodb://localhost:27017/userdb';
+  'mongodb://localhost:27017/usersdb';
 
 mongoose.connect(mongoUri);
 
@@ -89,8 +89,9 @@ app.post('/adduser', async (req, res) => {
       createdAt: new Date()
     });
 
-    await newUser.save();
-
+   const savedUser = await newUser.save();
+    console.log(savedUser);
+    
     res.status(201).json({
       message: 'User created',
       id: newUser._id

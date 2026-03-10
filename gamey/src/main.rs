@@ -327,7 +327,7 @@ pub async fn bot_move_hard(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("🚀 Servidor Rust escuchando en el puerto 3001");
+    println!("🚀 Servidor Rust escuchando en el puerto 4000");
 
     let shared_game = web::Data::new(Mutex::new(None::<GameY>));
 
@@ -352,7 +352,7 @@ async fn main() -> std::io::Result<()> {
             .route("/v1/ybot/choose/intermediate_bot", web::post().to(bot_move_intermediate))
             .route("/v1/ybot/choose/hard_bot", web::post().to(bot_move_hard))
     })
-        .bind("0.0.0.0:3001")?
+        .bind("0.0.0.0:4000")?
         .run()
         .await
 }

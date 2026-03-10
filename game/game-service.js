@@ -40,7 +40,7 @@ const gameSchema = new mongoose.Schema({
 const GameModel = mongoose.model('Game', gameSchema);
 
 // URL del servidor bot de Rust/Gamey
-const GAMEY_BOT_URL =  'http://localhost:3001';
+const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
 
 app.use(cors());
 app.use(express.json());
