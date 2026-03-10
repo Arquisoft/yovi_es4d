@@ -507,7 +507,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_resumen_de_decisiones">9.1. Resumen de decisiones</a></li>
 </ul>
 </li>
-<li><a href="#section-quality-scenarios">10. Quality Requirements</a>
+<li><a href="#section-quality-scenarios">10. Requisitos de Calidad</a>
 <ul class="sectlevel2">
 <li><a href="#_árbol_de_calidad">10.1. Árbol de calidad</a></li>
 </ul>
@@ -1244,6 +1244,11 @@ Realiza acciones como iniciar sesión, jugar al juego, consultar el historial de
 Gestiona registro, inicio y cierre de sesión.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GameDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos de las partidas.<br>
+Gestiona los datos cuando se juega una partida.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Yovi</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Aplicación principal para mostrar el juego.</p></td>
 </tr>
@@ -1295,6 +1300,10 @@ Se conecta a través del navegador web a la aplicación Yovi.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos hecha en MondoDB, donde, por ahora, se guardan los datos de los usuarios.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GameDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos hecha en MondoDB, donde, se guardan los datos de las partidas.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Microservicios</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Son los diferentes microservicios que componen el sistema, cada uno con su función específica.</p></td>
 </tr>
@@ -1324,6 +1333,11 @@ Se conecta a través del navegador web a la aplicación Yovi.</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">UserDB</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Pueden ser consultas variadas, como pueden ser datos del usuario, o inserciones, como el registro de un nuevo usuario.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Los resultados de esas consultas o de las inserciones.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GameDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pueden ser consultas variadas, como pueden ser datos de las partidas, o inserciones, como el registro de una nueva partida.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Los resultados de esas consultas o de las inserciones.</p></td>
 </tr>
 </tbody>
@@ -1664,7 +1678,7 @@ del nivel 1, junto con las descripciones en caja negra de sus bloques internos.<
 <h3 id="_representación_del_sistema_general">5.1. Representación del sistema general</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/diagrama_componentes_vista_bloques_yovi_V0_1.png" alt="diagrama componentes vista bloques yovi V0 1">
+<img src="./images/diagramaDeBloquesV0.3.png" alt="diagramaDeBloquesV0.3">
 </div>
 </div>
 <div class="dlist">
@@ -1699,6 +1713,26 @@ del nivel 1, junto con las descripciones en caja negra de sus bloques internos.<
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">WebApp</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Contiene la interfaz de usuario de la aplicación.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gateway</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Microservicio que se encarga de delegar a otros microservicios según la petición.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AuthService</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Valida la autenticación de los usuarios.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Game Service</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Interfaz API que valida las acciones de la partida.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gamey Bot</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Implementación del juego en Rust.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Users Service</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intermediario de acceso a la base de datos de usuarios.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Backend (Microservicios)</p></td>
@@ -1819,7 +1853,7 @@ construcción importante.</p>
 <h3 id="_escenario_1_registro_de_usuario">6.1. Escenario 1: Registro de usuario</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Registro.png" alt="Diagrama de secuencia" width="513" height="348">
+<img src="./images/Diagrama%20de%20secuencia:Registro.png" alt="Diagrama de secuencia" width="514" height="348">
 </div>
 </div>
 </div>
@@ -1827,7 +1861,7 @@ construcción importante.</p>
 <h3 id="_escenario_2_inicio_de_sesión">6.2. Escenario 2: Inicio de sesión</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Inicio%20de%20sesión.png" alt="Diagrama de secuencia" width="593" height="348">
+<img src="./images/Diagrama%20de%20secuencia:Inicio%20de%20sesión.png" alt="Diagrama de secuencia" width="596" height="348">
 </div>
 </div>
 </div>
@@ -1835,7 +1869,7 @@ construcción importante.</p>
 <h3 id="_escenario_3_juego_con_el_bot">6.3. Escenario 3: Juego con el bot</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Juego%20bot.png" alt="Diagrama de secuencia" width="845" height="699">
+<img src="./images/Diagrama%20de%20secuencia:Juego%20bot.png" alt="Diagrama de secuencia" width="849" height="699">
 </div>
 </div>
 <div style="page-break-after: always;"></div>
@@ -1978,10 +2012,13 @@ hacer zoom dentro de esa caja negra utilizando diagramas de despliegue adicional
 <p>Gateway: Actúa como punto de entrada único para el fronted, enrutando las solicitudes a los microservicios correspondientes.</p>
 </li>
 <li>
-<p>User: Gestiona la autenticación, el registro de usuarios y el historial de partidas.</p>
+<p>Game: Maneja la lógica del juego, incluyendo la gestión de partidas, movimientos y estadísticas.</p>
 </li>
 <li>
-<p>Game: Maneja la lógica del juego, incluyendo la gestión de partidas, movimientos y estadísticas.</p>
+<p>Auth: Gestiona la autenticación de los usuarios, incluyendo el inicio de sesión y cierre de sesión.</p>
+</li>
+<li>
+<p>User: Gestiona las operaciones relacionadas con el usuario, como el registro, edición del perfil y consulta del perfil.</p>
 </li>
 </ul>
 </div>
@@ -2240,6 +2277,11 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">i18n</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Incorporamos un sistema de internacionalización (i18n) que permite la adaptación de la aplicación a múltiples idiomas.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Frameword de Estilo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tailwind</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hemos decidido utilizar Tailwind porque presenta un estilo moderno que es muy sencillo de implementar y utilizar en las plantillas del frontend.</p></td>
+</tr>
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
@@ -2247,7 +2289,7 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="section-quality-scenarios">10. Quality Requirements</h2>
+<h2 id="section-quality-scenarios">10. Requisitos de Calidad</h2>
 <div class="sectionbody">
 <div class="sidebarblock arc42help">
 <div class="content">
@@ -2518,18 +2560,11 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Deuda técnica 1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Explicación detallada de la deuda técnica 1.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Deuda técnica 2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Explicación detallada de la deuda técnica 2.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Authuser y userService comparten base de datos</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Actualmente, tanto authuser como userService comparten la misma base de datos, lo que podría generar problemas de seguridad y escalabilidad en el futuro.</p></td>
 </tr>
 </tbody>
 </table>
-<div class="paragraph">
-<p>En desarrollo&#8230;&#8203;</p>
-</div>
 <div class="sidebarblock arc42help">
 <div class="content">
 <div class="paragraph">
@@ -2624,7 +2659,7 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <div id="footer">
 <div id="footer-text">
 Version 8.2 EN<br>
-Last updated 2026-02-16 17:14:32 +0100
+Last updated 2026-02-16 23:02:45 +0100
 </div>
 </div>
 </body>
