@@ -1,9 +1,7 @@
-
 services:
   mongodb:
     container_name: mongodb_es4d
     image: mongo:latest
-    profiles: ["dev", "prod"]
     volumes:
       - mongodb_data:/data/db
     ports:
@@ -13,8 +11,7 @@ services:
 
   authservice:
     container_name: authservice_es4d
-    build: ./users/authservice
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/authservice:${IMAGE_TAG}
     depends_on:
       - mongodb
     ports:
@@ -22,14 +19,13 @@ services:
     networks:
       - es4d-net
     environment:
-      MONGODB_URI:  mongodb://mongodb_es4d:27017/usersdb
+      MONGODB_URI: mongodb://mongodb_es4d:27017/usersdb
       JWT_SECRET: your-secret-key
       VITE_API_URL: http://localhost:8000
 
   userservice:
     container_name: userservice_es4d
-    build: ./users/userservice
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/userservice:${IMAGE_TAG}
     depends_on:
       - mongodb
     ports:
@@ -42,8 +38,7 @@ services:
 
   gamey:
     container_name: gamey_es4d
-    build: ./gamey
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/gamey:${IMAGE_TAG}
     ports:
       - "4000:4000"
     networks:
@@ -53,8 +48,7 @@ services:
 
   game:
     container_name: game_es4d
-    build: ./game
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/game:${IMAGE_TAG}
     ports:
       - "8003:8003"
     networks:
@@ -70,8 +64,7 @@ services:
 
   gateway:
     container_name: gateway_es4d
-    build: ./gateway
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/gateway:${IMAGE_TAG}
     depends_on:
       - authservice
       - userservice
@@ -88,8 +81,7 @@ services:
 
   webapp:
     container_name: webapp_es4d
-    build: ./webapp
-    profiles: ["dev", "prod"]
+    image: ghcr.io/arquisoft/yovi_es4d/webapp:${IMAGE_TAG}
     depends_on:
       - gateway
     ports:
@@ -102,7 +94,6 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: prometheus_es4d
-    profiles: ["dev"]
     networks:
       - es4d-net
     volumes:
@@ -116,7 +107,6 @@ services:
   grafana:
     image: grafana/grafana
     container_name: grafana_es4d
-    profiles: ["dev"]
     networks:
       - es4d-net
     volumes:
