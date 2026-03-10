@@ -20,11 +20,23 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install dependencies (authservice)
+        run: npm --prefix users/authservice ci
+
       - name: Install dependencies (users)
-        run: npm --prefix users ci
+        run: npm --prefix users/userservice ci
 
       - name: Install dependencies (webapp)
         run: npm --prefix webapp ci
+
+      - name: Install dependencias (game)
+        run : npm --prefix game ci
+      
+      - name: Install dependencias (gamey)
+        run: npm --prefix gamey ci
+      
+      - name: Install dependencias (gateway)
+        run: npm --prefix gateway ci
 
       # Si tienes builds específicos (opcional)
       #- name: Build webapp
