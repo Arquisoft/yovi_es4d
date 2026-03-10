@@ -37,7 +37,7 @@ jobs:
           cd gamey
           cargo build --release
       
-      - name: Install dependencias (gateway)
+      - name: Instalar dependencias (gateway)
         run: npm --prefix gateway ci
 
       # Si tienes builds específicos (opcional)
