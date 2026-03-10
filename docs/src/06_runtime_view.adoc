@@ -3,7 +3,6 @@ ifndef::imagesdir[:imagesdir: ../images]
 [[section-runtime-view]]
 == Vista de tiempo de ejecución
 
-
 ifdef::arc42help[]
 [role="arc42help"]
 ****
@@ -11,82 +10,85 @@ ifdef::arc42help[]
 La vista de ejecución (Runtime View) describe el comportamiento concreto y las interacciones de los bloques de construcción del sistema en forma de escenarios de las siguientes áreas:
 
 * Casos de uso o funcionalidades importantes: ¿cómo los ejecutan los bloques de construcción?
-
 * Interacciones en interfaces externas críticas: ¿cómo cooperan los bloques con usuarios y sistemas vecinos?
-
 * Operación y administración: lanzamiento, inicio, parada
-
 * Escenarios de error y excepción
 
 Observación: El criterio principal para la selección de los posibles escenarios (secuencias, flujos de trabajo) es su relevancia arquitectónica. No es importante describir una gran cantidad de escenarios. Es preferible documentar una selección representativa.
 
 .Form
 * Existen muchas notaciones para describir escenarios, por ejemplo:
-
 * Lista numerada de pasos (en lenguaje natural)
-
 * Diagramas de actividad o diagramas de flujo
-
 * Diagramas de secuencia
-
 * BPMN o EPCs (cadenas de procesos dirigidas por eventos)
-
 * Máquinas de estados
-
 * ...
 
-
 .Further Information
-
 Consulta https://docs.arc42.org/section-6/[Runtime View] en la documentación de arc42.
-
 ****
 endif::arc42help[]
 
 === Escenario 1: Registro de usuario
 [plantuml,"Diagrama de secuencia:Registro",png]
 ----
-actor usuario
+@startuml
+actor Usuario
 database UserDB
-usuario -> userservice: Registro con nombre de usuario, correo y contraseña
-userservice --> userservice: Comprobación de datos
-userservice --> UserDB: Almacenamiento de datos de usuario
-UserDB --> userservice: Confirmación de datos almacenados
-userservice --> usuario: Confirmación de registro exitoso
+participant UserService
+
+Usuario -> UserService: Registro con nombre de usuario, correo y contraseña
+UserService -> UserService: Comprobación de datos
+UserService -> UserDB: Almacenamiento de datos de usuario
+UserDB --> UserService: Confirmación de datos almacenados
+UserService --> Usuario: Confirmación de registro exitoso
+@enduml
 ----
 
 === Escenario 2: Inicio de sesión
 [plantuml,"Diagrama de secuencia:Inicio de sesión",png]
 ----
-actor usuario
+@startuml
+actor Usuario
 database UserDB
-usuario -> userservice: Inicio de sesión con nombre de usuario y contraseña
-userservice --> userservice: Comprobación de datos
-userservice --> UserDB: Comprobación de datos de usuario
-UserDB --> userservice: Confirmación de la existencia de los datos almacenados
-userservice --> usuario: Confirmación de inicio de sesión exitoso
+participant UserService
+
+Usuario -> UserService: Inicio de sesión con nombre de usuario y contraseña
+UserService -> UserService: Comprobación de datos
+UserService -> UserDB: Comprobación de datos de usuario
+UserDB --> UserService: Confirmación de la existencia de los datos almacenados
+UserService --> Usuario: Confirmación de inicio de sesión exitoso
+@enduml
 ----
 
 === Escenario 3: Juego con el bot
 [plantuml,"Diagrama de secuencia:Juego bot",png]
 ----
-actor usuario
-usuario -> webapp: Inicio de juego
-webapp --> game: Solicitud de inicio de juego
-game --> gamey: Pedida de datos para iniciar el juego
-gamey --> game: Devuelta de datos para iniciar el juego
-game --> webapp: Devuelta del tablero
-webapp --> usuario: Visión del tablero
-usuario -> webapp: Movimiento del jugador
-webapp --> game: Envío del movimiento del jugador
-game --> gamey: Envío y validación del movimiento del jugador a Rust 
-gamey --> game: Devuelve el movimiento del jugador validado
-game --> webapp: Devuelta del movimiento del jugador
-webapp --> usuario: Visión del movimiento del jugador
-webapp --> game: Solicitud de movimiento del bot
-game --> gamey: Pedida y validación de movimiento del bot a Rust
-gamey --> game: Devuelta del movimiento del bot validado
-game --> webapp: Devuelta del movimiento del bot
-webapp --> usuario: Visión del movimiento del bot
+@startuml
+actor Usuario
+participant WebApp
+participant Game
+participant GameY
 
+Usuario -> WebApp: Inicio de juego
+WebApp -> Game: Solicitud de inicio de juego
+Game -> GameY: Pedida de datos para iniciar el juego
+GameY --> Game: Devuelta de datos para iniciar el juego
+Game --> WebApp: Devuelta del tablero
+WebApp --> Usuario: Visión del tablero
+
+Usuario -> WebApp: Movimiento del jugador
+WebApp -> Game: Envío del movimiento del jugador
+Game -> GameY: Envío y validación del movimiento del jugador a Rust
+GameY --> Game: Devuelve el movimiento del jugador validado
+Game --> WebApp: Devuelta del movimiento del jugador
+WebApp --> Usuario: Visión del movimiento del jugador
+
+WebApp -> Game: Solicitud de movimiento del bot
+Game -> GameY: Pedida y validación de movimiento del bot a Rust
+GameY --> Game: Devuelta del movimiento del bot validado
+Game --> WebApp: Devuelta del movimiento del bot
+WebApp --> Usuario: Visión del movimiento del bot
+@enduml
 ----
