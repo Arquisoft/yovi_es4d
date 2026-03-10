@@ -31,23 +31,23 @@ jobs:
           workdir: users/userservice
 
     docker-push-authservice:
-    name: Push auth service Docker Image to GitHub Packages
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        with:
-          name: arquisoft/yovi_es4d/authservice
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-          workdir: users/authservice
+      name: Push auth service Docker Image to GitHub Packages
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+      steps:
+        - uses: actions/checkout@v4
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+        - name: Publish to Registry
+          uses: elgohr/Publish-Docker-Github-Action@v5
+          with:
+            name: arquisoft/yovi_es4d/authservice
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+            registry: ghcr.io
+            workdir: users/authservice
 
   # Publicar imagen webapp
   docker-push-webapp:
