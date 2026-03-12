@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -139,6 +141,7 @@ app.post('/api/game/start', async (req, res) => {
     });
 
   } catch (error) {
+    console.log("BOT URL:", GAMEY_BOT_URL);
     console.error('❌ Error starting game:', error.message);
     res.status(500).json({ error: 'Error iniciando juego' });
   }
