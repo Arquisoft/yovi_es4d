@@ -1,3 +1,21 @@
+/**
+ * Servicio Gateway de YOVI ES4D
+ *
+ * Este módulo actúa como punto de entrada centralizado (API Gateway) para la aplicación.
+ * Gestiona autenticación con JWT, autorización y enrutamiento de solicitudes a los microservicios
+ * de autenticación, usuarios y juegos. Incluye validación de tokens, monitoreo de métricas
+ * y documentación OpenAPI/Swagger.
+ *
+ * @module gateway-service
+ * @requires express
+ * @requires axios
+ * @requires cors
+ * @requires express-prom-bundle
+ * @requires cookie-parser
+ * @requires jsonwebtoken
+ * @requires swagger-ui-express
+ */
+
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -24,8 +42,8 @@ const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
 
 
 app.use(cors({
-  origin: 'http://localhost:5173', // tu frontend
-  credentials: true               // permite enviar cookies o headers de auth
+  origin: 'http://localhost:5173', 
+  credentials: true              
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -35,7 +53,14 @@ app.use(metricsMiddleware);
 
 /**
  * Middleware para verificar JWT.
- * Si no hay token, asigna un usuario guest.
+ * Valida el token JWT almacenado en las cookies y extrae la información del usuario.
+ * Si no hay token o es inválido, rechaza la solicitud con estado 401.
+ *
+ * @middleware
+ * @param {Object} req - Objeto de solicitud Express con cookies
+ * @param {Object} res - Objeto de respuesta Express
+ * @param {Function} next - Función para pasar al siguiente middleware
+ * @throws {401} Si el token no existe o es inválido
  */
 const verifyToken = (req, res, next) => {
   const token = req.cookies.token; 
@@ -58,9 +83,14 @@ const verifyToken = (req, res, next) => {
 // ================= AUTH & USERS =================
 
 /**
- * Endpoint for the history of games of a user.
- * @route {GET} /api/game/history?userId={id}
- * @param {string} userId - The ID of the user whose game history is being requested.
+ * Obtener historial de juegos de un usuario.
+ * Recupera todos los juegos jugados por el usuario autenticado del servicio de juegos.
+ *
+ * @route {GET} /api/game/history
+ * @param {string} req.body.userId - ID del usuario autenticado (extraído del JWT)
+ * @returns {Object[]} Array de objetos de juego con detalles de cada partida
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al recuperar el historial
  */
 app.get('/api/game/history', verifyToken, async (req, res) => {
   try {
@@ -77,11 +107,24 @@ app.get('/api/game/history', verifyToken, async (req, res) => {
     const status = error.response?.status || 500;
     const message = error.response?.data?.error || error.message;
     res.status(status).json({ error: message });
+    console.log(error);
   }
 });
 
 
 
+/**
+ * Valida las credenciales del usuario y genera un token JWT.
+ * El token se devuelve en una cookie segura.
+ *
+ * @route {POST} /login
+ * @param {Object} req.body - Credenciales del usuario
+ * @param {string} req.body.email - Email del usuario
+ * @param {string} req.body.password - Contraseña del usuario
+ * @returns {Object} Token JWT y datos del usuario autenticado
+ * @throws {400} Si las credenciales son inválidas
+ * @throws {500} Si hay error en el servicio de autenticación
+ */
 app.post('/login', async (req, res) => {
   try {
     const authResponse = await axios.post(
@@ -106,6 +149,19 @@ app.post('/login', async (req, res) => {
   }
 });
 
+/**
+ * Registrar nuevo usuario.
+ * Crea una nueva cuenta de usuario en el servicio de usuarios.
+ *
+ * @route {POST} /adduser
+ * @param {Object} req.body - Datos del nuevo usuario
+ * @param {string} req.body.email - Email del nuevo usuario
+ * @param {string} req.body.password - Contraseña del nuevo usuario
+ * @param {string} req.body.username - Nombre de usuario
+ * @returns {Object} Datos del usuario creado
+ * @throws {400} Si hay validación fallida o email ya registrado
+ * @throws {500} Si hay error en el servicio de usuarios
+ */
 app.post('/adduser', async (req, res) => {
   try {
     const userResponse = await axios.post(userServiceUrl + '/adduser', req.body);
@@ -117,6 +173,16 @@ app.post('/adduser', async (req, res) => {
     console.log(error);
   }
 });
+/**
+ * Obtener perfil del usuario autenticado.
+ * Recupera la información de perfil del usuario actualmente autenticado.
+ *
+ * @route {POST} /api/user/getUserProfile
+ * @param {string} req.cookies.token - Token JWT en cookies
+ * @returns {Object} Perfil del usuario con email, username, etc.
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al recuperar el perfil
+ */
 app.post("/api/user/getUserProfile", async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -142,22 +208,34 @@ app.post("/api/user/getUserProfile", async (req, res) => {
 // ================= GAME =================
 
 /**
- * Devuelve los modos de bot disponibles (los lee del game-service).
+ * Obtener modos de bot disponibles.
+ * Devuelve la lista de dificultades de bot disponibles.
  * El cliente React lo usa para construir el selector de dificultad.
  *
- * @route GET /api/game/bot-modes
+ * @route {GET} /api/game/bot-modes
+ * @returns {Object} Objeto con array de botModes disponibles
+ * @throws {500} Si hay error al obtener los modos
  */
 app.get('/api/game/bot-modes', async (req, res) => {
   try {
     const response = await axios.get(`${gameServiceUrl}/api/game/bot-modes`);
     res.json(response.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: 'Error obteniendo modos de bot' });
   }
 });
 
 
 
+/**
+ * Obtener información del usuario autenticado.
+ * Devuelve el ID del usuario actualmente autenticado.
+ *
+ * @route {GET} /api/auth/me
+ * @returns {Object} Objeto con userId del usuario autenticado
+ * @throws {401} Si no está autenticado
+ */
 app.get('/api/auth/me', verifyToken, async (req, res) => {
   res.json({
     userId: req.body.userId
@@ -166,6 +244,14 @@ app.get('/api/auth/me', verifyToken, async (req, res) => {
 
 });
 
+/**
+ * Desautenticar usuario (logout).
+ * Invalida el token JWT del usuario y elimina la cookie de autenticación.
+ *
+ * @route {POST} /logout
+ * @returns {Object} Confirmación de logout exitoso
+ * @throws {500} Si hay error al cerrar sesión
+ */
 app.post('/logout', async (req, res) => {
   try {
     const authResponse = await axios.post(
@@ -174,7 +260,6 @@ app.post('/logout', async (req, res) => {
       { withCredentials: true }
     );
 
-    // reenviar cookie al frontend
     const setCookie = authResponse.headers['set-cookie'];
     if (setCookie) {
       res.setHeader('Set-Cookie', setCookie);
@@ -186,16 +271,22 @@ app.post('/logout', async (req, res) => {
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || 'Logout error'
     });
+    console.log(error);
   }
 });
 /**
- * Endpoint to edit an existing user's details.
- * Requires JWT token verification for user authentication.
+ * Editar nombre de usuario.
+ * Actualiza el nombre de usuario del usuario autenticado.
+ * Requiere autenticación JWT.
  *
- * @route {POST} /api/user/editUser
- * @param {Object} req.body - The data required to update the user's details.
- * @param {Object} req.body.userId - The authenticated user's information.
- * @returns {Object} The response from the user service.
+ * @route {POST} /api/user/editUsername
+ * @param {Object} req.body - Datos a actualizar
+ * @param {string} req.body.username - Nuevo nombre de usuario
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Confirmación de actualización exitosa
+ * @throws {400} Si faltan userId o username
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al actualizar
  */
 app.post('/api/user/editUsername', verifyToken, async (req, res) => {
     const { username } = req.body;
@@ -212,9 +303,25 @@ app.post('/api/user/editUsername', verifyToken, async (req, res) => {
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
+        console.log(error);
     }
 });
 
+/**
+ * Cambiar contraseña del usuario.
+ * Cambia la contraseña del usuario autenticado después de validar la contraseña actual.
+ * Requiere autenticación JWT.
+ *
+ * @route {POST} /api/user/changePassword
+ * @param {Object} req.body - Datos de cambio de contraseña
+ * @param {string} req.body.currentPassword - Contraseña actual
+ * @param {string} req.body.newPassword - Nueva contraseña
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Confirmación de cambio de contraseña exitoso
+ * @throws {400} Si faltan campos requeridos
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al cambiar contraseña
+ */
 app.post('/api/user/changePassword', verifyToken, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.body.userId;
@@ -233,18 +340,26 @@ app.post('/api/user/changePassword', verifyToken, async (req, res) => {
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
+        console.log(error);
     }
 });
 
 
 
 /**
- * Iniciar juego.
- * Body: { gameMode?, botMode? }
- *   gameMode : 'vsBot' | 'multiplayer'  (default: 'vsBot')
- *   botMode  : 'random_bot' | 'intermediate_bot' | ...  (default: 'random_bot')
+ * Iniciar un nuevo juego.
+ * Crea una nueva partida con los parámetros especificados.
+ * Requiere autenticación JWT.
  *
- * @route POST /api/game/start
+ * @route {POST} /api/game/start
+ * @param {Object} req.body - Parámetros del juego
+ * @param {string} [req.body.gameMode='vsBot'] - Modo de juego (vsBot o multiplayer)
+ * @param {string} [req.body.botMode='random_bot'] - Dificultad del bot
+ * @param {number} [req.body.boardSize=11] - Tamaño del tablero (8, 11, 15, 19)
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Datos de inicialización del juego (gameId, board, players)
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al iniciar el juego
  */
 app.post('/api/game/start', verifyToken, async (req, res) => {
   try {
@@ -256,14 +371,25 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
     });
     res.json(startResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error iniciando juego' });
   }
 });
 
 /**
  * Validar movimiento del jugador humano.
+ * Verifica que el movimiento propuesto sea válido según las reglas del juego.
+ * Requiere autenticación JWT.
  *
- * @route POST /api/game/:gameId/validateMove
+ * @route {POST} /api/game/:gameId/validateMove
+ * @param {string} req.params.gameId - ID único del juego
+ * @param {Object} req.body - Datos del movimiento
+ * @param {string} req.body.move - Posición del movimiento en formato (x,y,z)
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Validación del movimiento y estado actual del juego
+ * @throws {400} Si el movimiento es inválido
+ * @throws {401} Si no está autenticado
+ * @throws {404} Si el juego no se encuentra
  */
 app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
   try {
@@ -274,16 +400,26 @@ app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
     );
     res.json(validateResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 400).json({ error: error.response?.data?.error || 'Invalid move' });
   }
 });
 
 /**
- * Movimiento del bot (vsBot) o multiplayer.
+ * Procesar movimiento en el juego.
+ * Maneja movimientos de bot en modo vsBot o de otros jugadores en modo multiplayer.
+ * Requiere autenticación JWT.
  *
- * @route POST /api/game/:gameId/move
- * Body: { move, userId, mode }
- *   mode: 'vsBot' | 'multiplayer'
+ * @route {POST} /api/game/:gameId/move
+ * @param {string} req.params.gameId - ID único del juego
+ * @param {Object} req.body - Datos del movimiento
+ * @param {string} req.body.move - Posición en formato (x,y,z)
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @param {string} req.body.mode - Modo de juego (vsBot o multiplayer)
+ * @returns {Object} Estado actualizado del juego después del movimiento
+ * @throws {400} Si falta información requerida o modo inválido
+ * @throws {401} Si no está autenticado
+ * @throws {500} Si hay error al procesar el movimiento
  */
 app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
   try {
@@ -318,9 +454,17 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 });
 
 /**
- * Estado del juego.
+ * Obtener estado actual del juego.
+ * Recupera el estado completo de una partida incluyendo tablero, jugadores y turnos.
+ * Requiere autenticación JWT.
  *
- * @route GET /api/game/:gameId
+ * @route {GET} /api/game/:gameId
+ * @param {string} req.params.gameId - ID único del juego
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Estado completo del juego (board, players, moves, turn, status, winner)
+ * @throws {401} Si no está autenticado
+ * @throws {404} Si el juego no se encuentra
+ * @throws {500} Si hay error al obtener el estado
  */
 app.get('/api/game/:gameId', verifyToken, async (req, res) => {
   try {
@@ -330,14 +474,24 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
     });
     res.json(statusResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error obteniendo estado del juego' });
   }
 });
 
 /**
- * Finalizar y guardar juego.
+ * Finalizar y guardar un juego.
+ * Marcar un juego como finalizado y guardar sus datos en la base de datos.
+ * Requiere autenticación JWT.
  *
- * @route POST /api/game/end
+ * @route {POST} /api/game/end
+ * @param {Object} req.body - Datos de finalización
+ * @param {string} req.body.gameId - ID único del juego a finalizar
+ * @param {string} req.body.userId - ID del usuario autenticado (del JWT)
+ * @returns {Object} Datos del juego finalizado (winner, moves count, duration)
+ * @throws {401} Si no está autenticado
+ * @throws {404} Si el juego no se encuentra
+ * @throws {500} Si hay error al finalizar el juego
  */
 app.post('/api/game/end', verifyToken, async (req, res) => {
   try {
@@ -347,12 +501,17 @@ app.post('/api/game/end', verifyToken, async (req, res) => {
     });
     res.json(endResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error finalizando juego' });
   }
 });
 
 // ================= SWAGGER =================
 
+/**
+ * Cargar y servir documentación OpenAPI/Swagger.
+ * Si existe el archivo openapi.yaml, se sirve la interfaz Swagger en /api-doc.
+ */
 const openapiPath = './openapi.yaml';
 if (fs.existsSync(openapiPath)) {
   const file = fs.readFileSync(openapiPath, 'utf8');
@@ -360,6 +519,10 @@ if (fs.existsSync(openapiPath)) {
   app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
 
+/**
+ * Iniciar el servidor HTTP en el puerto especificado.
+ * @type {Server}
+ */
 const server = app.listen(port, () => {});
 
 module.exports = server;
