@@ -69,11 +69,16 @@
     "score": "Score:",
     "newGame": "New Game"
   }, "gameBoard": {
-    "turn": "Turn",
+    "turn": "Turn:",
     "waiting": "Waiting for opponent...",
     "yourTurn": "It's your turn!",
     "botPlaying": "The bot is playing...",
-    "endGame": "End of the game! Winner"
+    "endGame": "End of the game! Winner",
+    "player1": "Player",
+    "player2": "Bot",
+    "won": "wins",
+    "gameStart": "Starting game",
+    "board": "board"
   }, "editUser": {
     "title": "Edit Profile",
     "email": "Email",

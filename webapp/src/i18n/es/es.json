@@ -83,11 +83,16 @@
     "score": "Puntuación:",
     "newGame": "Nueva partida"
   }, "gameBoard": {
-    "turn": "Turno",
+    "turn": "Turno:",
     "waiting": "Esperando al oponente...",
     "yourTurn": "¡Es tu turno!",
     "botPlaying": "El bot está jugando...",
-    "endGame": "¡Juego terminado! Ganador"
+    "endGame": "¡Juego terminado! Ganador",
+    "player1": "Jugador",
+    "player2": "Bot",
+    "won": "gana",
+    "gameStart": "Iniciando partida",
+    "board": "tablero"
   }, "editUser": {
     "title": "Editar Perfil",
     "email": "Correo electrónico",
