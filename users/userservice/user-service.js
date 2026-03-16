@@ -74,6 +74,35 @@ function validatePassword(password) {
   }
 }
 
+app.post('/updateAvatar', async (req, res) => {
+  try {
+
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const seed = Math.random().toString(36).substring(7);
+
+    const newAvatar =
+      `https://api.dicebear.com/8.x/adventurer/svg?seed=${seed}`;
+
+    user.avatar = newAvatar;
+    await user.save();
+
+    res.json({
+      message: "Avatar updated",
+      avatar: newAvatar
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
 
 /**
  * Crear un nuevo usuario.
@@ -117,7 +146,7 @@ app.post('/adduser', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const avatar =
-      `https://api.dicebear.com/8.x/initials/svg?seed=${email}`;
+        `https://api.dicebear.com/8.x/adventurer/svg?seed=${email}`;
 
     const newUser = new User({
       username,

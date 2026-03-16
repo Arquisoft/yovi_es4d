@@ -111,6 +111,42 @@ app.get('/api/game/history', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * Actualizar avatar del usuario.
+ * Genera un nuevo avatar aleatorio y lo asigna al usuario autenticado.
+ * Requiere autenticación JWT.
+ *
+ * @route {POST} /api/user/updateAvatar
+ * @param {Object} req.body - Datos del usuario
+ * @param {string} req.body.userId - ID del usuario autenticado (extraído del JWT)
+ * @returns {Object} Objeto con mensaje de confirmación y URL del nuevo avatar
+ * @throws {401} Si no está autenticado
+ * @throws {404} Si el usuario no existe
+ * @throws {500} Si hay error al actualizar el avatar
+ */
+app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
+
+  const userId = req.body.userId;
+
+  try {
+
+    const response = await axios.post(
+      `${userServiceUrl}/updateAvatar`,
+      { userId }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Internal error'
+    });
+
+    console.log(error);
+  }
+
+});
 
 
 /**

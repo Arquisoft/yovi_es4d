@@ -87,6 +87,24 @@ const loadProfile = async () => {
     }
   };
 
+  const updateAvatar = async () => {
+  try {
+
+    const res = await axios.post(
+      `${API_URL}/api/user/updateAvatar`,
+      {},
+      { withCredentials: true }
+    );
+
+    setUser({
+      ...user,
+      avatar: res.data.avatar
+    });
+
+  } catch (err: any) {
+    setError(err.response?.data || err.message);
+  }
+};
   if (!user) return <p style={{ textAlign: 'center', color: 'white', marginTop: '40px' }}>Loading...</p>;
 
   return (
@@ -97,14 +115,23 @@ const loadProfile = async () => {
 
           <h2 className="auth-title">{t("editUser.title")}</h2>
 
-          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div className="avatar-container">
+
             <img
               src={
                 user.avatar ||
-                `https://api.dicebear.com/8.x/initials/svg?seed=${user.email}`
+                `https://api.dicebear.com/8.x/adventurer/svg?seed=${user.email}`
               }
               alt="avatar"
             />
+
+            <button
+              className="avatar-refresh"
+              onClick={updateAvatar}
+            >
+              ⟳
+            </button>
+
           </div>
 
           <label htmlFor="email-input">{t("editUser.email")}</label>
