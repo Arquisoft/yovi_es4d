@@ -2,10 +2,12 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
 import "./GameOver.css";
+import { useTranslation } from "../i18n";
 
 const GameOver: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const gameState = location.state as any;
 
     // ── Sin estado ───────────────────────────────────────────
@@ -13,9 +15,9 @@ const GameOver: React.FC = () => {
         return (
             <div className="go-empty">
                 <span style={{ fontSize: "2rem" }}>◈</span>
-                <p>No hay partida disponible</p>
+                <p>{t('gameOver.noGame')}</p>
                 <button className="go-btn-primary" onClick={() => navigate("/")}>
-                    Volver al inicio
+                    {t('gameOver.goHome')}
                 </button>
             </div>
         );
@@ -35,16 +37,16 @@ const GameOver: React.FC = () => {
 
             {/* Badge */}
             <div className="go-badge">
-                <span>Partida finalizada</span>
+                <span>{t('gameOver.title')}</span>
             </div>
 
             {/* Título */}
             <h1 className={`go-title${isJ2Win ? " winner-j2" : ""}`}>
-                <span className="go-winner-name">{winnerP?.name ?? "Ganador"}</span>
-                {" "}ha ganado
+                <span className="go-winner-name">{winnerP?.name ?? t('gameOver.winner')}</span>
+                {" "}{t('gameOver.hasWon')}
             </h1>
             <p className="go-subtitle">
-                Puntuación final · tablero {gameState.hexData?.length ? "completado" : ""}
+                {t('gameOver.finalScore')} {gameState.hexData?.length ? t('gameOver.completed') : ""}
             </p>
 
             {/* Contenido */}
@@ -69,7 +71,7 @@ const GameOver: React.FC = () => {
                                 <span className="go-player-name">{player.name}</span>
 
                                 <div>
-                                    <div className="go-score-label">Score</div>
+                                    <div className="go-score-label">{t('gameOver.score')}</div>
                                     <div className="go-score">{String(player.points).padStart(4, "0")}</div>
                                 </div>
                             </div>
@@ -91,17 +93,17 @@ const GameOver: React.FC = () => {
             {/* Acciones */}
             <div className="go-actions">
                 <button className="go-btn-primary" onClick={() => navigate("/select")}>
-                    Nueva partida
+                    {t('gameOver.newGame')}
                 </button>
                 <button className="go-btn-secondary" onClick={() => navigate("/")}>
-                    Inicio
+                    {t('gameOver.goHome')}
                 </button>
             </div>
 
             {/* Decoración */}
             <div className="go-decoration">
                 <div className="go-decoration-line" />
-                <span className="go-decoration-text">YOVI</span>
+                <span className="go-decoration-text">YOVI_ES4D</span>
                 <div className="go-decoration-line" />
             </div>
 

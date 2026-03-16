@@ -72,12 +72,16 @@
     "enterRepassword": "Confirma tu contraseña",
     "errorPasswordMatch": "Las contraseñas no coinciden"
   }, "gameOver": {
-    "title": "¡Juego terminado!",
-    "winner": "El ganador es: {{winner}}",
+    "title": "Partida finalizada",
+    "winner": "Ganador",
     "playAgain": "Jugar de nuevo",
     "goHome": "Volver al inicio",
     "noGame": "No hay juego disponible",
-    "hasWon": "ha ganado"
+    "hasWon": "ha ganado",
+    "finalScore": "Puntuación final · tablero",
+    "completed": "completado",
+    "score": "Puntuación:",
+    "newGame": "Nueva partida"
   }, "gameBoard": {
     "turn": "Turno",
     "waiting": "Esperando al oponente...",

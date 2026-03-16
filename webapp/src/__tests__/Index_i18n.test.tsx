@@ -188,4 +188,110 @@ describe("I18nProvider", () => {
     expect(screen.getByText("fallback")).toBeInTheDocument()
  })
 
+ test("returns fallback when intermediate object becomes undefined", () => {
+  const resources = {
+    en: {
+      home: undefined
+    }
+  }
+
+  function Test() {
+    const { t } = useTranslation()
+    return <span>{t("home.title", "fallback")}</span>
+  }
+
+  render(
+    <I18nProvider defaultLang="en" resources={resources}>
+      <Test />
+    </I18nProvider>
+  )
+
+  expect(screen.getByText("fallback")).toBeInTheDocument()
+ })
+
+ test("returns fallback when resource branch is undefined", () => {
+  const resources = {
+    en: {
+      home: undefined
+    }
+  }
+
+  function Test() {
+    const { t } = useTranslation()
+    return <span>{t("home.title", "fallback")}</span>
+  }
+
+  render(
+    <I18nProvider defaultLang="en" resources={resources}>
+      <Test />
+    </I18nProvider>
+  )
+
+  expect(screen.getByText("fallback")).toBeInTheDocument()
+})
+test("returns fallback when resource branch is null", () => {
+  const resources = {
+    en: {
+      home: null
+    }
+  }
+
+  function Test() {
+    const { t } = useTranslation()
+    return <span>{t("home.title", "fallback")}</span>
+  }
+
+  render(
+    <I18nProvider defaultLang="en" resources={resources}>
+      <Test />
+    </I18nProvider>
+  )
+
+  expect(screen.getByText("fallback")).toBeInTheDocument()
+})
+test("returns fallback when nested path becomes undefined", () => {
+  const resources = {
+    en: {
+      home: {
+        section: undefined
+      }
+    }
+  }
+
+  function Test() {
+    const { t } = useTranslation()
+    return <span>{t("home.section.title", "fallback")}</span>
+  }
+
+  render(
+    <I18nProvider defaultLang="en" resources={resources}>
+      <Test />
+    </I18nProvider>
+  )
+
+  expect(screen.getByText("fallback")).toBeInTheDocument()
+})
+test("returns key when nested path becomes undefined and no fallback", () => {
+  const resources = {
+    en: {
+      home: {
+        section: undefined
+      }
+    }
+  }
+
+  function Test() {
+    const { t } = useTranslation()
+    return <span>{t("home.section.title")}</span>
+  }
+
+  render(
+    <I18nProvider defaultLang="en" resources={resources}>
+      <Test />
+    </I18nProvider>
+  )
+
+  expect(screen.getByText("home.section.title")).toBeInTheDocument()
+})
+
 })
