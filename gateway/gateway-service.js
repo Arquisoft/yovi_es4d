@@ -23,10 +23,27 @@ const userServiceUrl="http://userservice:8001" || process.env.USER_SERVICE_URL;
 const authServiceUrl="http://authservice:8002" || process.env.GAME_SERVICE_URL; 
 
 
+// Lista de orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:5173',        // desarrollo local
+  'http://20.188.62.231:5173',   // VM/frontend en Azure
+  'https://midominio.com'         // producción (tu dominio)
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // tu frontend
-  credentials: true               // permite enviar cookies o headers de auth
+  origin: function(origin, callback){
+    // Permite requests sin origin (Postman, herramientas internas)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy does not allow access from origin ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true  // permite cookies y headers de autenticación
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
