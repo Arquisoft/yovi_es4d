@@ -18,9 +18,10 @@ const port = 8000;
 
 
 // URLs for microservices NECESARIO CAMBIAR
-const gameServiceUrl="http://gameservice:8003" || process.env.AUTH_SERVICE_URL;
+const gameServiceUrl="http://game:8003" || process.env.AUTH_SERVICE_URL;
 const userServiceUrl="http://userservice:8001" || process.env.USER_SERVICE_URL;
 const authServiceUrl="http://authservice:8002" || process.env.GAME_SERVICE_URL; 
+
 
 
 // Lista de orígenes permitidos
