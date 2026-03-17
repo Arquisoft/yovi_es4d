@@ -91,6 +91,7 @@ app.get('/api/game/history', verifyToken, async (req, res) => {
     res.json(gameRes.data);
 
   } catch (error) {
+    console.log(error);
     const status = error.response?.status || 500;
     const message = error.response?.data?.error || error.message;
     res.status(status).json({ error: message });
@@ -169,6 +170,7 @@ app.get('/api/game/bot-modes', async (req, res) => {
     const response = await axios.get(`${gameServiceUrl}/api/game/bot-modes`);
     res.json(response.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: 'Error obteniendo modos de bot' });
   }
 });
@@ -200,6 +202,7 @@ app.post('/logout', async (req, res) => {
     res.json(authResponse.data);
 
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || 'Logout error'
     });
@@ -226,6 +229,7 @@ app.post('/api/user/editUsername', verifyToken, async (req, res) => {
         const response = await axios.post(`${userServiceUrl}/editUser`, { userId, username });
         res.json(response.data);
     } catch (error) {
+      console.log(error);
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
@@ -247,6 +251,7 @@ app.post('/api/user/changePassword', verifyToken, async (req, res) => {
         });
         res.json(response.data);
     } catch (error) {
+      console.log(error);
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
@@ -273,6 +278,7 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
     });
     res.json(startResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error iniciando juego' });
   }
 });
@@ -291,6 +297,7 @@ app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
     );
     res.json(validateResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 400).json({ error: error.response?.data?.error || 'Invalid move' });
   }
 });
@@ -347,6 +354,7 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
     });
     res.json(statusResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error obteniendo estado del juego' });
   }
 });
@@ -364,6 +372,7 @@ app.post('/api/game/end', verifyToken, async (req, res) => {
     });
     res.json(endResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error finalizando juego' });
   }
 });
