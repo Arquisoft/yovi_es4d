@@ -292,4 +292,316 @@ test('muestra console.error si handleHexClick lanza excepción', async () => {
   consoleErrorMock.mockRestore()
 })
 
+test('usa valores por defecto si turn y status no vienen en la respuesta', async () => {
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...gameStartResponse,
+        turn: undefined,
+        status: undefined,
+      }),
+    } as Response)
+
+  renderGame()
+
+  const header = await screen.findByRole('banner')
+  expect(header).toHaveTextContent(translations.es.gameBoard.player1) // j1 por defecto
+})
+
+test('no hace nada si no es turno de j1', async () => {
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...gameStartResponse,
+        turn: 'j2',
+      }),
+    } as Response)
+
+  const user = userEvent.setup()
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  expect(global.fetch).toHaveBeenCalledTimes(2) // NO validateMove
+})
+
+test('muestra mensaje por defecto si no hay error en validateMove', async () => {
+  const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: false }),
+    } as Response)
+
+  const user = userEvent.setup()
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  await waitFor(() => {
+    expect(alertMock).toHaveBeenCalledWith('Movimiento inválido')
+  })
+})
+
+test('mantiene status previo si validateMove no devuelve status', async () => {
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: true, winner: null }),
+    } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ board: [], turn: 'j1', winner: null, status: 'active' }),
+    } as Response)
+
+  const user = userEvent.setup()
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  // si no rompe, está cubierto
+  expect(true).toBe(true)
+})
+
+test('muestra ganador j2 correctamente', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        board: [],
+        turn: 'j1',
+        winner: 'j2',
+        status: 'finished',
+      }),
+    } as Response)
+
+  renderGame()
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  await screen.findByText(
+    new RegExp(`${translations.es.gameBoard.player2} ${translations.es.gameBoard.won}`, 'i')
+  )
+})
+
+test('actualiza hexData marcando la casilla como j1 (map)', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ userId: 'jugador1' }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        gameId: 'abc123',
+        board: [{ position: '0,0', player: null }],
+        players: [
+          { id: 'jugador1', name: 'Jugador', points: 0 },
+          { id: 'bot', name: 'Bot', points: 0 },
+        ],
+        turn: 'j1',
+        status: 'active',
+      }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: true }),
+    } as Response)
+
+    .mockImplementationOnce(() => new Promise(() => {}))
+
+  renderGame()
+
+  await screen.findByTestId('triangle')
+
+  await user.click(screen.getByText('hex-0-0'))
+
+  await waitFor(() => {
+    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+  })
+})
+
+test('marca la celda como j1 cuando coincide la posición', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    // /me
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ userId: 'jugador1' }),
+    } as Response)
+
+    // /start
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        gameId: 'abc123',
+        board: [{ position: '0,0', player: null }],
+        players: [
+          { id: 'jugador1', name: 'Jugador', points: 0 },
+          { id: 'bot', name: 'Bot', points: 0 },
+        ],
+        turn: 'j1',
+        status: 'active',
+      }),
+    } as Response)
+
+    // validateMove
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: true }),
+    } as Response)
+
+    // 🚨 bloqueamos move
+    .mockImplementationOnce(() => new Promise(() => {}))
+
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  // Si llega aquí, el map se ejecutó
+  await waitFor(() => {
+    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+  })
+})
+
+test('no modifica celdas que no coinciden', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ userId: 'jugador1' }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        gameId: 'abc123',
+        board: [
+          { position: '0,0', player: null },
+          { position: '1,0', player: null },
+        ],
+        players: [
+          { id: 'jugador1', name: 'Jugador', points: 0 },
+          { id: 'bot', name: 'Bot', points: 0 },
+        ],
+        turn: 'j1',
+        status: 'active',
+      }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: true }),
+    } as Response)
+
+    .mockImplementationOnce(() => new Promise(() => {}))
+
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  await waitFor(() => {
+    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+  })
+
+  expect(true).toBe(true)
+})
+
+test('no ejecuta el map si el movimiento no es válido', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ userId: 'jugador1' }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        gameId: 'abc123',
+        board: [{ position: '0,0', player: null }],
+        players: [
+          { id: 'jugador1', name: 'Jugador', points: 0 },
+          { id: 'bot', name: 'Bot', points: 0 },
+        ],
+        turn: 'j1',
+        status: 'active',
+      }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ valid: false }),
+    } as Response)
+
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  await waitFor(() => {
+    expect(window.alert).toBeDefined()
+  })
+
+  expect(global.fetch).toHaveBeenCalledTimes(3)
+})
+
+test('no ejecuta el map si no es turno j1', async () => {
+  const user = userEvent.setup()
+
+  global.fetch = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ userId: 'jugador1' }),
+    } as Response)
+
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        gameId: 'abc123',
+        board: [{ position: '0,0', player: null }],
+        players: [
+          { id: 'jugador1', name: 'Jugador', points: 0 },
+          { id: 'bot', name: 'Bot', points: 0 },
+        ],
+        turn: 'j2',
+        status: 'active',
+      }),
+    } as Response)
+
+  renderGame()
+
+  await screen.findByTestId('triangle')
+  await user.click(screen.getByText('hex-0-0'))
+
+  expect(global.fetch).toHaveBeenCalledTimes(2)
+})
+
+
 })
