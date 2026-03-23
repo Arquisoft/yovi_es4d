@@ -9,6 +9,7 @@ import Dashboard from "../pages/Dashboard";
 import EditProfile from "../pages/EditProfilePage";
 import Historial from "../pages/Historial";
 import ModeSelector from "../components/game/ModeSelector";
+import Friends  from "../pages/Friends";
 
 
 const router = createBrowserRouter([
@@ -55,7 +56,11 @@ const router = createBrowserRouter([
   {
     path: "/select",
     element: <ModeSelector />
-  }
+  },
+  {
+  path: "/friends",
+  element: <Friends /> 
+}
 
 ]);
 
