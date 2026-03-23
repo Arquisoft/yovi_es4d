@@ -542,6 +542,153 @@ app.post('/api/game/end', verifyToken, async (req, res) => {
   }
 });
 
+app.get('/api/friends', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.get(`${friendServiceUrl}/friends`, {
+      headers: { Authorization: `Bearer ${req.cookies.token}` },
+      params: {
+        search: req.query.search,
+        page: req.query.page
+      }
+    });
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || 'Error obteniendo amigos'
+    });
+  }
+});
+app.get('/api/friends/explore', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.get(`${friendServiceUrl}/friends/explore`, {
+      headers: { Authorization: `Bearer ${req.cookies.token}` },
+      params: {
+        search: req.query.search,
+        page: req.query.page
+      }
+    });
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: 'Error explorando usuarios'
+    });
+  }
+});
+app.post('/api/friends/request', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${friendServiceUrl}/friends/request`,
+      { receiverId: req.body.receiverId },
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: 'Error enviando solicitud'
+    });
+  }
+});
+app.get('/api/friends/requests', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.get(`${friendServiceUrl}/friends/requests`, {
+      headers: { Authorization: `Bearer ${req.cookies.token}` },
+      params: { type: req.query.type } // received | sent
+    });
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error obteniendo solicitudes' });
+  }
+});
+app.patch('/api/friends/accept', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.patch(
+      `${friendServiceUrl}/friends/accept`,
+      { requestId: req.body.requestId },
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error aceptando solicitud' });
+  }
+});
+app.patch('/api/friends/reject', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.patch(
+      `${friendServiceUrl}/friends/reject`,
+      { requestId: req.body.requestId },
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error rechazando solicitud' });
+  }
+});
+app.delete('/api/friends/request/:id', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.delete(
+      `${friendServiceUrl}/friends/request/${req.params.id}`,
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error cancelando solicitud' });
+  }
+});
+app.get('/api/notifications', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.get(`${friendServiceUrl}/notifications`, {
+      headers: { Authorization: `Bearer ${req.cookies.token}` },
+      params: { page: req.query.page }
+    });
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error obteniendo notificaciones' });
+  }
+});
+app.patch('/api/notifications/read-all', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.patch(
+      `${friendServiceUrl}/notifications/read-all`,
+      {},
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error actualizando notificaciones' });
+  }
+});
+app.post('/api/notifications/game-invite', verifyToken, async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${friendServiceUrl}/notifications/game-invite`,
+      { receiverId: req.body.receiverId },
+      { headers: { Authorization: `Bearer ${req.cookies.token}` } }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error enviando invitación' });
+  }
+});
 // ================= SWAGGER =================
 
 /**
