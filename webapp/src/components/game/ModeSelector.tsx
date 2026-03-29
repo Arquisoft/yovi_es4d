@@ -16,11 +16,18 @@ const BOARD_SIZES = [
     { value: 19, label: "Extra",   description: "190 celdas · Para expertos",  tag: "19×" },
 ];
 
+const GAME_MODE_META: Record<string, { label: string; description: string }> = {
+    vsBot:       { label: "Contra la máquina",       description: "Juega contra la máquina." },
+    multiplayer: { label: "2 Jugadores",  description: "Dos personas en el mismo ordenador." },
+};
+
+
 const ModeSelector: React.FC = () => {
     const navigate = useNavigate();
     const [availableBotModes, setAvailableBotModes] = useState<string[]>([]);
-    const [selectedBotMode, setSelectedBotMode]     = useState<string>("random_bot");
+    const [selectedBotMode, setSelectedBotMode]     = useState<string>("random_bot"); //Por defecto es el bot random
     const [selectedBoardSize, setSelectedBoardSize] = useState<number>(11);
+    const [selectedGameMode, setSelectedGameMode]   = useState<string>("vsBot"); //Por defecto es contra el bot
     const [loading, setLoading]                     = useState(true);
 
     useEffect(() => {
@@ -44,7 +51,7 @@ const ModeSelector: React.FC = () => {
 
     const handleStart = () =>
         navigate("/game", {
-            state: { gameMode: "vsBot", botMode: selectedBotMode, boardSize: selectedBoardSize },
+            state: { gameMode: selectedGameMode, botMode: selectedBotMode, boardSize: selectedBoardSize },
         });
 
     return (
@@ -61,10 +68,38 @@ const ModeSelector: React.FC = () => {
 
             <div className="ms-body">
 
-                {/* ── Dificultad ── */}
-                <div className="fade-up" >
-                    <p className="ms-section-label">Dificultad</p>
-
+              
+            {/* ── Modo de juego ── */}
+                <div className="fade-up">
+                    <p className="ms-section-label">Modo de juego</p>
+                    <div className="ms-difficulty-list">
+                        {Object.entries(GAME_MODE_META).map(([mode, meta]) => {
+                            const isSelected = selectedGameMode === mode;
+                            return (
+                                <button
+                                    key={mode}
+                                    onClick={() => setSelectedGameMode(mode)}
+                                    className={`ms-mode-card fade-up${isSelected ? " selected" : ""}`}
+                                >
+                                    <div className="ms-mode-info">
+                                        <div className="ms-mode-name-row">
+                                            <span className="ms-mode-name">{meta.label}</span>
+                                        </div>
+                                        <p className="ms-mode-desc">{meta.description}</p>
+                                    </div>
+                                    <div className={`ms-radio${isSelected ? " checked" : ""}`}>
+                                        {isSelected && <span className="ms-radio-dot" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+ 
+                {/* ── Dificultad (solo en vsBot) ── */}
+                <div className="fade-up" style={{ display: selectedGameMode === "vsBot" ? "block" : "none" }}>
+                    <p className="ms-section-label">Dificultad de bot</p>
+ 
                     {loading ? (
                         <div className="flex items-center gap-2 mb-6">
                             {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--violet)", display: "inline-block" }} />)}
@@ -79,18 +114,18 @@ const ModeSelector: React.FC = () => {
                                         key={mode}
                                         onClick={() => setSelectedBotMode(mode)}
                                         className={`ms-mode-card fade-up${isSelected ? " selected" : ""}`}
-
+ 
                                     >
                                         <span className="ms-mode-emoji">{meta?.emoji ?? "🤖"}</span>
-
+ 
                                         <div className="ms-mode-info">
                                             <div className="ms-mode-name-row">
                                                 <span className="ms-mode-name">{meta?.label ?? mode}</span>
-
+ 
                                             </div>
                                             <p className="ms-mode-desc">{meta?.description}</p>
                                         </div>
-
+ 
                                         <div className={`ms-radio${isSelected ? " checked" : ""}`}>
                                             {isSelected && <span className="ms-radio-dot" />}
                                         </div>

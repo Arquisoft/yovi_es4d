@@ -174,7 +174,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     userId: userId
   });
 
-  game.currentPlayer = 'j2';
+  game.currentPlayer = game.currentPlayer === 'j1' ? 'j2' : 'j1';
 
   if (rustResponse.data.status === 'finished') {
     game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
@@ -197,6 +197,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
  * Movimiento del bot en modo vsBot
  */
 app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
+  
   try {
     const { gameId } = req.params;
     const { role } = req.body; 
@@ -266,7 +267,19 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
  * Movimiento 1vs1 (vacío de momento)
  */
 app.post('/api/game/:gameId/multiplayer/move', (req, res) => {
-  res.json({ message: 'Multiplayer move endpoint (empty)' });
+  const { gameId } = req.params;
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+ 
+  // El turno ya fue cambiado a j2 en validateMove, aquí solo devolvemos el estado
+  res.json({
+    gameId,
+    board:  game.board,
+    moves:  game.moves,
+    turn:   game.currentPlayer,
+    winner: game.winner || null,
+    status: game.status,
+  });
 });
 
 /**

@@ -110,8 +110,13 @@ const GameBoard: React.FC = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleHexClick = async (position: string) => {
-    if (!gameState.gameId || gameState.botPlaying || gameState.turn !== "j1" || gameState.status === "finished") return;
 
+    const isMultiplayer = gameMode === "multiplayer";
+    // En vsBot solo j1 puede clickar; en multiplayer cualquier turno
+    if (!gameState.gameId || gameState.status === "finished") return;
+    if (!isMultiplayer && (gameState.botPlaying || gameState.turn !== "j1")) return;
+    if (isMultiplayer && gameState.botPlaying) return;
+ 
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
@@ -134,10 +139,12 @@ const GameBoard: React.FC = () => {
         return;
       }
 
+      const currentTurn = gameState.turn; // j1 ó j2 según el turno
+
       setGameState(prev => ({
         ...prev,
-        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: "j1" } : h),
-        players: prev.players.map(p => p.id === prev.players[0].id ? { ...p, points: p.points + 5 } : p),
+        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
+        players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
         winner:  validateData.winner || prev.winner,
         status:  validateData.status || prev.status,
       }));
@@ -156,9 +163,13 @@ const GameBoard: React.FC = () => {
         turn:    moveData.turn,
         winner:  moveData.winner,
         status:  moveData.status,
-        players: prev.players.map(p =>
-          p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
-        ),
+
+         // En vsBot suma puntos al bot, en multiplayer no hace falta ya se suma arriba
+        players: gameMode === "vsBot"
+          ? prev.players.map(p =>
+              p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+            )
+          : prev.players,
         botPlaying: false,
       }));
     } catch (error) {
@@ -168,7 +179,7 @@ const GameBoard: React.FC = () => {
   };
 
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
-  const player2 = gameState.players[1] || { id: "bot",      name: t('gameBoard.player2'),     points: 0 };
+  const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' ? t('gameBoard.player2') : 'Bot', points: 0 };
 
   return (
     <div className="game-bg min-h-screen flex flex-col">
@@ -184,7 +195,7 @@ const GameBoard: React.FC = () => {
             </span>
           ) : gameState.botPlaying ? (
             <span className="gb-status-thinking">
-              <span>{t('gameBoard.botPlaying')}</span>
+               <span>{gameMode === 'multiplayer' ? t('gameBoard.thinking') || 'Procesando...' : t('gameBoard.botPlaying')}</span>
               <span className="gb-thinking-dots">
                 {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />)}
               </span>
