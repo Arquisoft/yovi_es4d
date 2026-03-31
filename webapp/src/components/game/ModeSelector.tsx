@@ -17,9 +17,8 @@ const BOARD_SIZES = [
 ];
 
 const GAME_MODE_META: Record<string, { label: string; description: string }> = {
-    vsBot:       { label: "Contra la máquina", description: "Juega contra la IA."                         },
-    multiplayer: { label: "2 Jugadores",        description: "Dos personas en el mismo ordenador."         },
-    online:      { label: "Online",             description: "Juega con un amigo a distancia por código." },
+    vsBot:       { label: "Contra la máquina", description: "Juega contra la IA."                 },
+    multiplayer: { label: "2 Jugadores",        description: "Dos personas en el mismo ordenador." },
 };
 
 
@@ -75,6 +74,23 @@ const ModeSelector: React.FC = () => {
             <div className="ms-body">
 
               
+            {/* ── Online ── */}
+                <div className="fade-up">
+                    <button
+                        className="ms-mode-card fade-up"
+                        onClick={() => navigate("/online-lobby")}
+                    >
+                        <div className="ms-mode-info">
+                            <div className="ms-mode-name-row">
+                                <span className="ms-mode-name">🌐 Jugar online</span>
+                            </div>
+                            <p className="ms-mode-desc">Juega con un amigo a distancia usando un código.</p>
+                        </div>
+                    </button>
+                </div>
+
+                <div style={{ marginTop: "1.5rem" }} />
+
             {/* ── Modo de juego ── */}
                 <div className="fade-up">
                     <p className="ms-section-label">Modo de juego</p>
