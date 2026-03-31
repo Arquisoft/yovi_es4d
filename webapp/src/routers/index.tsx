@@ -9,6 +9,7 @@ import Dashboard from "../pages/Dashboard";
 import EditProfile from "../pages/EditProfilePage";
 import Historial from "../pages/Historial";
 import ModeSelector from "../components/game/ModeSelector";
+import OnlineLobby from "../components/game/Onlinelobby";
 
 
 const router = createBrowserRouter([
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
   {
     path: "/select",
     element: <ModeSelector />
+  },
+  {
+    path: "/online-lobby",
+    element: <OnlineLobby  />
   }
 
 ]);

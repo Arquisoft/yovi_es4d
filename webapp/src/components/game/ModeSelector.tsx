@@ -17,8 +17,9 @@ const BOARD_SIZES = [
 ];
 
 const GAME_MODE_META: Record<string, { label: string; description: string }> = {
-    vsBot:       { label: "Contra la máquina",       description: "Juega contra la máquina." },
-    multiplayer: { label: "2 Jugadores",  description: "Dos personas en el mismo ordenador." },
+    vsBot:       { label: "Contra la máquina", description: "Juega contra la IA."                         },
+    multiplayer: { label: "2 Jugadores",        description: "Dos personas en el mismo ordenador."         },
+    online:      { label: "Online",             description: "Juega con un amigo a distancia por código." },
 };
 
 
@@ -49,10 +50,15 @@ const ModeSelector: React.FC = () => {
         fetchBotModes();
     }, []);
 
-    const handleStart = () =>
-        navigate("/game", {
-            state: { gameMode: selectedGameMode, botMode: selectedBotMode, boardSize: selectedBoardSize },
-        });
+    const handleStart = () => {
+        if (selectedGameMode === "online") {
+            navigate("/online-lobby");
+        } else {
+            navigate("/game", {
+                state: { gameMode: selectedGameMode, botMode: selectedBotMode, boardSize: selectedBoardSize },
+            });
+        }
+    };
 
     return (
         <div className="game-bg min-h-screen flex flex-col items-center justify-center px-6 py-16">

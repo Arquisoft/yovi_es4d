@@ -13,6 +13,8 @@ const YAML = require('yaml');
 const jwt = require('jsonwebtoken');
 const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
 
+const { Server } = require('socket.io'); //Para partidas online (WebSockets)
+
 const app = express();
 const port = 8000;
 
@@ -21,6 +23,8 @@ const port = 8000;
 const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:8002';
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8001';
 const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
+
+
 
 
 app.use(cors({
@@ -361,5 +365,95 @@ if (fs.existsSync(openapiPath)) {
 }
 
 const server = app.listen(port, () => {});
+
+// ================= WEBSOCKETS (Online mode) =================
+
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    credentials: true,
+  },
+});
+
+// rooms: código → { j1: socketId, j2: socketId|null, gameId: string|null, boardSize: number }
+const rooms = new Map();
+ 
+function generateCode() {
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+ 
+io.on('connection', (socket) => {
+  console.log(`🔌 Socket conectado: ${socket.id}`);
+ 
+  // ── Crear sala ──────────────────────────────────────────
+  socket.on('create_room', ({ boardSize = 11 } = {}) => {
+    let code;
+    do { code = generateCode(); } while (rooms.has(code));
+ 
+    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize });
+    socket.join(code);
+    socket.emit('room_created', { code });
+    console.log(`🏠 Sala creada: ${code} por ${socket.id}`);
+  });
+ 
+  // ── Unirse a sala ───────────────────────────────────────
+  socket.on('join_room', ({ code }) => {
+    const room = rooms.get(code?.toUpperCase());
+    if (!room) {
+      socket.emit('room_error', { message: 'Sala no encontrada' });
+      return;
+    }
+    if (room.j2) {
+      socket.emit('room_error', { message: 'Sala llena' });
+      return;
+    }
+ 
+    room.j2 = socket.id;
+    socket.join(code.toUpperCase());
+ 
+    // Notificar a ambos — game puede empezar
+    io.to(code.toUpperCase()).emit('game_ready', {
+      boardSize: room.boardSize,
+      // j1 juega primero
+      yourRole: null, // se asigna individualmente abajo
+    });
+ 
+    // Decir a cada jugador su rol
+    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
+    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
+ 
+    console.log(`🎮 Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
+  });
+ 
+  // ── Guardar gameId cuando la partida empieza ────────────
+  socket.on('game_started', ({ code, gameId }) => {
+    const room = rooms.get(code);
+    if (room) room.gameId = gameId;
+  });
+ 
+  // ── Reenviar movimiento al rival ────────────────────────
+  socket.on('move_made', ({ code, position, turn }) => {
+    // Enviar al otro jugador de la sala (no al que hizo el movimiento)
+    socket.to(code).emit('opponent_move', { position, turn });
+  });
+ 
+  // ── Reenviar fin de partida ─────────────────────────────
+  socket.on('game_over', ({ code, winner }) => {
+    socket.to(code).emit('game_over', { winner });
+  });
+ 
+  // ── Desconexión ─────────────────────────────────────────
+  socket.on('disconnect', () => {
+    console.log(`🔌 Socket desconectado: ${socket.id}`);
+    // Notificar al rival si estaba en una sala
+    for (const [code, room] of rooms.entries()) {
+      if (room.j1 === socket.id || room.j2 === socket.id) {
+        socket.to(code).emit('opponent_disconnected');
+        rooms.delete(code);
+        break;
+      }
+    }
+  });
+});
 
 module.exports = server;

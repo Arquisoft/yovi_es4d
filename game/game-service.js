@@ -264,7 +264,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 });
 
 /**
- * Movimiento 1vs1 (vacío de momento)
+ * Movimiento 1vs1 
  */
 app.post('/api/game/:gameId/multiplayer/move', (req, res) => {
   const { gameId } = req.params;

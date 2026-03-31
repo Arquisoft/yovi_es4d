@@ -6,6 +6,7 @@ import Jugador from "./player";
 import { API_URL } from "../../config";
 import "./game.css";
 import { useTranslation } from "../../i18n";
+import { io, Socket } from "socket.io-client";
 
 interface HexData {
   position: string;
@@ -29,9 +30,11 @@ interface GameState {
 }
 
 interface LocationState {
-  gameMode?:  string;
-  botMode?:   string;
-  boardSize?: number;
+  gameMode?:   string;
+  botMode?:    string;
+  boardSize?:  number;
+  onlineRole?: string;  // 'j1' | 'j2' — asignado por el servidor en modo online
+  roomCode?:   string;
 }
 
 const GameBoard: React.FC = () => {
@@ -41,12 +44,15 @@ const GameBoard: React.FC = () => {
 
 
   const {
-    gameMode  = "vsBot",
-    botMode   = "random_bot",
-    boardSize = 11,
+    gameMode   = "vsBot",
+    botMode    = "random_bot",
+    boardSize  = 11,
+    onlineRole = "j1",
+    roomCode   = "",
   } = (location.state as LocationState) ?? {};
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [socket, setSocket]   = useState<Socket | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
@@ -63,6 +69,39 @@ const GameBoard: React.FC = () => {
       navigate("/gameover", { state: gameState });
     }
   }, [gameState.status, navigate]);
+
+  // ── Socket online ────────────────────────────────────────
+  useEffect(() => {
+    if (gameMode !== "online") return;
+
+    const s = io(API_URL, { withCredentials: true });
+    setSocket(s);
+
+    // Recibir movimiento del rival
+    s.on('opponent_move', ({ position, turn }: { position: string; turn: string }) => {
+      setGameState(prev => ({
+        ...prev,
+        hexData: prev.hexData.map(h =>
+          h.position === position
+            ? { ...h, player: (onlineRole === "j1" ? "j2" : "j1") as "j1" | "j2" }
+            : h
+        ),
+        turn: turn as "j1" | "j2",
+        botPlaying: false,
+      }));
+    });
+
+    s.on('opponent_disconnected', () => {
+      alert("Tu rival se ha desconectado");
+      navigate("/select");
+    });
+
+    s.on('game_over', ({ winner }: { winner: string }) => {
+      setGameState(prev => ({ ...prev, winner: winner as "j1" | "j2", status: "finished" }));
+    });
+
+    return () => { s.disconnect(); };
+  }, [gameMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const startGame = async () => {
@@ -102,6 +141,11 @@ const GameBoard: React.FC = () => {
           winner:     data.winner || null,
           botPlaying: false,
         });
+
+        // En modo online, solo j1 crea el juego en el servidor
+        if (gameMode === "online" && socket) {
+          socket.emit('game_started', { code: roomCode, gameId: data.gameId });
+        }
       } catch (error) {
         console.error("Error starting game:", error);
       }
@@ -112,9 +156,11 @@ const GameBoard: React.FC = () => {
   const handleHexClick = async (position: string) => {
 
     const isMultiplayer = gameMode === "multiplayer";
-    // En vsBot solo j1 puede clickar; en multiplayer cualquier turno
+    const isOnline       = gameMode === "online";
     if (!gameState.gameId || gameState.status === "finished") return;
-    if (!isMultiplayer && (gameState.botPlaying || gameState.turn !== "j1")) return;
+    // Online: solo puede clickar el jugador cuyo rol coincide con el turno actual
+    if (isOnline && (gameState.botPlaying || gameState.turn !== onlineRole)) return;
+    if (!isMultiplayer && !isOnline && (gameState.botPlaying || gameState.turn !== "j1")) return;
     if (isMultiplayer && gameState.botPlaying) return;
  
     setGameState(prev => ({ ...prev, botPlaying: true }));
@@ -149,6 +195,17 @@ const GameBoard: React.FC = () => {
         status:  validateData.status || prev.status,
       }));
 
+      // En modo online emitir movimiento al rival y no llamar al bot
+      if (gameMode === "online" && socket) {
+        const nextTurn = currentTurn === "j1" ? "j2" : "j1";
+        socket.emit('move_made', { code: roomCode, position, turn: nextTurn });
+        if (validateData.winner) {
+          socket.emit('game_over', { code: roomCode, winner: validateData.winner });
+        }
+        setGameState(prev => ({ ...prev, turn: nextTurn as "j1" | "j2", botPlaying: false }));
+        return; // no llamar a /move (bot)
+      }
+
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
         credentials: "include",
@@ -179,7 +236,7 @@ const GameBoard: React.FC = () => {
   };
 
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
-  const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' ? t('gameBoard.player2') : 'Bot', points: 0 };
+  const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' || gameMode === 'online' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' || gameMode === 'online' ? t('gameBoard.player2') : 'Bot', points: 0 };
 
   return (
     <div className="game-bg min-h-screen flex flex-col">
