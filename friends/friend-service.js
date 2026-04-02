@@ -39,7 +39,7 @@ app.get('/friends', async (req, res) => {
     });
 
     const friendIds = relations.map(r =>
-      r.senderId.toString() === userId ? r.receiverId : r.senderId
+      r.senderId.toString() === userId ? r.receiverId.toString() : r.senderId.toString()
     );
 
     res.json(friendIds);
@@ -58,7 +58,6 @@ app.get('/friends/explore', async (req, res) => {
     const limit = 10;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    // Amigos actuales
     const relations = await FriendRequest.find({
       $or: [
         { senderId: userId, status: 'accepted' },
@@ -74,11 +73,14 @@ app.get('/friends/explore', async (req, res) => {
       params: { search, page, limit }
     });
 
-     const usersArray = Array.isArray(response.data) ? response.data : [];
-    const users = usersArray.filter(u =>
-      u._id !== userId && !friendIds.includes(u._id)
-    );
+    
+    const users = response.data.filter(u => {
+      if (u._id === userId) return false;
 
+      if (friendIds.includes(u._id)) return false;
+
+      return true;
+    });
     res.json({ users });
   } catch (err) {
     console.error(err);
@@ -100,6 +102,10 @@ app.post('/friends/request', async (req, res) => {
 
     const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
     const receiver = await axios.get(`${USER_SERVICE_URL}/api/users/${receiverId}`);
+
+    // Validar que exista email
+    if (!sender.data.email || !receiver.data.email)
+      return res.status(500).json({ error: 'Cannot create friend request without emails' });
 
     const request = new FriendRequest({
       senderId,
@@ -150,18 +156,21 @@ app.get('/friends/requests', async (req, res) => {
   }
 });
 
-// Aceptar, rechazar y cancelar solicitudes
+// PATCH aceptar solicitud
+// PATCH aceptar solicitud
 app.patch('/friends/accept', async (req, res) => {
   try {
     const { requestId, userId } = req.body;
     if (!requestId || !userId) return res.status(400).json({ error: 'requestId and userId required' });
 
+    // Buscar solicitud existente
     const request = await FriendRequest.findById(requestId);
     if (!request) return res.status(404).json({ error: 'Not found' });
     if (request.receiverId.toString() !== userId) return res.status(403).json({ error: 'Not allowed' });
 
+    // Actualizar solo status
     request.status = 'accepted';
-    await request.save();
+    await request.save(); // Mongoose ya tiene senderEmail y receiverEmail
 
     await Notification.create({
       userId: request.senderId,
@@ -177,12 +186,18 @@ app.patch('/friends/accept', async (req, res) => {
   }
 });
 
+// PATCH rechazar solicitud
 app.patch('/friends/reject', async (req, res) => {
   try {
     const { requestId } = req.body;
     if (!requestId) return res.status(400).json({ error: 'requestId required' });
 
-    await FriendRequest.findByIdAndUpdate(requestId, { status: 'rejected' });
+    const request = await FriendRequest.findById(requestId);
+    if (!request) return res.status(404).json({ error: 'Not found' });
+
+    request.status = 'rejected';
+    await request.save(); // solo actualizar status
+
     res.json({ message: 'Rejected' });
   } catch (err) {
     console.error(err);
@@ -190,6 +205,7 @@ app.patch('/friends/reject', async (req, res) => {
   }
 });
 
+// Cancelar solicitud
 app.delete('/friends/request/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -211,8 +227,6 @@ app.delete('/friends/request/:id', async (req, res) => {
 // ----------------------
 // 🔔 NOTIFICACIONES
 // ----------------------
-// GET notificaciones enriquecidas
-// 🔔 NOTIFICACIONES ENRIQUECIDAS
 app.get('/notifications', async (req, res) => {
   try {
     const { userId, page = 1 } = req.query;
@@ -230,9 +244,8 @@ app.get('/notifications', async (req, res) => {
       notifications.map(async (n) => {
         let relatedUserData;
         try {
-          // Llamamos al endpoint POST /profile del user-service
           const response = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: n.relatedUserId });
-          relatedUserData = response.data; // { id, username, email, avatar }
+          relatedUserData = response.data;
         } catch (err) {
           console.error(`Error obteniendo datos de user ${n.relatedUserId}:`, err.message);
           relatedUserData = { username: 'Usuario desconocido', email: '', avatar: '' };

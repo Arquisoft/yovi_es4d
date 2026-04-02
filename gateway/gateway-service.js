@@ -611,17 +611,41 @@ app.get('/api/friends/requests', verifyToken, async (req, res) => {
 
     const requests = friendResp.data;
 
-    // 2️⃣ Enriquecer con username desde user-service
+    // 2️⃣ Enriquecer con email y username desde user-service si hace falta
     const enriched = await Promise.all(requests.map(async (r) => {
-      // Traer perfil del sender
-      const senderRes = await axios.post(`${userServiceUrl}/profile`, { userId: r.sender._id });
-      // Traer perfil del receiver
-      const receiverRes = await axios.post(`${userServiceUrl}/profile`, { userId: r.receiver._id });
+      let senderData = r.sender;
+      let receiverData = r.receiver;
+
+      try {
+        if (!r.sender.email || !r.sender.username) {
+          const senderRes = await axios.post(`${userServiceUrl}/profile`, { userId: r.sender._id });
+          senderData = { 
+            _id: r.sender._id, 
+            username: senderRes.data.username, 
+            email: senderRes.data.email 
+          };
+        }
+        if (!r.receiver.email || !r.receiver.username) {
+          const receiverRes = await axios.post(`${userServiceUrl}/profile`, { userId: r.receiver._id });
+          receiverData = { 
+            _id: r.receiver._id, 
+            username: receiverRes.data.username, 
+            email: receiverRes.data.email 
+          };
+        }
+      } catch (err) {
+        console.error(`Error enriqueciendo datos de usuario: ${err.message}`);
+        // fallback si falla la llamada al user-service
+        senderData = { ...senderData, email: senderData.email || '' };
+        receiverData = { ...receiverData, email: receiverData.email || '' };
+      }
 
       return {
-        ...r,
-        sender: { ...r.sender, username: senderRes.data.username },
-        receiver: { ...r.receiver, username: receiverRes.data.username }
+        _id: r._id,
+        status: r.status,
+        createdAt: r.createdAt,
+        sender: senderData,
+        receiver: receiverData
       };
     }));
 

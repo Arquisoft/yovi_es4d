@@ -23,7 +23,7 @@ export const exploreUsers = async (search = '', page = 1): Promise<User[]> => {
     params: { search, page },
     withCredentials: true,
   });
-  return res.data;
+  return res.data.users;
 };
 
 // 👥 Obtener amigos
