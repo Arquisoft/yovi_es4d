@@ -30,11 +30,12 @@ interface GameState {
 }
 
 interface LocationState {
-  gameMode?:   string;
-  botMode?:    string;
-  boardSize?:  number;
-  onlineRole?: string;  // 'j1' | 'j2' — asignado por el servidor en modo online
-  roomCode?:   string;
+  gameMode?:    string;
+  botMode?:     string;
+  boardSize?:   number;
+  onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
+  roomCode?:    string;
+  player2Name?: string;
 }
 
 const GameBoard: React.FC = () => {
@@ -44,11 +45,12 @@ const GameBoard: React.FC = () => {
 
 
   const {
-    gameMode   = "vsBot",
-    botMode    = "random_bot",
-    boardSize  = 11,
-    onlineRole = "j1",
-    roomCode   = "",
+    gameMode    = "vsBot",
+    botMode     = "random_bot",
+    boardSize   = 11,
+    onlineRole  = "j1",
+    roomCode    = "",
+    player2Name,
   } = (location.state as LocationState) ?? {};
 
   useEffect(() => {
@@ -74,7 +76,7 @@ const GameBoard: React.FC = () => {
 
   useEffect(() => {
     if (gameState.status === "finished") {
-      navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, onlineRole } });
+      navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, onlineRole, player2Name } });
     }
   }, [gameState.status, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -299,7 +301,10 @@ const GameBoard: React.FC = () => {
   // Nombre e imagen del usuario logueado y del rival (online)
   const myName         = userProfile?.username     || t('gameBoard.player1');
   const myAvatar       = userProfile?.avatar       || "logo.png";
-  const opponentName   = opponentProfile?.username || t('gameBoard.player2');
+  const opponentName   = opponentProfile?.username
+    || (gameMode === "multiplayer" ? player2Name : undefined)
+    || gameState.players[1]?.name
+    || t('gameBoard.player2');
   const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
   // En online el usuario puede ser j1 o j2; en los demás modos siempre es j1
@@ -308,7 +313,7 @@ const GameBoard: React.FC = () => {
   const p1Name   = isMySlotJ1 ? myName         : opponentName;
   const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
   const p2Name   = isMySlotJ1 ? opponentName                              : myName;
-  const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "🤖" : opponentAvatar) : myAvatar;
+  const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
 
   return (
     <div className="game-bg min-h-screen flex flex-col">

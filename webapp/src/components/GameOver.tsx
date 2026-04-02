@@ -35,7 +35,10 @@ const GameOver: React.FC = () => {
 
     const myName         = userProfile?.username     || player1?.name;
     const myAvatar       = userProfile?.avatar       || "logo.png";
-    const opponentName   = opponentProfile?.username || player2?.name;
+    const player2Name    = gameState.player2Name as string | undefined;
+    const opponentName   = opponentProfile?.username
+        || (gameMode === "multiplayer" ? player2Name : undefined)
+        || player2?.name;
     const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
     const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
@@ -43,7 +46,7 @@ const GameOver: React.FC = () => {
     const p1Name   = isMySlotJ1 ? myName         : opponentName;
     const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
     const p2Name   = isMySlotJ1 ? opponentName                                    : myName;
-    const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "🤖" : opponentAvatar) : myAvatar;
+    const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
 
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 

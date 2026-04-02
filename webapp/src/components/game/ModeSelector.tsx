@@ -33,6 +33,7 @@ const ModeSelector: React.FC = () => {
     const [gameMode, setGameMode]       = useState("vsBot");
     const [botMode, setBotMode]         = useState("random_bot");
     const [boardSize, setBoardSize]     = useState(11);
+    const [player2Name, setPlayer2Name] = useState("");
 
     useEffect(() => {
         fetch(`${API_URL}/api/game/bot-modes`, { credentials: "include" })
@@ -47,7 +48,7 @@ const ModeSelector: React.FC = () => {
     }, []);
 
     const handleStart = () => {
-        navigate("/game", { state: { gameMode, botMode, boardSize } });
+        navigate("/game", { state: { gameMode, botMode, boardSize, player2Name: player2Name.trim() || "Jugador 2" } });
     };
 
     return (
@@ -112,6 +113,36 @@ const ModeSelector: React.FC = () => {
                         ))}
                     </div>
                 </div>
+
+                {/* Nombre del jugador 2 (solo en multiplayer) */}
+                {gameMode === "multiplayer" && (
+                    <div className="fade-up rounded-2xl p-5 mb-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <p className="ms-section-label" style={{ margin: 0 }}>Nombre del jugador 2</p>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                maxLength={20}
+                                placeholder="Nombre del rival..."
+                                value={player2Name}
+                                onChange={e => setPlayer2Name(e.target.value)}
+                                className="w-full rounded-xl px-4 py-3 outline-none transition-all"
+                                style={{
+                                    background: "var(--bg)",
+                                    border: `2px solid ${player2Name.trim() ? "var(--coral)" : "var(--border)"}`,
+                                    color: "var(--text)",
+                                    fontSize: "1rem",
+                                }}
+                            />
+                            {player2Name.trim() && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "var(--coral)" }}>
+                                    ✓
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Dificultad del bot (solo en vsBot) */}
                 {gameMode === "vsBot" && (
