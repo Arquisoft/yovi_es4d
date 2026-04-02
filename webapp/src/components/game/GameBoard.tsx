@@ -307,8 +307,8 @@ const GameBoard: React.FC = () => {
 
   const p1Name   = isMySlotJ1 ? myName         : opponentName;
   const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
-  const p2Name   = isMySlotJ1 ? opponentName    : myName;
-  const p2Avatar = isMySlotJ1 ? opponentAvatar  : myAvatar;
+  const p2Name   = isMySlotJ1 ? opponentName                              : myName;
+  const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "🤖" : opponentAvatar) : myAvatar;
 
   return (
     <div className="game-bg min-h-screen flex flex-col">

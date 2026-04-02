@@ -81,7 +81,7 @@ const OnlineLobby: React.FC = () => {
       {lobbyState === "idle" && (
         <div className="fade-up w-full max-w-3xl">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Panel Crear */}
             <div className="flex flex-col gap-5 rounded-2xl p-6"

@@ -42,8 +42,8 @@ const GameOver: React.FC = () => {
 
     const p1Name   = isMySlotJ1 ? myName         : opponentName;
     const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
-    const p2Name   = isMySlotJ1 ? opponentName    : myName;
-    const p2Avatar = isMySlotJ1 ? opponentAvatar  : myAvatar;
+    const p2Name   = isMySlotJ1 ? opponentName                                    : myName;
+    const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "🤖" : opponentAvatar) : myAvatar;
 
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 
@@ -86,7 +86,10 @@ const GameOver: React.FC = () => {
                                 {isWinner && <span className="go-winner-crown">👑</span>}
 
                                 <div className="go-player-avatar">
-                                    <img src={p.avatar} alt={p.name} />
+                                    {p.avatar.includes(".") || p.avatar.includes("/")
+                                        ? <img src={p.avatar} alt={p.name} />
+                                        : <span style={{ fontSize: "2.5rem", lineHeight: 1 }}>{p.avatar}</span>
+                                    }
                                 </div>
 
                                 <span className="go-player-name">{p.name}</span>
