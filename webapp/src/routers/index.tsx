@@ -10,6 +10,7 @@ import EditProfile from "../pages/EditProfilePage";
 import Historial from "../pages/Historial";
 import ModeSelector from "../components/game/ModeSelector";
 import Friends  from "../pages/Friends";
+import Notifications from "../components/Notifications";
 
 
 const router = createBrowserRouter([
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
   {
   path: "/friends",
   element: <Friends /> 
+},
+{
+  path: "/notifications",
+  element: <Notifications />
 }
 
 ]);

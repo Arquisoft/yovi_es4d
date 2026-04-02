@@ -1,85 +1,75 @@
+// src/services/friendService.ts
+import axios from 'axios';
 import { API_URL } from '../config';
 
-// 🔍 Explorar usuarios
-export const exploreUsers = async (search = '', page = 1) => {
-  const res = await fetch(
-    `${API_URL}/api/friends/explore?search=${search}&page=${page}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
+export interface User {
+  _id: string;
+  username: string;
+  avatar?: string;
+}
 
-  if (!res.ok) throw new Error('Error explorando usuarios');
-  return res.json();
+// 🔹 Solicitud de amistad
+export interface Request {
+  _id: string;
+  status: string;
+  sender: User;
+  receiver: User;
+  createdAt: string;
+}
+
+// 🔍 Explorar usuarios
+export const exploreUsers = async (search = '', page = 1): Promise<User[]> => {
+  const res = await axios.get(`${API_URL}/api/friends/explore`, {
+    params: { search, page },
+    withCredentials: true,
+  });
+  return res.data;
 };
 
 // 👥 Obtener amigos
-export const getFriends = async (search = '', page = 1) => {
-  const res = await fetch(
-    `${API_URL}/api/friends?search=${search}&page=${page}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
-
-  if (!res.ok) throw new Error('Error obteniendo amigos');
-  return res.json();
+export const getFriends = async (search = '', page = 1): Promise<User[]> => {
+  const res = await axios.get(`${API_URL}/api/friends`, {
+    params: { search, page },
+    withCredentials: true,
+  });
+  return res.data;
 };
 
 // 📩 Solicitudes recibidas
-export const getFriendRequests = async () => {
-  const res = await fetch(
-    `${API_URL}/api/friends/requests?type=received`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
-
-  if (!res.ok) throw new Error('Error obteniendo solicitudes');
-  return res.json();
+export const getFriendRequests = async (): Promise<Request[]> => {
+  const res = await axios.get(`${API_URL}/api/friends/requests`, {
+    params: { type: 'received' },
+    withCredentials: true,
+  });
+  return res.data;
 };
 
 // ➕ Enviar solicitud
-export const sendFriendRequest = async (receiverId: string) => {
-  const res = await fetch(`${API_URL}/api/friends/request`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ receiverId })
-  });
-
-  if (!res.ok) throw new Error('Error enviando solicitud');
-  return res.json();
+export const sendFriendRequest = async (receiverId: string): Promise<any> => {
+  const res = await axios.post(
+    `${API_URL}/api/friends/request`,
+    { receiverId },
+    { withCredentials: true }
+  );
+  return res.data;
 };
 
-// ✅ Aceptar
-export const acceptFriendRequest = async (requestId: string) => {
-  const res = await fetch(`${API_URL}/api/friends/accept`, {
-    method: 'PATCH',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requestId })
-  });
-
-  if (!res.ok) throw new Error('Error aceptando');
-  return res.json();
+// ✅ Aceptar solicitud
+export const acceptFriendRequest = async (requestId: string): Promise<any> => {
+  const res = await axios.patch(
+    `${API_URL}/api/friends/accept`,
+    { requestId },
+    { withCredentials: true }
+  );
+  return res.data;
 };
 
-// ❌ Rechazar
-export const rejectFriendRequest = async (requestId: string) => {
-  const res = await fetch(`${API_URL}/api/friends/reject`, {
-    method: 'PATCH',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requestId })
-  });
-
-  if (!res.ok) throw new Error('Error rechazando');
-  return res.json();
+// ❌ Rechazar solicitud
+export const rejectFriendRequest = async (requestId: string): Promise<any> => {
+  const res = await axios.patch(
+    `${API_URL}/api/friends/reject`,
+    { requestId },
+    { withCredentials: true }
+  );
+  return res.data;
 };

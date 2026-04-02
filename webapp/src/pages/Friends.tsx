@@ -20,8 +20,8 @@ type User = {
 
 type Request = {
   _id: string;
-  senderId: User;
-  receiverId: User;
+  sender: User;
+  receiver: User;
 };
 
 const Friends: React.FC = () => {
@@ -33,29 +33,35 @@ const Friends: React.FC = () => {
   const [data, setData] = useState<User[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [page, setPage] = useState(1);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ----------------------
-  // CARGA DE DATOS
-  // ----------------------
-  const loadData = async () => {
-    if (!user) return;
+  useEffect(() => {
+    if (!user) return; // usuario no cargado todavía
+    const userId = user?._id || user?.id || user?.userId;
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
+    loadData();
+  }, [user, tab, search, page, navigate]);
 
+  const loadData = async () => {
+    const userId = user?._id || user?.id || user?.userId;
+    if (!userId) return;
     try {
       setLoading(true);
       setError(null);
 
       if (tab === 'explore') {
         const res = await exploreUsers(search, page);
-        setData(res);
+        setData(Array.isArray(res) ? res : []);
       } else if (tab === 'friends') {
         const res = await getFriends(search, page);
-        setData(res);
+        setData(Array.isArray(res) ? res : []);
       } else if (tab === 'requests') {
         const res = await getFriendRequests();
-        setRequests(res);
+        setRequests(Array.isArray(res) ? res : []);
       }
     } catch (err) {
       console.error(err);
@@ -64,19 +70,6 @@ const Friends: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // ----------------------
-  // EFFECT: Verifica usuario y carga datos
-  // ----------------------
-  useEffect(() => {
-    if (user === undefined) return; // todavía verificando
-    if (user === null) {
-      navigate('/login');
-      return;
-    }
-
-    loadData();
-  }, [user, tab, search, page, navigate]);
 
   // ----------------------
   // ACCIONES
@@ -116,7 +109,6 @@ const Friends: React.FC = () => {
   return (
     <>
       <Sidebar />
-
       <div className="friends-page">
         <header>
           <h1>Amigos</h1>
@@ -164,7 +156,6 @@ const Friends: React.FC = () => {
                     <div>
                       <strong>{u.username}</strong>
                     </div>
-
                     {tab === 'explore' && (
                       <button onClick={() => handleSend(u._id)}>Añadir</button>
                     )}
@@ -176,9 +167,8 @@ const Friends: React.FC = () => {
                 requests.map((r) => (
                   <li key={r._id}>
                     <div>
-                      <strong>{r.senderId.username}</strong>
+                      <strong>{r.sender.username}</strong>
                     </div>
-
                     <div className="actions">
                       <button onClick={() => handleAccept(r._id)}>Aceptar</button>
                       <button onClick={() => handleReject(r._id)}>Rechazar</button>
@@ -186,7 +176,16 @@ const Friends: React.FC = () => {
                   </li>
                 ))}
             </ul>
-
+              {!loading && tab !== 'requests' && data.length === 0 && (
+                <div className="empty-message">
+                  No hay usuarios nuevos 😅
+                </div>
+              )}
+              {!loading && tab === 'requests' && requests.length === 0 && (
+                <div className="empty-message">
+                  No tienes solicitudes pendientes 👍
+                </div>
+              )}
             {/* PAGINACIÓN */}
             {tab !== 'requests' && (
               <div className="pagination">

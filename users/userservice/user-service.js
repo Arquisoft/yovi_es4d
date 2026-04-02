@@ -322,7 +322,30 @@ app.post('/changePassword', async (req, res) => {
   }
 
 });
+app.post('/api/users/bulk', async (req, res) => {
+  const { ids } = req.body;
+  const users = await User.find({ _id: { $in: ids } });
+  res.json(users);
+});
+app.get('/api/users', async (req, res) => {
+  try {
+    const { exclude = [], search = '' } = req.query;
 
+    // Convierte a Array si viene como string
+    const excludeIds = Array.isArray(exclude) ? exclude : [exclude];
+const users = [];
+    if (response.data && response.data.length > 0) {
+     users = await User.find({
+      _id: { $nin: excludeIds },
+      username: { $regex: search, $options: 'i' }
+    }).select('-password');
+  }
+    res.json(users);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
 
 /**
  * Iniciar el servidor de usuarios en el puerto especificado.

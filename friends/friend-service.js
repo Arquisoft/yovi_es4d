@@ -1,11 +1,8 @@
-// friend-service.js
 require('dotenv').config();
-
 const axios = require('axios');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 
 const FriendRequest = require('./models/friendRequest');
 const Notification = require('./models/Notification');
@@ -13,6 +10,7 @@ const Notification = require('./models/Notification');
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:8001';
 
+// Conexión a MongoDB
 if (process.env.SKIP_MONGO !== 'true') {
   mongoose.connect(mongoUri)
     .then(() => console.log('Conectado a MongoDB'))
@@ -25,72 +23,26 @@ const port = process.env.PORT || 8004;
 app.use(cors());
 app.use(express.json());
 
-const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
-
-// ----------------------
-// Middleware JWT
-// ----------------------
-function authenticate(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token provided' });
-
-  try {
-    const decoded = jwt.verify(token, privateKey);
-    req.userId = decoded.userId;
-    next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-}
-
-// ----------------------
-// Función para obtener datos de usuarios desde el user-service
-// ----------------------
-async function getUsersByIds(ids) {
-  try {
-    if (!ids || !ids.length) return [];
-    const res = await axios.post(`${USER_SERVICE_URL}/api/users/bulk`, { ids });
-    return res.data; // [{ _id, username, avatar }, ...]
-  } catch (err) {
-    console.error('Error fetching users from user-service', err);
-    return [];
-  }
-}
-
 // ----------------------
 // 🧑‍🤝‍🧑 AMIGOS
 // ----------------------
-
-// GET amigos (con búsqueda y paginación)
-app.get('/friends', authenticate, async (req, res) => {
+app.get('/friends', async (req, res) => {
   try {
-    const search = req.query.search || '';
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
     const relations = await FriendRequest.find({
       $or: [
-        { senderId: req.userId, status: 'accepted' },
-        { receiverId: req.userId, status: 'accepted' }
+        { senderId: userId, status: 'accepted' },
+        { receiverId: userId, status: 'accepted' }
       ]
     });
 
     const friendIds = relations.map(r =>
-      r.senderId.toString() === req.userId ? r.receiverId : r.senderId
+      r.senderId.toString() === userId ? r.receiverId : r.senderId
     );
 
-    let friends = await getUsersByIds(friendIds);
-
-    // Filtrar por búsqueda
-    if (search) {
-      friends = friends.filter(f => f.username.toLowerCase().includes(search.toLowerCase()));
-    }
-
-    // Paginación
-    const start = (page - 1) * limit;
-    const paginated = friends.slice(start, start + limit);
-
-    res.json(paginated);
+    res.json(friendIds);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });
@@ -100,32 +52,34 @@ app.get('/friends', authenticate, async (req, res) => {
 // ----------------------
 // 🔍 EXPLORAR USUARIOS
 // ----------------------
-app.get('/friends/explore', authenticate, async (req, res) => {
+app.get('/friends/explore', async (req, res) => {
   try {
-    const search = req.query.search || '';
-    const page = parseInt(req.query.page) || 1;
+    const { userId, search = '', page = 1 } = req.query;
     const limit = 10;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
+    // Amigos actuales
     const relations = await FriendRequest.find({
       $or: [
-        { senderId: req.userId },
-        { receiverId: req.userId }
+        { senderId: userId, status: 'accepted' },
+        { receiverId: userId, status: 'accepted' }
       ]
     });
+    const friendIds = relations.map(r =>
+      r.senderId.toString() === userId ? r.receiverId.toString() : r.senderId.toString()
+    );
 
-    const excludedIds = new Set([req.userId]);
-    relations.forEach(r => {
-      excludedIds.add(r.senderId.toString());
-      excludedIds.add(r.receiverId.toString());
+    // Traer usuarios desde user-service
+    const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
+      params: { search, page, limit }
     });
 
-    const resUsers = await axios.get(`${USER_SERVICE_URL}/api/users`, {
-      params: { exclude: Array.from(excludedIds), search }
-    });
+     const usersArray = Array.isArray(response.data) ? response.data : [];
+    const users = usersArray.filter(u =>
+      u._id !== userId && !friendIds.includes(u._id)
+    );
 
-    const users = resUsers.data.slice((page - 1) * limit, page * limit);
-
-    res.json(users);
+    res.json({ users });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });
@@ -135,27 +89,31 @@ app.get('/friends/explore', authenticate, async (req, res) => {
 // ----------------------
 // 📩 SOLICITUDES
 // ----------------------
-
-// Enviar solicitud
-app.post('/friends/request', authenticate, async (req, res) => {
+app.post('/friends/request', async (req, res) => {
   try {
-    const { receiverId } = req.body;
+    const { senderId, receiverId } = req.body;
+    if (!senderId || !receiverId)
+      return res.status(400).json({ error: 'senderId and receiverId required' });
 
-    const existing = await FriendRequest.findOne({
-      senderId: req.userId,
-      receiverId,
-      status: 'pending'
-    });
-
+    const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
     if (existing) return res.status(400).json({ error: 'Request already exists' });
 
-    const request = new FriendRequest({ senderId: req.userId, receiverId });
+    const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
+    const receiver = await axios.get(`${USER_SERVICE_URL}/api/users/${receiverId}`);
+
+    const request = new FriendRequest({
+      senderId,
+      senderEmail: sender.data.email,
+      receiverId,
+      receiverEmail: receiver.data.email
+    });
     await request.save();
 
     await Notification.create({
       userId: receiverId,
       type: 'friend_request',
-      relatedUserId: req.userId
+      relatedUserId: senderId,
+      relatedUserEmail: sender.data.email
     });
 
     res.status(201).json({ message: 'Request sent' });
@@ -166,26 +124,22 @@ app.post('/friends/request', authenticate, async (req, res) => {
 });
 
 // Obtener solicitudes
-app.get('/friends/requests', authenticate, async (req, res) => {
+app.get('/friends/requests', async (req, res) => {
   try {
-    const { type } = req.query;
+    const { userId, type } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
     let query = {};
-    if (type === 'received') query = { receiverId: req.userId, status: 'pending' };
-    else if (type === 'sent') query = { senderId: req.userId, status: 'pending' };
+    if (type === 'received') query = { receiverId: userId, status: 'pending' };
+    else if (type === 'sent') query = { senderId: userId, status: 'pending' };
 
     const requests = await FriendRequest.find(query);
-
-    // Llenar datos de usuarios usando user-service
-    const senderIds = requests.map(r => r.senderId.toString());
-    const receiverIds = requests.map(r => r.receiverId.toString());
-    const usersData = await getUsersByIds([...new Set([...senderIds, ...receiverIds])]);
 
     const enriched = requests.map(r => ({
       _id: r._id,
       status: r.status,
-      sender: usersData.find(u => u._id === r.senderId.toString()),
-      receiver: usersData.find(u => u._id === r.receiverId.toString()),
+      sender: { _id: r.senderId, email: r.senderEmail },
+      receiver: { _id: r.receiverId, email: r.receiverEmail },
       createdAt: r.createdAt
     }));
 
@@ -196,13 +150,15 @@ app.get('/friends/requests', authenticate, async (req, res) => {
   }
 });
 
-// Aceptar solicitud
-app.patch('/friends/accept', authenticate, async (req, res) => {
+// Aceptar, rechazar y cancelar solicitudes
+app.patch('/friends/accept', async (req, res) => {
   try {
-    const { requestId } = req.body;
+    const { requestId, userId } = req.body;
+    if (!requestId || !userId) return res.status(400).json({ error: 'requestId and userId required' });
+
     const request = await FriendRequest.findById(requestId);
     if (!request) return res.status(404).json({ error: 'Not found' });
-    if (request.receiverId.toString() !== req.userId) return res.status(403).json({ error: 'Not allowed' });
+    if (request.receiverId.toString() !== userId) return res.status(403).json({ error: 'Not allowed' });
 
     request.status = 'accepted';
     await request.save();
@@ -210,7 +166,8 @@ app.patch('/friends/accept', authenticate, async (req, res) => {
     await Notification.create({
       userId: request.senderId,
       type: 'friend_request',
-      relatedUserId: req.userId
+      relatedUserId: userId,
+      relatedUserEmail: request.receiverEmail
     });
 
     res.json({ message: 'Accepted' });
@@ -220,10 +177,11 @@ app.patch('/friends/accept', authenticate, async (req, res) => {
   }
 });
 
-// Rechazar solicitud
-app.patch('/friends/reject', authenticate, async (req, res) => {
+app.patch('/friends/reject', async (req, res) => {
   try {
     const { requestId } = req.body;
+    if (!requestId) return res.status(400).json({ error: 'requestId required' });
+
     await FriendRequest.findByIdAndUpdate(requestId, { status: 'rejected' });
     res.json({ message: 'Rejected' });
   } catch (err) {
@@ -232,12 +190,15 @@ app.patch('/friends/reject', authenticate, async (req, res) => {
   }
 });
 
-// Cancelar solicitud enviada
-app.delete('/friends/request/:id', authenticate, async (req, res) => {
+app.delete('/friends/request/:id', async (req, res) => {
   try {
-    const request = await FriendRequest.findById(req.params.id);
+    const { id } = req.params;
+    const { senderId } = req.body;
+    if (!senderId) return res.status(400).json({ error: 'senderId required' });
+
+    const request = await FriendRequest.findById(id);
     if (!request) return res.status(404).json({ error: 'Not found' });
-    if (request.senderId.toString() !== req.userId) return res.status(403).json({ error: 'Not allowed' });
+    if (request.senderId.toString() !== senderId) return res.status(403).json({ error: 'Not allowed' });
 
     await request.deleteOne();
     res.json({ message: 'Request cancelled' });
@@ -250,28 +211,61 @@ app.delete('/friends/request/:id', authenticate, async (req, res) => {
 // ----------------------
 // 🔔 NOTIFICACIONES
 // ----------------------
-app.get('/notifications', authenticate, async (req, res) => {
+// GET notificaciones enriquecidas
+// 🔔 NOTIFICACIONES ENRIQUECIDAS
+app.get('/notifications', async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const { userId, page = 1 } = req.query;
     const limit = 10;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    const notifications = await Notification.find({ userId: req.userId })
+    const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
-    const unreadCount = await Notification.countDocuments({ userId: req.userId, read: false });
+    const unreadCount = await Notification.countDocuments({ userId, read: false });
 
-    res.json({ unreadCount, notifications });
+    const enrichedNotifications = await Promise.all(
+      notifications.map(async (n) => {
+        let relatedUserData;
+        try {
+          // Llamamos al endpoint POST /profile del user-service
+          const response = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: n.relatedUserId });
+          relatedUserData = response.data; // { id, username, email, avatar }
+        } catch (err) {
+          console.error(`Error obteniendo datos de user ${n.relatedUserId}:`, err.message);
+          relatedUserData = { username: 'Usuario desconocido', email: '', avatar: '' };
+        }
+
+        return {
+          _id: n._id,
+          type: n.type,
+          read: n.read,
+          createdAt: n.createdAt,
+          relatedUser: {
+            _id: n.relatedUserId,
+            username: relatedUserData.username,
+            email: relatedUserData.email,
+            avatar: relatedUserData.avatar
+          }
+        };
+      })
+    );
+
+    res.json({ unreadCount, notifications: enrichedNotifications });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    res.status(500).json({ error: 'Error obteniendo notificaciones' });
   }
 });
 
-app.patch('/notifications/read-all', authenticate, async (req, res) => {
+app.patch('/notifications/read-all', async (req, res) => {
   try {
-    await Notification.updateMany({ userId: req.userId, read: false }, { read: true });
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    await Notification.updateMany({ userId, read: false }, { read: true });
     res.json({ message: 'All notifications read' });
   } catch (err) {
     console.error(err);
@@ -279,10 +273,20 @@ app.patch('/notifications/read-all', authenticate, async (req, res) => {
   }
 });
 
-app.post('/notifications/game-invite', authenticate, async (req, res) => {
+app.post('/notifications/game-invite', async (req, res) => {
   try {
-    const { receiverId } = req.body;
-    await Notification.create({ userId: receiverId, type: 'game_invite', relatedUserId: req.userId });
+    const { senderId, receiverId } = req.body;
+    if (!senderId || !receiverId) return res.status(400).json({ error: 'senderId and receiverId required' });
+
+    const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
+
+    await Notification.create({
+      userId: receiverId,
+      type: 'game_invite',
+      relatedUserId: senderId,
+      relatedUserEmail: sender.data.email
+    });
+
     res.status(201).json({ message: 'Game invite sent' });
   } catch (err) {
     console.error(err);
@@ -292,7 +296,9 @@ app.post('/notifications/game-invite', authenticate, async (req, res) => {
 
 // ----------------------
 if (require.main === module) {
-  app.listen(port, '0.0.0.0', () => console.log(`Friend Service listening on ${port}`));
+  app.listen(port, '0.0.0.0', () =>
+    console.log(`Friend Service listening on ${port}`)
+  );
 }
 
 module.exports = app;
