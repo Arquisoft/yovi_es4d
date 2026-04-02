@@ -434,7 +434,34 @@ io.on('connection', (socket) => {
       socket.emit('game_joined', { gameId: room.gameId, code: upperCode });
     }
 
+    // Si el rival ya envió su perfil, enviárselo al jugador que acaba de unirse
+    const otherRole = role === 'j1' ? 'j2' : 'j1';
+    if (room[`${otherRole}_name`]) {
+      socket.emit('opponent_info', {
+        name:   room[`${otherRole}_name`],
+        avatar: room[`${otherRole}_avatar`],
+      });
+    }
+
     console.log(`🔄 Rejoin sala ${upperCode}: ${role}=${socket.id}`);
+  });
+
+  // ── Compartir perfil del jugador con el rival ───────────
+  socket.on('player_info', ({ code, name, avatar }) => {
+    const upperCode = code?.toUpperCase();
+    const room = rooms.get(upperCode);
+    if (!room) return;
+
+    // Guardar en la sala para jugadores que se unan después
+    const role = room.j1 === socket.id ? 'j1' : 'j2';
+    room[`${role}_name`]   = name;
+    room[`${role}_avatar`] = avatar;
+
+    // Reenviar al rival si ya está conectado
+    const otherRole = role === 'j1' ? 'j2' : 'j1';
+    if (room[otherRole]) {
+      io.to(room[otherRole]).emit('opponent_info', { name, avatar });
+    }
   });
  
   // ── Guardar gameId cuando la partida empieza ────────────

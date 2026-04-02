@@ -52,7 +52,8 @@ const GameBoard: React.FC = () => {
   } = (location.state as LocationState) ?? {};
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<{ username: string; avatar: string } | null>(null);
+  const [userProfile, setUserProfile]         = useState<{ username: string; avatar: string } | null>(null);
+  const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
@@ -67,7 +68,7 @@ const GameBoard: React.FC = () => {
 
   useEffect(() => {
     if (gameState.status === "finished") {
-      navigate("/gameover", { state: { ...gameState, userProfile, gameMode, onlineRole } });
+      navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, onlineRole } });
     }
   }, [gameState.status, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -81,6 +82,11 @@ const GameBoard: React.FC = () => {
     // Reconectarse a la sala con el nuevo socket del GameBoard
     s.on('connect', () => {
       s.emit('rejoin_room', { code: roomCode, role: onlineRole });
+    });
+
+    // Recibir perfil del rival
+    s.on('opponent_info', ({ name, avatar }: { name: string; avatar: string }) => {
+      setOpponentProfile({ username: name, avatar });
     });
 
     // j2: recibir gameId cuando j1 inicia la partida
@@ -151,6 +157,14 @@ const GameBoard: React.FC = () => {
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setUserProfile({ username: profileData.username, avatar: profileData.avatar });
+          // Compartir perfil con el rival en modo online
+          if (gameMode === "online") {
+            socketRef.current?.emit('player_info', {
+              code: roomCode,
+              name: profileData.username,
+              avatar: profileData.avatar,
+            });
+          }
         }
 
         // j2 en modo online no crea partida: espera el evento 'game_joined'
@@ -276,16 +290,19 @@ const GameBoard: React.FC = () => {
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
   const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' || gameMode === 'online' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' || gameMode === 'online' ? t('gameBoard.player2') : 'Bot', points: 0 };
 
-  // Nombre e imagen del usuario logueado
-  const myName   = userProfile?.username || t('gameBoard.player1');
-  const myAvatar = userProfile?.avatar   || "logo.png";
+  // Nombre e imagen del usuario logueado y del rival (online)
+  const myName         = userProfile?.username     || t('gameBoard.player1');
+  const myAvatar       = userProfile?.avatar       || "logo.png";
+  const opponentName   = opponentProfile?.username || t('gameBoard.player2');
+  const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
-  // j1 siempre es el usuario logueado, salvo en online donde puede ser j2
+  // En online el usuario puede ser j1 o j2; en los demás modos siempre es j1
   const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
-  const p1Name   = isMySlotJ1 ? myName   : player1.name;
-  const p1Avatar = isMySlotJ1 ? myAvatar : "logo.png";
-  const p2Name   = !isMySlotJ1 ? myName   : player2.name;
-  const p2Avatar = !isMySlotJ1 ? myAvatar : "logo.png";
+
+  const p1Name   = isMySlotJ1 ? myName         : opponentName;
+  const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
+  const p2Name   = isMySlotJ1 ? opponentName    : myName;
+  const p2Avatar = isMySlotJ1 ? opponentAvatar  : myAvatar;
 
   return (
     <div className="game-bg min-h-screen flex flex-col">

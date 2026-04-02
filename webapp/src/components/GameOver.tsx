@@ -28,19 +28,22 @@ const GameOver: React.FC = () => {
     const winnerId  = gameState.winner; // "j1" | "j2"
     const isJ2Win   = winnerId === "j2";
 
-    // Nombre e imagen del usuario logueado
-    const userProfile  = gameState.userProfile as { username: string; avatar: string } | undefined;
-    const gameMode     = gameState.gameMode  as string | undefined;
-    const onlineRole   = gameState.onlineRole as string | undefined;
+    const userProfile     = gameState.userProfile     as { username: string; avatar: string } | undefined;
+    const opponentProfile = gameState.opponentProfile as { username: string; avatar: string } | undefined;
+    const gameMode        = gameState.gameMode        as string | undefined;
+    const onlineRole      = gameState.onlineRole      as string | undefined;
 
-    const myName   = userProfile?.username || player1?.name;
-    const myAvatar = userProfile?.avatar   || "logo.png";
+    const myName         = userProfile?.username     || player1?.name;
+    const myAvatar       = userProfile?.avatar       || "logo.png";
+    const opponentName   = opponentProfile?.username || player2?.name;
+    const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
     const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
-    const p1Name   = isMySlotJ1 ? myName   : player1?.name;
-    const p1Avatar = isMySlotJ1 ? myAvatar : "logo.png";
-    const p2Name   = !isMySlotJ1 ? myName   : player2?.name;
-    const p2Avatar = !isMySlotJ1 ? myAvatar : "logo.png";
+
+    const p1Name   = isMySlotJ1 ? myName         : opponentName;
+    const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
+    const p2Name   = isMySlotJ1 ? opponentName    : myName;
+    const p2Avatar = isMySlotJ1 ? opponentAvatar  : myAvatar;
 
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 
