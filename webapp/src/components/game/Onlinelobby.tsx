@@ -88,7 +88,6 @@ const OnlineLobby: React.FC = () => {
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
 
               <div className="flex items-center gap-2">
-                <span className="text-lg" style={{ color: "var(--violet)" }}>◈</span>
                 <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
                   Crear sala
                 </h2>
@@ -125,7 +124,6 @@ const OnlineLobby: React.FC = () => {
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
 
               <div className="flex items-center gap-2">
-                <span className="text-lg" style={{ color: "var(--coral)" }}>◈</span>
                 <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
                   Unirse a sala
                 </h2>

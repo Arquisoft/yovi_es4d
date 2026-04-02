@@ -51,6 +51,12 @@ const GameBoard: React.FC = () => {
     roomCode   = "",
   } = (location.state as LocationState) ?? {};
 
+  useEffect(() => {
+    if (!location.state) navigate("/select", { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!location.state) return null;
+
   const [userId, setUserId] = useState<string | null>(null);
   const [userProfile, setUserProfile]         = useState<{ username: string; avatar: string } | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
