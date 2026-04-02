@@ -67,9 +67,9 @@ const GameBoard: React.FC = () => {
 
   useEffect(() => {
     if (gameState.status === "finished") {
-      navigate("/gameover", { state: gameState });
+      navigate("/gameover", { state: { ...gameState, userProfile, gameMode, onlineRole } });
     }
-  }, [gameState.status, navigate]);
+  }, [gameState.status, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Socket online ────────────────────────────────────────
   useEffect(() => {
