@@ -407,28 +407,47 @@ io.on('connection', (socket) => {
       socket.emit('room_error', { message: 'Sala llena' });
       return;
     }
- 
+
     room.j2 = socket.id;
+    room.transitioning = true; // ambos navegan al GameBoard, no borrar sala al desconectar
     socket.join(code.toUpperCase());
- 
-    // Notificar a ambos — game puede empezar
-    io.to(code.toUpperCase()).emit('game_ready', {
-      boardSize: room.boardSize,
-      // j1 juega primero
-      yourRole: null, // se asigna individualmente abajo
-    });
- 
+
     // Decir a cada jugador su rol
     io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
     io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
- 
+
     console.log(`🎮 Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
+  });
+
+  // ── Reconexión desde GameBoard ──────────────────────────
+  socket.on('rejoin_room', ({ code, role }) => {
+    const upperCode = code?.toUpperCase();
+    const room = rooms.get(upperCode);
+    if (!room) return;
+
+    if (role === 'j1') room.j1 = socket.id;
+    if (role === 'j2') room.j2 = socket.id;
+    socket.join(upperCode);
+
+    // Si j2 se une y la partida ya fue creada por j1, enviarle el gameId
+    if (role === 'j2' && room.gameId) {
+      socket.emit('game_joined', { gameId: room.gameId, code: upperCode });
+    }
+
+    console.log(`🔄 Rejoin sala ${upperCode}: ${role}=${socket.id}`);
   });
  
   // ── Guardar gameId cuando la partida empieza ────────────
   socket.on('game_started', ({ code, gameId }) => {
     const room = rooms.get(code);
-    if (room) room.gameId = gameId;
+    if (room) {
+      room.gameId = gameId;
+      room.transitioning = false; // transición completada, ya en partida
+      // Notificar a j2 con el gameId para que cargue la partida
+      if (room.j2) {
+        io.to(room.j2).emit('game_joined', { gameId, code });
+      }
+    }
   });
  
   // ── Reenviar movimiento al rival ────────────────────────
@@ -445,11 +464,17 @@ io.on('connection', (socket) => {
   // ── Desconexión ─────────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`🔌 Socket desconectado: ${socket.id}`);
-    // Notificar al rival si estaba en una sala
     for (const [code, room] of rooms.entries()) {
       if (room.j1 === socket.id || room.j2 === socket.id) {
-        socket.to(code).emit('opponent_disconnected');
-        rooms.delete(code);
+        if (room.transitioning) {
+          // Desconexión por navegación lobby → GameBoard: solo anular el socket, no borrar sala
+          if (room.j1 === socket.id) room.j1 = null;
+          if (room.j2 === socket.id) room.j2 = null;
+        } else {
+          // Desconexión real durante la espera o la partida
+          socket.to(code).emit('opponent_disconnected');
+          rooms.delete(code);
+        }
         break;
       }
     }

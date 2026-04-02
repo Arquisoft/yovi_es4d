@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import Triangle from "./Triangle";
@@ -52,7 +52,7 @@ const GameBoard: React.FC = () => {
   } = (location.state as LocationState) ?? {};
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [socket, setSocket]   = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
@@ -75,7 +75,31 @@ const GameBoard: React.FC = () => {
     if (gameMode !== "online") return;
 
     const s = io(API_URL, { withCredentials: true });
-    setSocket(s);
+    socketRef.current = s;
+
+    // Reconectarse a la sala con el nuevo socket del GameBoard
+    s.on('connect', () => {
+      s.emit('rejoin_room', { code: roomCode, role: onlineRole });
+    });
+
+    // j2: recibir gameId cuando j1 inicia la partida
+    s.on('game_joined', async ({ gameId }: { gameId: string }) => {
+      try {
+        const res = await fetch(`${API_URL}/api/game/${gameId}`, { credentials: "include" });
+        const data = await res.json();
+        setGameState({
+          gameId:     data.gameId,
+          hexData:    data.board,
+          players:    data.players.map((p: PlayerData) => ({ ...p, points: 0 })),
+          turn:       data.turn   || "j1",
+          status:     data.status || "active",
+          winner:     data.winner || null,
+          botPlaying: false,
+        });
+      } catch (err) {
+        console.error("Error cargando partida para j2:", err);
+      }
+    });
 
     // Recibir movimiento del rival
     s.on('opponent_move', ({ position, turn }: { position: string; turn: string }) => {
@@ -118,6 +142,9 @@ const GameBoard: React.FC = () => {
         const resolvedUserId = meData.userId;
         setUserId(resolvedUserId);
 
+        // j2 en modo online no crea partida: espera el evento 'game_joined'
+        if (gameMode === "online" && onlineRole === "j2") return;
+
         // 2. Iniciar partida con el userId real
         const res = await fetch(`${API_URL}/api/game/start`, {
           method: "POST",
@@ -142,9 +169,9 @@ const GameBoard: React.FC = () => {
           botPlaying: false,
         });
 
-        // En modo online, solo j1 crea el juego en el servidor
-        if (gameMode === "online" && socket) {
-          socket.emit('game_started', { code: roomCode, gameId: data.gameId });
+        // En modo online, j1 notifica al servidor con el gameId para que j2 pueda unirse
+        if (gameMode === "online") {
+          socketRef.current?.emit('game_started', { code: roomCode, gameId: data.gameId });
         }
       } catch (error) {
         console.error("Error starting game:", error);
@@ -196,11 +223,11 @@ const GameBoard: React.FC = () => {
       }));
 
       // En modo online emitir movimiento al rival y no llamar al bot
-      if (gameMode === "online" && socket) {
+      if (gameMode === "online" && socketRef.current) {
         const nextTurn = currentTurn === "j1" ? "j2" : "j1";
-        socket.emit('move_made', { code: roomCode, position, turn: nextTurn });
+        socketRef.current.emit('move_made', { code: roomCode, position, turn: nextTurn });
         if (validateData.winner) {
-          socket.emit('game_over', { code: roomCode, winner: validateData.winner });
+          socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner });
         }
         setGameState(prev => ({ ...prev, turn: nextTurn as "j1" | "j2", botPlaying: false }));
         return; // no llamar a /move (bot)
