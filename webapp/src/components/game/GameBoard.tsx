@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 import Triangle from "./Triangle";
 import Jugador from "./player";
+import UserHeader from "../UserHeader";
 import { API_URL } from "../../config";
 import "./game.css";
 import { useTranslation } from "../../i18n";
@@ -317,6 +318,7 @@ const GameBoard: React.FC = () => {
 
   return (
     <div className="game-bg min-h-screen flex flex-col">
+      <UserHeader />
 
       {/* ── Header ─────────────────────────────────────── */}
       <header className="gb-header">

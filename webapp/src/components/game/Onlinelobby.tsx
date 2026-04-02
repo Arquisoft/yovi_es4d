@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 import { API_URL } from "../../config";
 import "./game.css";
+import UserHeader from "../UserHeader";
 
 type LobbyState = "idle" | "creating" | "waiting" | "joining" | "ready";
 
@@ -68,7 +69,9 @@ const OnlineLobby: React.FC = () => {
   };
 
   return (
-    <div className="game-bg min-h-screen flex flex-col items-center justify-center px-6 py-16">
+    <div className="game-bg min-h-screen flex flex-col">
+      <UserHeader />
+      <div className="flex flex-col items-center justify-center flex-1 px-6 py-16">
 
       {/* ── Cabecera ── */}
       <div className="ms-header fade-up">
@@ -236,6 +239,7 @@ const OnlineLobby: React.FC = () => {
         <div className="ms-decoration-line" />
         <span className="ms-decoration-text">YOVI</span>
         <div className="ms-decoration-line" />
+      </div>
       </div>
     </div>
   );

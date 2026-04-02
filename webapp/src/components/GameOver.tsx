@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
+import UserHeader from "./UserHeader";
 import "./GameOver.css";
 import { useTranslation } from "../i18n";
 
@@ -51,7 +52,9 @@ const GameOver: React.FC = () => {
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 
     return (
-        <div className="go-container">
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <UserHeader />
+        <div className="go-container" style={{ flex: 1 }}>
 
             {/* Trofeo */}
             <div className="go-trophy">🏆</div>
@@ -134,6 +137,7 @@ const GameOver: React.FC = () => {
                 <div className="go-decoration-line" />
             </div>
 
+        </div>
         </div>
     );
 };

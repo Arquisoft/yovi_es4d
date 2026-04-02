@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../config";
 import "./game.css";
+import UserHeader from "../UserHeader";
 
 // ── Metadatos estáticos ────────────────────────────────────
 
@@ -52,7 +53,9 @@ const ModeSelector: React.FC = () => {
     };
 
     return (
-        <div className="game-bg min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div className="game-bg min-h-screen flex flex-col">
+            <UserHeader />
+            <div className="flex flex-col items-center justify-center flex-1 px-6 py-16">
 
             {/* Cabecera */}
             <div className="ms-header fade-up">
@@ -218,6 +221,7 @@ const ModeSelector: React.FC = () => {
                 <div className="ms-decoration-line" />
             </div>
 
+        </div>
         </div>
     );
 };
