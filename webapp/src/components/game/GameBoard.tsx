@@ -52,6 +52,7 @@ const GameBoard: React.FC = () => {
   } = (location.state as LocationState) ?? {};
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{ username: string; avatar: string } | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
@@ -141,6 +142,16 @@ const GameBoard: React.FC = () => {
         const meData = await meRes.json();
         const resolvedUserId = meData.userId;
         setUserId(resolvedUserId);
+
+        // Obtener nombre e imagen del usuario logueado
+        const profileRes = await fetch(`${API_URL}/api/user/getUserProfile`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setUserProfile({ username: profileData.username, avatar: profileData.avatar });
+        }
 
         // j2 en modo online no crea partida: espera el evento 'game_joined'
         if (gameMode === "online" && onlineRole === "j2") return;
@@ -265,6 +276,17 @@ const GameBoard: React.FC = () => {
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
   const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' || gameMode === 'online' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' || gameMode === 'online' ? t('gameBoard.player2') : 'Bot', points: 0 };
 
+  // Nombre e imagen del usuario logueado
+  const myName   = userProfile?.username || t('gameBoard.player1');
+  const myAvatar = userProfile?.avatar   || "logo.png";
+
+  // j1 siempre es el usuario logueado, salvo en online donde puede ser j2
+  const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
+  const p1Name   = isMySlotJ1 ? myName   : player1.name;
+  const p1Avatar = isMySlotJ1 ? myAvatar : "logo.png";
+  const p2Name   = !isMySlotJ1 ? myName   : player2.name;
+  const p2Avatar = !isMySlotJ1 ? myAvatar : "logo.png";
+
   return (
     <div className="game-bg min-h-screen flex flex-col">
 
@@ -275,7 +297,7 @@ const GameBoard: React.FC = () => {
         <div className="gb-header-status">
           {gameState.status === "finished" ? (
             <span className="gb-status-winner">
-              🏆 {gameState.winner === "j1" ? player1.name : player2.name} {t('gameBoard.won')}
+              🏆 {gameState.winner === "j1" ? p1Name : p2Name} {t('gameBoard.won')}
             </span>
           ) : gameState.botPlaying ? (
             <span className="gb-status-thinking">
@@ -288,7 +310,7 @@ const GameBoard: React.FC = () => {
             <span className="gb-status-turn">
               {t('gameBoard.turn')}{" "}
               <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
-                {gameState.turn === "j1" ? player1.name : player2.name}
+                {gameState.turn === "j1" ? p1Name : p2Name}
               </span>
             </span>
           )}
@@ -304,8 +326,8 @@ const GameBoard: React.FC = () => {
 
         <aside className="gb-player-aside">
           <Jugador
-            name={player1.name}
-            imgSrc="logo.png"
+            name={p1Name}
+            imgSrc={p1Avatar}
             points={player1.points}
             isActive={gameState.turn === "j1" && !gameState.botPlaying}
             color="violet"
@@ -329,8 +351,8 @@ const GameBoard: React.FC = () => {
 
         <aside className="gb-player-aside">
           <Jugador
-            name={player2.name}
-            imgSrc="logo.png"
+            name={p2Name}
+            imgSrc={p2Avatar}
             points={player2.points}
             isActive={gameState.turn === "j2" && !gameState.botPlaying}
             isPlaying={gameState.botPlaying}
