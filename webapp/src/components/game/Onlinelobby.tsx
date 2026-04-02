@@ -23,7 +23,6 @@ const OnlineLobby: React.FC = () => {
   const [error, setError]           = useState<string>("");
   const [boardSize, setBoardSize]   = useState<number>(11);
 
-  // Conectar socket al montar
   useEffect(() => {
     const s = io(API_URL, { withCredentials: true });
     setSocket(s);
@@ -35,12 +34,11 @@ const OnlineLobby: React.FC = () => {
 
     s.on('your_role', ({ role, code, boardSize: bs }: { role: string; code: string; boardSize: number }) => {
       setLobbyState("ready");
-      // Navegar al juego con el rol asignado
       navigate("/game", {
         state: {
           gameMode:  "online",
           boardSize: bs,
-          onlineRole: role,   // 'j1' o 'j2'
+          onlineRole: role,
           roomCode:  code,
           socketId:  s.id,
         },
@@ -72,90 +70,133 @@ const OnlineLobby: React.FC = () => {
   return (
     <div className="game-bg min-h-screen flex flex-col items-center justify-center px-6 py-16">
 
+      {/* ── Cabecera ── */}
       <div className="ms-header fade-up">
         <div className="ms-badge"><span>Partida online</span></div>
         <h1 className="ms-title">Jugar online</h1>
         <p className="ms-subtitle">Crea una sala o únete con un código</p>
       </div>
 
-      <div className="ms-body">
+      {/* ── Estado idle: dos paneles ── */}
+      {lobbyState === "idle" && (
+        <div className="fade-up w-full max-w-3xl">
 
-        {/* ── Tamaño (solo al crear) ── */}
-        {lobbyState === "idle" && (
-          <div className="fade-up">
-            <p className="ms-section-label">Tamaño del tablero</p>
-            <div className="ms-size-grid">
-              {BOARD_SIZES.map(s => (
-                <button
-                  key={s.value}
-                  onClick={() => setBoardSize(s.value)}
-                  className={`ms-size-card fade-up${boardSize === s.value ? " selected" : ""}`}
-                >
-                  <div className="ms-size-badge">{s.tag}</div>
-                  <div className="ms-size-label">{s.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* ── Acciones ── */}
-        {lobbyState === "idle" && (
-          <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {/* Panel Crear */}
+            <div className="flex flex-col gap-5 rounded-2xl p-6"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
 
-            <button className="ms-play-btn" onClick={handleCreate}>
-              Crear sala
-            </button>
+              <div className="flex items-center gap-2">
+                <span className="text-lg" style={{ color: "var(--violet)" }}>◈</span>
+                <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
+                  Crear sala
+                </h2>
+              </div>
 
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <input
-                type="text"
-                maxLength={4}
-                placeholder="Código (ej: XKQZ)"
-                value={inputCode}
-                onChange={e => setInputCode(e.target.value.toUpperCase())}
-                style={{
-                  flex: 1,
-                  padding: "0.75rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid var(--border)",
-                  background: "var(--surface)",
-                  color: "var(--text)",
-                  fontSize: "1rem",
-                  letterSpacing: "0.2em",
-                  textAlign: "center",
-                }}
-              />
-              <button
-                className="ms-play-btn"
-                style={{ flex: "none", padding: "0.75rem 1.5rem" }}
-                onClick={handleJoin}
-                disabled={inputCode.length < 4}
-              >
-                Unirse
+              <div>
+                <p className="ms-section-label mb-3">Tamaño del tablero</p>
+                <div className="ms-size-grid">
+                  {BOARD_SIZES.map(s => (
+                    <button
+                      key={s.value}
+                      onClick={() => setBoardSize(s.value)}
+                      className={`ms-size-card${boardSize === s.value ? " selected" : ""}`}
+                    >
+                      <div className="ms-size-badge">{s.tag}</div>
+                      <div className="ms-size-label">{s.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button className="ms-play-btn mt-auto" onClick={handleCreate}>
+                Crear sala
               </button>
             </div>
 
-            {error && (
-              <p style={{ color: "var(--coral)", textAlign: "center", margin: 0 }}>{error}</p>
-            )}
-          </div>
-        )}
+            {/* Divisor vertical solo en md+ */}
+            <div className="hidden md:flex items-center justify-center absolute left-1/2 top-0 bottom-0 -translate-x-1/2 pointer-events-none">
+              <div style={{ width: 1, height: "100%", background: "var(--border)" }} />
+            </div>
 
-        {/* ── Esperando rival ── */}
-        {lobbyState === "waiting" && (
-          <div className="fade-up" style={{ textAlign: "center" }}>
-            <p className="ms-section-label">Comparte este código con tu amigo</p>
-            <div style={{
-              fontSize: "3rem",
-              fontWeight: 700,
-              letterSpacing: "0.4em",
-              color: "var(--violet)",
-              margin: "1rem 0",
-            }}>
+            {/* Panel Unirse */}
+            <div className="flex flex-col gap-5 rounded-2xl p-6"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+
+              <div className="flex items-center gap-2">
+                <span className="text-lg" style={{ color: "var(--coral)" }}>◈</span>
+                <h2 className="font-semibold text-base" style={{ color: "var(--text)" }}>
+                  Unirse a sala
+                </h2>
+              </div>
+
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Introduce el código de 4 letras que te ha compartido tu amigo.
+              </p>
+
+              <div className="flex flex-col gap-3 mt-auto">
+                <input
+                  type="text"
+                  maxLength={4}
+                  placeholder="Ej: XKQZ"
+                  value={inputCode}
+                  onChange={e => setInputCode(e.target.value.toUpperCase())}
+                  className="w-full text-center text-2xl font-bold tracking-widest rounded-xl px-4 py-4 outline-none transition-all"
+                  style={{
+                    background: "var(--bg)",
+                    border: `2px solid ${inputCode.length === 4 ? "var(--violet)" : "var(--border)"}`,
+                    color: "var(--text)",
+                    letterSpacing: "0.4em",
+                  }}
+                />
+                <button
+                  className="ms-play-btn"
+                  onClick={handleJoin}
+                  disabled={inputCode.length < 4}
+                  style={inputCode.length < 4 ? {} : { background: "var(--coral)" }}
+                >
+                  Unirse
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-center mt-4 text-sm" style={{ color: "var(--coral)" }}>{error}</p>
+          )}
+
+          <div className="text-center mt-6">
+            <button
+              onClick={() => navigate("/select")}
+              className="text-sm transition-opacity hover:opacity-70"
+              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+            >
+              ← Volver
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Esperando rival ── */}
+      {lobbyState === "waiting" && (
+        <div className="fade-up w-full max-w-sm">
+          <div className="rounded-2xl p-8 flex flex-col items-center gap-4"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+
+            <p className="ms-section-label">Comparte este código</p>
+
+            <div className="rounded-xl px-8 py-4 tracking-widest font-bold text-5xl"
+              style={{
+                background: "var(--bg)",
+                border: "2px solid var(--violet)",
+                color: "var(--violet)",
+                letterSpacing: "0.4em",
+              }}>
               {roomCode}
             </div>
-            <div style={{ display: "flex", justifyContent: "center", gap: "0.4rem", marginTop: "0.5rem" }}>
+
+            <div className="flex gap-1 mt-1">
               {[0,1,2].map(i => (
                 <span key={i} className="thinking-dot" style={{
                   width: 8, height: 8, borderRadius: "50%",
@@ -163,40 +204,37 @@ const OnlineLobby: React.FC = () => {
                 }} />
               ))}
             </div>
-            <p style={{ color: "var(--text-muted)", marginTop: "0.75rem" }}>
+
+            <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
               Esperando a que tu amigo se una...
             </p>
-          </div>
-        )}
 
-        {/* ── Uniéndose ── */}
-        {lobbyState === "joining" && (
-          <div className="fade-up" style={{ textAlign: "center" }}>
-            <p style={{ color: "var(--text-muted)" }}>Uniéndose a la sala {inputCode}...</p>
-          </div>
-        )}
-
-        {/* ── Listo ── */}
-        {lobbyState === "ready" && (
-          <div className="fade-up" style={{ textAlign: "center" }}>
-            <p style={{ color: "var(--violet)" }}>¡Partida lista! Cargando...</p>
-          </div>
-        )}
-
-        {/* Volver */}
-        {(lobbyState === "idle" || lobbyState === "waiting") && (
-          <div className="fade-up" style={{ textAlign: "center", marginTop: "1rem" }}>
             <button
               onClick={() => navigate("/select")}
-              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "0.9rem" }}
+              className="text-sm mt-2 transition-opacity hover:opacity-70"
+              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
             >
-              ← Volver
+              ← Cancelar
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="ms-decoration fade-up">
+      {/* ── Uniéndose ── */}
+      {lobbyState === "joining" && (
+        <div className="fade-up" style={{ textAlign: "center" }}>
+          <p style={{ color: "var(--text-muted)" }}>Uniéndose a la sala <strong style={{ color: "var(--violet)" }}>{inputCode}</strong>...</p>
+        </div>
+      )}
+
+      {/* ── Listo ── */}
+      {lobbyState === "ready" && (
+        <div className="fade-up" style={{ textAlign: "center" }}>
+          <p style={{ color: "var(--violet)" }}>¡Partida lista! Cargando...</p>
+        </div>
+      )}
+
+      <div className="ms-decoration fade-up mt-8">
         <div className="ms-decoration-line" />
         <span className="ms-decoration-text">YOVI</span>
         <div className="ms-decoration-line" />
