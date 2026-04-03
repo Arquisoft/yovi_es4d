@@ -65,6 +65,8 @@ const GameBoard: React.FC = () => {
   const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
+  const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     hexData: [],
@@ -122,9 +124,9 @@ const GameBoard: React.FC = () => {
       setGameState(prev => ({
         ...prev,
         hexData: prev.hexData.map(h =>
-          h.position === position
-            ? { ...h, player: (onlineRole === "j1" ? "j2" : "j1") as "j1" | "j2" }
-            : h
+            h.position === position
+                ? { ...h, player: (onlineRole === "j1" ? "j2" : "j1") as "j1" | "j2" }
+                : h
         ),
         turn: turn as "j1" | "j2",
         botPlaying: false,
@@ -132,8 +134,7 @@ const GameBoard: React.FC = () => {
     });
 
     s.on('opponent_disconnected', () => {
-      alert("Tu rival se ha desconectado");
-      navigate("/select");
+      setOpponentDisconnected(true);
     });
 
     s.on('game_over', ({ winner }: { winner: string }) => {
@@ -223,20 +224,20 @@ const GameBoard: React.FC = () => {
     if (isOnline && (gameState.botPlaying || gameState.turn !== onlineRole)) return;
     if (!isMultiplayer && !isOnline && (gameState.botPlaying || gameState.turn !== "j1")) return;
     if (isMultiplayer && gameState.botPlaying) return;
- 
+
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
     try {
       // userId real — el gateway lo sobreescribe desde el JWT de todas formas,
       // pero lo mandamos para que game-service pueda identificar al jugador 1
       const validateRes = await fetch(
-        `${API_URL}/api/game/${gameState.gameId}/validateMove`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, move: position }),
-        }
+          `${API_URL}/api/game/${gameState.gameId}/validateMove`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, move: position }),
+          }
       );
       const validateData = await validateRes.json();
 
@@ -282,12 +283,12 @@ const GameBoard: React.FC = () => {
         winner:  moveData.winner,
         status:  moveData.status,
 
-         // En vsBot suma puntos al bot, en multiplayer no hace falta ya se suma arriba
+        // En vsBot suma puntos al bot, en multiplayer no hace falta ya se suma arriba
         players: gameMode === "vsBot"
-          ? prev.players.map(p =>
-              p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+            ? prev.players.map(p =>
+                p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
             )
-          : prev.players,
+            : prev.players,
         botPlaying: false,
       }));
     } catch (error) {
@@ -303,9 +304,9 @@ const GameBoard: React.FC = () => {
   const myName         = userProfile?.username     || t('gameBoard.player1');
   const myAvatar       = userProfile?.avatar       || "logo.png";
   const opponentName   = opponentProfile?.username
-    || (gameMode === "multiplayer" ? player2Name : undefined)
-    || gameState.players[1]?.name
-    || t('gameBoard.player2');
+      || (gameMode === "multiplayer" ? player2Name : undefined)
+      || gameState.players[1]?.name
+      || t('gameBoard.player2');
   const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
   // En online el usuario puede ser j1 o j2; en los demás modos siempre es j1
@@ -316,89 +317,107 @@ const GameBoard: React.FC = () => {
   const p2Name   = isMySlotJ1 ? opponentName                              : myName;
   const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
 
+  if (opponentDisconnected) {
+    return (
+        <div className="game-bg min-h-screen flex flex-col items-center justify-center">
+          <div className="bg-black rounded-2xl px-10 py-8 flex flex-col items-center gap-6 shadow-xl">
+            <p className="text-2xl font-semibold text-white">Tu rival se ha desconectado</p>
+            <button
+                onClick={() => navigate("/select")}
+                className="px-6 py-3 rounded-xl bg-white hover:bg-gray-200 text-white font-semibold transition"
+            >
+
+
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+    );
+  }
+
   return (
-    <div className="game-bg min-h-screen flex flex-col">
-      <UserHeader />
+      <div className="game-bg min-h-screen flex flex-col">
+        <UserHeader />
 
-      {/* ── Header ─────────────────────────────────────── */}
-      <header className="gb-header">
-        <span className="gb-header-logo">YOVI_ES4D</span>
+        {/* ── Header ─────────────────────────────────────── */}
+        <header className="gb-header">
+          <span className="gb-header-logo">YOVI_ES4D</span>
 
-        <div className="gb-header-status">
-          {gameState.status === "finished" ? (
-            <span className="gb-status-winner">
+          <div className="gb-header-status">
+            {gameState.status === "finished" ? (
+                <span className="gb-status-winner">
               🏆 {gameState.winner === "j1" ? p1Name : p2Name} {t('gameBoard.won')}
             </span>
-          ) : gameState.botPlaying ? (
-            <span className="gb-status-thinking">
+            ) : gameState.botPlaying ? (
+                <span className="gb-status-thinking">
                <span>{gameMode === 'multiplayer' ? t('gameBoard.thinking') || 'Procesando...' : t('gameBoard.botPlaying')}</span>
               <span className="gb-thinking-dots">
                 {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />)}
               </span>
             </span>
-          ) : (
-            <span className="gb-status-turn">
+            ) : (
+                <span className="gb-status-turn">
               {t('gameBoard.turn')}{" "}
-              <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
+                  <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
                 {gameState.turn === "j1" ? p1Name : p2Name}
               </span>
             </span>
-          )}
-        </div>
+            )}
+          </div>
 
-        <span className="gb-header-meta">
+          <span className="gb-header-meta">
           {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
         </span>
-      </header>
+        </header>
 
-      {/* ── Área principal ─────────────────────────────── */}
-      <main className="gb-main">
+        {/* ── Área principal ─────────────────────────────── */}
+        <main className="gb-main">
 
-        <aside className="gb-player-aside">
-          <Jugador
-            name={p1Name}
-            imgSrc={p1Avatar}
-            points={player1.points}
-            isActive={gameState.turn === "j1" && !gameState.botPlaying}
-            color="violet"
-          />
-        </aside>
+          <aside className="gb-player-aside">
+            <Jugador
+                name={p1Name}
+                imgSrc={p1Avatar}
+                points={player1.points}
+                isActive={gameState.turn === "j1" && !gameState.botPlaying}
+                color="violet"
+            />
+          </aside>
 
-        <section className="gb-board-section">
-          {gameState.gameId ? (
-            <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
-          ) : (
-            <div className="gb-loading">
-              <div className="gb-loading-dots">
-                {[0,1,2].map(i => (
-                  <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
-                ))}
-              </div>
-              <span className="gb-loading-text">{t('gameBoard.gameStart')}</span>
-            </div>
-          )}
-        </section>
+          <section className="gb-board-section">
+            {gameState.gameId ? (
+                <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
+            ) : (
+                <div className="gb-loading">
+                  <div className="gb-loading-dots">
+                    {[0,1,2].map(i => (
+                        <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
+                    ))}
+                  </div>
+                  <span className="gb-loading-text">{t('gameBoard.gameStart')}</span>
+                </div>
+            )}
+          </section>
 
-        <aside className="gb-player-aside">
-          <Jugador
-            name={p2Name}
-            imgSrc={p2Avatar}
-            points={player2.points}
-            isActive={gameState.turn === "j2" && !gameState.botPlaying}
-            isPlaying={gameState.botPlaying}
-            color="coral"
-          />
-        </aside>
+          <aside className="gb-player-aside">
+            <Jugador
+                name={p2Name}
+                imgSrc={p2Avatar}
+                points={player2.points}
+                isActive={gameState.turn === "j2" && !gameState.botPlaying}
+                isPlaying={gameState.botPlaying}
+                color="coral"
+            />
+          </aside>
 
-      </main>
+        </main>
 
-      {/* ── Footer ─────────────────────────────────────── */}
-      <footer className="gb-footer">
+        {/* ── Footer ─────────────────────────────────────── */}
+        <footer className="gb-footer">
         <span className="gb-footer-text">
           {botMode.replace("_", " ")} · {t('gameBoard.board')} {boardSize}× · {gameMode}
         </span>
-      </footer>
-    </div>
+        </footer>
+      </div>
   );
 };
 
