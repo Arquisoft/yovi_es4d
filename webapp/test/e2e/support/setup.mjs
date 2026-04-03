@@ -3,9 +3,11 @@ import { chromium } from 'playwright'
 
 setDefaultTimeout(60_000)
 
+
 class CustomWorld {
-  browser = null
-  page = null
+  browser = null;
+  page = null;
+  BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 }
 
 setWorldConstructor(CustomWorld)
