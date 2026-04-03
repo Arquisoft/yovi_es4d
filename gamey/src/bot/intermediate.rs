@@ -1,8 +1,3 @@
-//! An intermediate bot implementation for the Game of Y.
-//!
-//! This module provides [`IntermediateBot`], a bot that uses a heuristic
-//! scoring function to evaluate and choose moves on the triangular board.
-//!
 //! ## Algorithm
 //!
 //! Each empty cell is scored based on:
@@ -28,19 +23,6 @@
 
 use crate::{Coordinates, GameY, PlayerId, YBot};
 
-/// A bot that uses a heuristic scoring function to select moves.
-///
-/// # Example
-///
-/// ```
-/// use gamey::{GameY, YBot};
-/// use gamey::bot::IntermediateBot;
-///
-/// let bot = IntermediateBot;
-/// let game = GameY::new(7);
-/// let chosen_move = bot.choose_move(&game);
-/// assert!(chosen_move.is_some());
-/// ```
 pub struct IntermediateBot;
 
 impl IntermediateBot {
@@ -119,9 +101,7 @@ impl IntermediateBot {
         let n = board.board_size();
         let (x, y, z) = (candidate.x(), candidate.y(), candidate.z());
 
-        // ── 1. Centrality ────────────────────────────────────────────────────
-        // min(x,y,z) is 0 on the edges and increases toward the centroid.
-        // Normalise to [0, 1] by dividing by the theoretical maximum (N-1)/3.
+        //1. Centrality
         let centrality = x.min(y).min(z) as f64;
         let max_centrality = ((n - 1) as f64) / 3.0;
         let centrality_score = if max_centrality > 0.0 {
@@ -130,10 +110,7 @@ impl IntermediateBot {
             0.0
         };
 
-        // ── 2. Opponent threat proximity (PRIMARY DEFENCE) ────────────────────
-        // Blocking the opponent is now the main strategic concern after centrality.
-        //   - direct neighbour of opponent → weight 3.0 (high urgency)
-        //   - 2-hop neighbour of opponent  → weight 1.5 (preemptive block)
+        //2. Opponent threat proximity
         let opp_adjacent = Self::neighbors(candidate)
             .iter()
             .filter(|nb| board.player_at(nb) == Some(opp_id))
@@ -144,44 +121,28 @@ impl IntermediateBot {
             .filter(|nb| board.player_at(nb) == Some(opp_id))
             .count() as f64;
 
-        // Extra urgency: if the opponent has 2+ adjacent pieces, this is a
-        // chain we must disrupt now.
         let urgency_multiplier = if opp_adjacent >= 2.0 { 1.5 } else { 1.0 };
         let threat_score = (3.0 * opp_adjacent + 1.5 * opp_2hop) * urgency_multiplier;
 
-        // ── 3. Strategic skip bonus ───────────────────────────────────────────
-        // Prefer cells that are "skip" targets from our own pieces: place at
-        // distance-2 to extend reach while forming an unbreakable virtual
-        // connection. This is more efficient than filling adjacent gaps now.
+        //3. Strategic skip bonus
+        // Prefer cells that are "skip" targets from the bot's own pieces: place at
         let own_pieces_as_skip_sources = board.available_cells().iter()
             .map(|&idx| Coordinates::from_index(idx, n))
-            // We need cells that are NOT available (i.e., occupied by us).
-            // Re-filter: count own pieces for which this candidate is a skip target.
-            .count(); // dummy — see corrected version below
+            .count();
 
-        // Correct: count how many of our own pieces have `candidate` as a skip target.
         let _ = own_pieces_as_skip_sources; // discard dummy count
         let skip_bonus: f64 = {
-            // Iterate over direct neighbours of candidate; for each that is ours,
-            // candidate is one hop away. Check if there is another own piece two
-            // hops away via candidate (i.e., candidate bridges two own pieces).
             let own_nbs: Vec<Coordinates> = Self::neighbors(candidate)
                 .into_iter()
                 .filter(|nb| board.player_at(nb) == Some(my_id))
                 .collect();
 
-            // Also count how many of our own pieces list `candidate` in their
-            // skip_targets — i.e., candidate is at distance-2 from an own piece.
             let own_skip_count = {
-                // A cell P has `candidate` as a skip target iff:
-                //   there exists an empty common neighbour between P and candidate.
-                // Equivalent check: candidate's direct empty neighbours ∩ P's direct neighbours ≠ ∅
                 let candidate_empty_nbs: std::collections::HashSet<_> = Self::neighbors(candidate)
                     .into_iter()
                     .filter(|nb| board.player_at(nb).is_none())
                     .collect();
 
-                // Scan cells at distance-2 from candidate that are owned by us.
                 Self::neighbors_2(candidate)
                     .iter()
                     .filter(|far| {
@@ -193,28 +154,23 @@ impl IntermediateBot {
                     .count() as f64
             };
 
-            // Also reward if placing here directly bridges two own chains.
             let bridge_chains = if own_nbs.len() >= 2 { own_nbs.len() as f64 - 1.0 } else { 0.0 };
 
             own_skip_count * 2.5 + bridge_chains * 1.5
         };
 
-        // ── 4. Own-piece continuity (SECONDARY, mild tiebreaker) ─────────────
-        // Direct adjacency to own pieces is less important than forming skip
-        // bridges; it is now a weak tiebreaker only.
+        //4. Own-piece continuity (SECONDARY, mild tiebreaker)
         let own_adjacent = Self::neighbors(candidate)
             .iter()
             .filter(|nb| board.player_at(nb) == Some(my_id))
             .count() as f64;
 
-        // ── 5. Side-touch bonus ───────────────────────────────────────────────
-        // Touching a side is valuable (helps towards the win condition).
+        // 5. Side-touch bonus
         let side_touch = (candidate.touches_side_a() as u8
             + candidate.touches_side_b() as u8
             + candidate.touches_side_c() as u8) as f64;
 
-        // ── Weighted combination ──────────────────────────────────────────────
-        // Priority order: block opponent > centrality > skip bridges > side touch > chain adj
+        //Weighted combination
         3.0 * centrality_score   // strong centre preference
             + 4.0 * threat_score       // blocking opponent is TOP priority
             + 3.0 * skip_bonus         // extend via skip patterns
@@ -231,7 +187,7 @@ impl YBot for IntermediateBot {
     fn choose_move(&self, board: &GameY) -> Option<Coordinates> {
         // Determine which player we are and who the opponent is.
         let my_id = board.next_player()?;
-        let opp_id = PlayerId::new(1 - my_id.id()); // works for 2-player games
+        let opp_id = PlayerId::new(1 - my_id.id());
 
         let available = board.available_cells();
         if available.is_empty() {
@@ -284,7 +240,6 @@ mod tests {
             coords: Coordinates::new(0, 0, 0),
         })
             .unwrap();
-        // Board is full and game is over → next_player() returns None
         assert!(bot().choose_move(&game).is_none());
     }
 
@@ -298,29 +253,22 @@ mod tests {
 
     #[test]
     fn test_prefers_centre_on_empty_board() {
-        // On a size-7 board the centroid is at (2,2,2).  The bot should pick
-        // something close to the centre rather than an edge cell.
         let game = GameY::new(7);
         let coords = bot().choose_move(&game).unwrap();
         let min_coord = coords.x().min(coords.y()).min(coords.z());
-        // A truly central cell has min_coord >= 1 for size 7.
         assert!(min_coord >= 1, "Bot should prefer interior cells, got {:?}", coords);
     }
 
     #[test]
     fn test_blocks_opponent_nearby() {
-        // Place opponent pieces so that the bot should react to them.
         let mut game = GameY::new(5);
 
-        // Player 0 moves first
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
-            coords: Coordinates::new(2, 1, 1), // centre-ish
+            coords: Coordinates::new(2, 1, 1),
         })
             .unwrap();
 
-        // Now it is player 1's turn.  The bot should pick a cell in the
-        // neighbourhood of player 0's piece (within 2 hops).
         let chosen = bot().choose_move(&game).unwrap();
 
         let opp_piece = Coordinates::new(2, 1, 1);
@@ -338,21 +286,18 @@ mod tests {
     fn test_extends_own_chain() {
         let mut game = GameY::new(5);
 
-        // Player 0 places
         game.add_move(Movement::Placement {
             player: PlayerId::new(0),
             coords: Coordinates::new(2, 1, 1),
         })
             .unwrap();
 
-        // Player 1 places somewhere out of the way
         game.add_move(Movement::Placement {
             player: PlayerId::new(1),
             coords: Coordinates::new(0, 0, 4),
         })
             .unwrap();
 
-        // Player 0 should play near its own piece (adjacent or skip distance).
         let chosen = bot().choose_move(&game).unwrap();
         let own_piece = Coordinates::new(2, 1, 1);
         let own_neighbors = IntermediateBot::neighbors(&own_piece);
@@ -365,6 +310,4 @@ mod tests {
             chosen
         );
     }
-
-
 }
