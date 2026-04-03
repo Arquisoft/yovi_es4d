@@ -102,5 +102,46 @@
     "movesNotAvailable": "Moves not available",
     "table": "Board:",
     "cells": "cells"
+  },  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading notifications...",
+    "empty": "You have no notifications",
+    "friendRequest": "sent you a friend request",
+    "accept": "Accept",
+    "reject": "Reject",
+    "errorLoading": "Error loading notifications",
+    "errorAccept": "Error accepting request",
+    "errorReject": "Error rejecting request"
+  },
+  "common": {
+    "back": "Back"
+  },
+  "friends": {
+    "title": "Friends",
+    "loadingUser": "Loading user...",
+    "errorLoading": "Error loading data",
+    "errorSend": "Error sending request",
+    "errorAccept": "Error accepting request",
+    "errorReject": "Error rejecting request",
+
+    "tabs": {
+      "explore": "Explore",
+      "friends": "My Friends",
+      "requests": "Requests"
+    },
+
+    "search": "Search user...",
+    "add": "Add",
+    "accept": "Accept",
+    "reject": "Reject",
+
+    "emptyExplore": "No new users 😅",
+    "emptyRequests": "No pending requests 👍",
+
+    "page": "Page {{page}}"
+  },
+  "back": {
+    "loading": "Loading..."
   }
 }
+

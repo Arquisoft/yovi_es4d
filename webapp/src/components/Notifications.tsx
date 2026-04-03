@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../i18n';
 import Sidebar from './Sidebar';
 import { API_URL } from '../config';
 import './StartScreen.css';
@@ -18,17 +19,18 @@ interface Notification {
   read: boolean;
   createdAt: string;
   relatedUser: RelatedUser;
-  requestId?: string; // ⚠️ necesario para aceptar/rechazar
+  requestId?: string;
 }
 
 const Notifications: React.FC = () => {
+  const { t } = useTranslation(); // 👈 hook i18n
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // 🔹 Función para cargar notificaciones
   const loadData = async () => {
     setLoading(true);
     setError(null);
@@ -41,7 +43,7 @@ const Notifications: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError('Error al cargar notificaciones');
+      setError(t('notifications.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,6 @@ const Notifications: React.FC = () => {
     loadData();
   }, []);
 
-  // 🔹 Manejar aceptar solicitud
   const handleAccept = async (notification: Notification) => {
     if (!notification.requestId) return;
     try {
@@ -63,11 +64,10 @@ const Notifications: React.FC = () => {
       await loadData();
     } catch (err: any) {
       console.error(err);
-      setError('Error aceptando solicitud');
+      setError(t('notifications.errorAccept'));
     }
   };
 
-  // 🔹 Manejar rechazar solicitud
   const handleReject = async (notification: Notification) => {
     if (!notification.requestId) return;
     try {
@@ -79,7 +79,7 @@ const Notifications: React.FC = () => {
       await loadData();
     } catch (err: any) {
       console.error(err);
-      setError('Error rechazando solicitud');
+      setError(t('notifications.errorReject'));
     }
   };
 
@@ -89,15 +89,22 @@ const Notifications: React.FC = () => {
       <div className="start-screen">
         <main className="main-content">
           <div className="content-inner">
-            <h1>Notificaciones</h1>
+            <h1>{t('notifications.title')}</h1>
 
-            {loading && <p style={{ color: 'white', textAlign: 'center' }}>Cargando notificaciones...</p>}
-            {error && <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>}
+            {loading && (
+              <p style={{ color: 'white', textAlign: 'center' }}>
+                {t('notifications.loading')}
+              </p>
+            )}
+
+            {error && (
+              <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>
+            )}
 
             {!loading && !error && (
               <div className="notifications-content rules-content">
                 {notifications.length === 0 ? (
-                  <p>No tienes notificaciones</p>
+                  <p>{t('notifications.empty')}</p>
                 ) : (
                   notifications.map((n) => (
                     <div key={n._id} className={`notification-card ${!n.read ? 'unread' : ''}`}>
@@ -108,12 +115,19 @@ const Notifications: React.FC = () => {
                       />
                       <div className="notification-text">
                         <p>
-                          <strong>{n.relatedUser.username}</strong> te ha enviado una solicitud de amistad
+                          <strong>{n.relatedUser.username}</strong>{' '}
+                          {t('notifications.friendRequest')}
                         </p>
-                        <small>{new Date(n.createdAt).toLocaleString()}</small>
+                        <small>
+                          {new Date(n.createdAt).toLocaleString()}
+                        </small>
                       </div>
-                      <button onClick={() => handleAccept(n)}>Aceptar</button>
-                      <button onClick={() => handleReject(n)}>Rechazar</button>
+                      <button onClick={() => handleAccept(n)}>
+                        {t('notifications.accept')}
+                      </button>
+                      <button onClick={() => handleReject(n)}>
+                        {t('notifications.reject')}
+                      </button>
                     </div>
                   ))
                 )}
@@ -122,7 +136,7 @@ const Notifications: React.FC = () => {
 
             <div className="action-row">
               <button className="play-button" onClick={() => navigate('/')}>
-                Volver
+                {t('common.back')}
               </button>
             </div>
           </div>

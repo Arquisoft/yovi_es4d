@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import { useTranslation } from '../i18n';
 import {
   exploreUsers,
   getFriends,
@@ -25,6 +26,7 @@ type Request = {
 };
 
 const Friends: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -37,6 +39,7 @@ const Friends: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+     
     if (!user) return; // usuario no cargado todavía
     const userId = user?._id || user?.id || user?.userId;
     if (!userId) {
@@ -65,7 +68,7 @@ const Friends: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      setError('Error cargando datos');
+      setError(t('friends.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,7 @@ const Friends: React.FC = () => {
       await sendFriendRequest(id);
       loadData();
     } catch {
-      setError('Error enviando solicitud');
+      setError(t('friends.errorSending'));
     }
   };
 
@@ -88,7 +91,7 @@ const Friends: React.FC = () => {
       await acceptFriendRequest(id);
       loadData();
     } catch {
-      setError('Error aceptando solicitud');
+      setError(t('friends.errorAccepting'));
     }
   };
 
@@ -97,33 +100,33 @@ const Friends: React.FC = () => {
       await rejectFriendRequest(id);
       loadData();
     } catch {
-      setError('Error rechazando solicitud');
+      setError(t('friends.errorRejecting'));
     }
   };
 
   // ----------------------
   // RENDER
   // ----------------------
-  if (user === undefined) return <div className="loading-message">Cargando usuario...</div>;
+  if (user === undefined) return <div className="loading-message">{t('back')}</div>;
 
   return (
     <>
       <Sidebar />
       <div className="friends-page">
         <header>
-          <h1>Amigos</h1>
+          <h1>{t('friends.title')}</h1>
         </header>
 
         {/* TABS */}
         <div className="tabs">
           <button onClick={() => setTab('explore')} className={tab === 'explore' ? 'active' : ''}>
-            Explorar
+            {t('friends.tabs.explore')}
           </button>
           <button onClick={() => setTab('friends')} className={tab === 'friends' ? 'active' : ''}>
-            Mis Amigos
+            {t('friends.tabs.friends')}
           </button>
           <button onClick={() => setTab('requests')} className={tab === 'requests' ? 'active' : ''}>
-            Solicitudes
+            {t('friends.tabs.requests')}
           </button>
         </div>
 
@@ -131,7 +134,7 @@ const Friends: React.FC = () => {
         {tab !== 'requests' && (
           <input
             type="text"
-            placeholder="Buscar usuario..."
+            placeholder={t('friends.search')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -145,7 +148,7 @@ const Friends: React.FC = () => {
 
         {/* LOADING */}
         {loading ? (
-          <div className="loading-message">Cargando...</div>
+          <div className="loading-message">{t('friends.loadingUser')}</div>
         ) : (
           <>
             <ul className="friends-list">
@@ -157,7 +160,7 @@ const Friends: React.FC = () => {
                       <strong>{u.username}</strong>
                     </div>
                     {tab === 'explore' && (
-                      <button onClick={() => handleSend(u._id)}>Añadir</button>
+                      <button onClick={() => handleSend(u._id)}>{t('friends.add')}</button>
                     )}
                   </li>
                 ))}
@@ -170,27 +173,27 @@ const Friends: React.FC = () => {
                       <strong>{r.sender.username}</strong>
                     </div>
                     <div className="actions">
-                      <button onClick={() => handleAccept(r._id)}>Aceptar</button>
-                      <button onClick={() => handleReject(r._id)}>Rechazar</button>
+                      <button onClick={() => handleAccept(r._id)}>{t('friends.accept')}</button>
+                      <button onClick={() => handleReject(r._id)}>{t('friends.reject')}</button>
                     </div>
                   </li>
                 ))}
             </ul>
               {!loading && tab !== 'requests' && data.length === 0 && (
                 <div className="empty-message">
-                  No hay usuarios nuevos 😅
+                  {t('friends.emptyExplore')}
                 </div>
               )}
               {!loading && tab === 'requests' && requests.length === 0 && (
                 <div className="empty-message">
-                  No tienes solicitudes pendientes 👍
+                    {t('friends.emptyRequests')}
                 </div>
               )}
             {/* PAGINACIÓN */}
             {tab !== 'requests' && (
               <div className="pagination">
                 <button onClick={() => setPage((p) => Math.max(p - 1, 1))}>⇦</button>
-                <span>Página {page}</span>
+                <span>{t('friends.page')} {page}</span>
                 <button onClick={() => setPage((p) => p + 1)}>⇨</button>
               </div>
             )}

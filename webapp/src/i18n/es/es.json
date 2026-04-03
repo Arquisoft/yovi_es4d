@@ -116,6 +116,46 @@
     "movesNotAvailable": "Movimientos no disponibles",
     "table": "Tablero:",
     "cells": "casillas"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "loading": "Cargando notificaciones...",
+    "empty": "No tienes notificaciones",
+    "friendRequest": "te ha enviado una solicitud de amistad",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "errorLoading": "Error al cargar notificaciones",
+    "errorAccept": "Error aceptando solicitud",
+    "errorReject": "Error rechazando solicitud"
+  },
+  "common": {
+    "back": "Volver"
+  }, "friends": {
+    "title": "Amigos",
+    "loadingUser": "Cargando usuario...",
+    "errorLoading": "Error cargando datos",
+    "errorSend": "Error enviando solicitud",
+    "errorAccept": "Error aceptando solicitud",
+    "errorReject": "Error rechazando solicitud",
+
+    "tabs": {
+      "explore": "Explorar",
+      "friends": "Mis Amigos",
+      "requests": "Solicitudes"
+    },
+
+    "search": "Buscar usuario...",
+    "add": "Añadir",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+
+    "emptyExplore": "No hay usuarios nuevos 😅",
+    "emptyRequests": "No tienes solicitudes pendientes 👍",
+
+    "page": "Página {{page}}"
+  },
+  "back": {
+    "loading": "Cargando..."
   }
 }
 
