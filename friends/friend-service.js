@@ -72,13 +72,26 @@ app.get('/friends/explore', async (req, res) => {
     const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
       params: { search, page, limit }
     });
+// Obtener solicitudes pendientes
+const pendingRequests = await FriendRequest.find({
+  $or: [
+    { senderId: userId, status: 'pending' },
+    { receiverId: userId, status: 'pending' }
+  ]
+});
 
+// IDs de usuarios con solicitud pendiente
+const pendingIds = pendingRequests.map(r =>
+  r.senderId.toString() === userId
+    ? r.receiverId.toString()
+    : r.senderId.toString()
+);
     
     const users = response.data.filter(u => {
       if (u._id === userId) return false;
 
       if (friendIds.includes(u._id)) return false;
-
+       if (pendingIds.includes(u._id)) return false;
       return true;
     });
     res.json({ users });
@@ -100,8 +113,8 @@ app.post('/friends/request', async (req, res) => {
     const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
     if (existing) return res.status(400).json({ error: 'Request already exists' });
 
-    const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
-    const receiver = await axios.get(`${USER_SERVICE_URL}/api/users/${receiverId}`);
+    const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: senderId });
+const receiver = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: receiverId });
 
     // Validar que exista email
     if (!sender.data.email || !receiver.data.email)
@@ -171,12 +184,11 @@ app.patch('/friends/accept', async (req, res) => {
     // Actualizar solo status
     request.status = 'accepted';
     await request.save(); // Mongoose ya tiene senderEmail y receiverEmail
-
-    await Notification.create({
-      userId: request.senderId,
+  
+    await Notification.findOneAndDelete({
+      userId: userId, // el que recibe la notificación
       type: 'friend_request',
-      relatedUserId: userId,
-      relatedUserEmail: request.receiverEmail
+      relatedUserId: request.senderId
     });
 
     res.json({ message: 'Accepted' });
@@ -195,9 +207,11 @@ app.patch('/friends/reject', async (req, res) => {
     const request = await FriendRequest.findById(requestId);
     if (!request) return res.status(404).json({ error: 'Not found' });
 
-    request.status = 'rejected';
-    await request.save(); // solo actualizar status
-
+    await request.deleteOne();
+    await Notification.findOneAndDelete({
+      type: 'friend_request',
+      relatedUserId: request.senderId
+    });
     res.json({ message: 'Rejected' });
   } catch (err) {
     console.error(err);
