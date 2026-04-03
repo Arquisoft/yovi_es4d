@@ -39,7 +39,6 @@ const Friends: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-     
     const userId = user?._id || user?.id || user?.userId;
     if (!userId) {
       navigate('/login');
@@ -54,6 +53,7 @@ const Friends: React.FC = () => {
       navigate('/login');
       return;
     }
+
     try {
       setLoading(true);
       setError(null);
@@ -76,15 +76,12 @@ const Friends: React.FC = () => {
     }
   };
 
-  // ----------------------
-  // ACCIONES
-  // ----------------------
   const handleSend = async (id: string) => {
     try {
       await sendFriendRequest(id);
       loadData();
     } catch {
-      setError(t('friends.errorSending'));
+      setError(t('friends.errorSend'));
     }
   };
 
@@ -93,7 +90,7 @@ const Friends: React.FC = () => {
       await acceptFriendRequest(id);
       loadData();
     } catch {
-      setError(t('friends.errorAccepting'));
+      setError(t('friends.errorAccept'));
     }
   };
 
@@ -102,14 +99,13 @@ const Friends: React.FC = () => {
       await rejectFriendRequest(id);
       loadData();
     } catch {
-      setError(t('friends.errorRejecting'));
+      setError(t('friends.errorReject'));
     }
   };
 
-  // ----------------------
-  // RENDER
-  // ----------------------
-  if (user === undefined) return <div className="loading-message">{t('back')}</div>;
+  if (user === undefined) {
+    return <div className="loading-message">{t('back.loading')}</div>;
+  }
 
   return (
     <>
@@ -119,7 +115,6 @@ const Friends: React.FC = () => {
           <h1>{t('friends.title')}</h1>
         </header>
 
-        {/* TABS */}
         <div className="tabs">
           <button onClick={() => setTab('explore')} className={tab === 'explore' ? 'active' : ''}>
             {t('friends.tabs.explore')}
@@ -132,7 +127,6 @@ const Friends: React.FC = () => {
           </button>
         </div>
 
-        {/* BUSCADOR */}
         {tab !== 'requests' && (
           <input
             type="text"
@@ -145,16 +139,13 @@ const Friends: React.FC = () => {
           />
         )}
 
-        {/* ERROR */}
         {error && <div className="error-message">{error}</div>}
 
-        {/* LOADING */}
         {loading ? (
           <div className="loading-message">{t('friends.loadingUser')}</div>
         ) : (
           <>
             <ul className="friends-list">
-              {/* EXPLORE / FRIENDS */}
               {tab !== 'requests' &&
                 data.map((u) => (
                   <li key={u._id}>
@@ -167,7 +158,6 @@ const Friends: React.FC = () => {
                   </li>
                 ))}
 
-              {/* REQUESTS */}
               {tab === 'requests' &&
                 requests.map((r) => (
                   <li key={r._id}>
@@ -181,17 +171,19 @@ const Friends: React.FC = () => {
                   </li>
                 ))}
             </ul>
-              {!loading && tab !== 'requests' && data.length === 0 && (
-                <div className="empty-message">
-                  {t('friends.emptyExplore')}
-                </div>
-              )}
-              {!loading && tab === 'requests' && requests.length === 0 && (
-                <div className="empty-message">
-                    {t('friends.emptyRequests')}
-                </div>
-              )}
-            {/* PAGINACIÓN */}
+
+            {!loading && tab !== 'requests' && data.length === 0 && (
+              <div className="empty-message">
+                {t('friends.emptyExplore')}
+              </div>
+            )}
+
+            {!loading && tab === 'requests' && requests.length === 0 && (
+              <div className="empty-message">
+                {t('friends.emptyRequests')}
+              </div>
+            )}
+
             {tab !== 'requests' && (
               <div className="pagination">
                 <button onClick={() => setPage((p) => Math.max(p - 1, 1))}>⇦</button>
