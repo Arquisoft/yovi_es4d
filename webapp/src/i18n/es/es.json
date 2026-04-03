@@ -16,7 +16,9 @@
     "team": "yovi_es4d",
     "selectLanguage": "Seleccionar idioma",
     "initsession": "Iniciar sesión",
-    "historial": "Historial"
+    "historial": "Historial",
+    "friends": "Amigos",
+    "notification": "🔔"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. Todos los derechos reservados."

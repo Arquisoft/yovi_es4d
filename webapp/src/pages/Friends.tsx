@@ -40,7 +40,6 @@ const Friends: React.FC = () => {
 
   useEffect(() => {
      
-    if (!user) return; // usuario no cargado todavía
     const userId = user?._id || user?.id || user?.userId;
     if (!userId) {
       navigate('/login');
@@ -51,7 +50,10 @@ const Friends: React.FC = () => {
 
   const loadData = async () => {
     const userId = user?._id || user?.id || user?.userId;
-    if (!userId) return;
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
