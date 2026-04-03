@@ -29,7 +29,7 @@ const YAML = require('yaml');
 
 // JWT Authentication library
 const jwt = require('jsonwebtoken');
-const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
+const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 
 const app = express();
 const port = 8000;
