@@ -82,10 +82,6 @@ const Historial: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  // ===============================
-  // 📊 Estadísticas
-  // ===============================
-
   const totalGames = history.length;
   const totalWins = history.filter(h => h.winner === 'j1').length;
   const totalDraws = history.filter(h => !h.winner).length;
@@ -102,8 +98,6 @@ const Historial: React.FC = () => {
   ];
 
   const COLORS = ['#4caf50', '#f44336', '#9e9e9e'];
-
-  // ===============================
 
   const getOpponentName = (game: BackendGameRecord) => {
     const opponent = game.players.find(p => p.role === 'j2');
@@ -225,10 +219,6 @@ const Historial: React.FC = () => {
                   </div>
 )}
             </section>
-
-            {/* ===============================
-                LISTADO PARTIDAS
-            =============================== */}
 
             <section className="historial-list">
               <h2>{t('historial.games')}</h2>
