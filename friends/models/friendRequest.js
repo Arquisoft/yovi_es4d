@@ -7,13 +7,13 @@ const friendRequestSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
-  senderEmail: { type: String, required: true }, // <- nuevo campo
+  senderEmail: { type: String, required: true }, 
   receiverId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
   },
-  receiverEmail: { type: String, required: true }, // <- nuevo campo
+  receiverEmail: { type: String, required: true }, 
   status: { 
     type: String, 
     enum: ['pending', 'accepted', 'rejected'], 
@@ -24,7 +24,6 @@ const friendRequestSchema = new mongoose.Schema({
     default: Date.now 
   }
 });
-// ✅ Evitar solicitudes duplicadas SOLO si están pendientes
 friendRequestSchema.index(
   { senderId: 1, receiverId: 1, status: 1 },
   { unique: true, partialFilterExpression: { status: 'pending' } }

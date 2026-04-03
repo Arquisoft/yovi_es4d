@@ -541,9 +541,6 @@ app.post('/api/game/end', verifyToken, async (req, res) => {
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error finalizando juego' });
   }
 });
-// ===================
-// 🧑‍🤝‍🧑 AMIGOS
-// ===================
 
 // GET amigos
 app.get('/api/friends', verifyToken, async (req, res) => {
@@ -601,7 +598,6 @@ app.post('/api/friends/request', verifyToken, async (req, res) => {
 // GET solicitudes (con emails incluidos)
 app.get('/api/friends/requests', verifyToken, async (req, res) => {
   try {
-    // 1️⃣ Traer solicitudes del friend-service
     const friendResp = await axios.get(`${friendServiceUrl}/friends/requests`, {
       params: {
         userId: req.body.userId,
@@ -611,7 +607,6 @@ app.get('/api/friends/requests', verifyToken, async (req, res) => {
 
     const requests = friendResp.data;
 
-    // 2️⃣ Enriquecer con email y username desde user-service si hace falta
     const enriched = await Promise.all(requests.map(async (r) => {
       let senderData = r.sender;
       let receiverData = r.receiver;
@@ -635,7 +630,6 @@ app.get('/api/friends/requests', verifyToken, async (req, res) => {
         }
       } catch (err) {
         console.error(`Error enriqueciendo datos de usuario: ${err.message}`);
-        // fallback si falla la llamada al user-service
         senderData = { ...senderData, email: senderData.email || '' };
         receiverData = { ...receiverData, email: receiverData.email || '' };
       }
@@ -649,7 +643,6 @@ app.get('/api/friends/requests', verifyToken, async (req, res) => {
       };
     }));
 
-    // 3️⃣ Enviar respuesta
     res.json(enriched);
 
   } catch (error) {
@@ -661,7 +654,7 @@ app.get('/api/friends/requests', verifyToken, async (req, res) => {
 app.patch('/api/friends/accept', verifyToken, async (req, res) => {
   try {
     const { requestId } = req.body;
-    const userId = req.body.userId; // viene del middleware verifyToken
+    const userId = req.body.userId; 
 
     if (!requestId || !userId) {
       return res.status(400).json({ error: 'Faltan parámetros' });
@@ -704,10 +697,6 @@ app.delete('/api/friends/request/:id', verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Error cancelando solicitud' });
   }
 });
-
-// ===================
-// 🔔 NOTIFICACIONES
-// ===================
 
 // GET notificaciones
 app.get('/api/notifications', verifyToken, async (req, res) => {

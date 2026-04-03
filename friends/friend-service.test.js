@@ -30,9 +30,8 @@ describe('Friend Service', () => {
     jest.clearAllMocks();
   });
 
-  // ======================
+  
   // GET /friends
-  // ======================
 
   it('should get friends', async () => {
     FriendRequest.find.mockResolvedValue([
@@ -66,10 +65,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // GET /friends/explore
-  // ======================
-
   it('should explore users excluding self, friends and pending requests', async () => {
     FriendRequest.find
       .mockResolvedValueOnce([
@@ -116,10 +113,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // POST /friends/request
-  // ======================
-
   it('should send friend request', async () => {
     FriendRequest.findOne.mockResolvedValue(null);
 
@@ -198,10 +193,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // GET /friends/requests
-  // ======================
-
   it('should get received friend requests', async () => {
     FriendRequest.find.mockResolvedValue([
       {
@@ -263,11 +256,9 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // PATCH /friends/accept
-  // ======================
-
-  it('should accept friend request', async () => {
+   it('should accept friend request', async () => {
     const saveMock = jest.fn().mockResolvedValue();
 
     FriendRequest.findById.mockResolvedValue({
@@ -339,10 +330,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // PATCH /friends/reject
-  // ======================
-
   it('should reject friend request', async () => {
     const deleteOneMock = jest.fn().mockResolvedValue();
 
@@ -398,10 +387,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // DELETE /friends/request/:id
-  // ======================
-
   it('should cancel friend request', async () => {
     const deleteOneMock = jest.fn().mockResolvedValue();
 
@@ -465,10 +452,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // GET /notifications
-  // ======================
-
   it('should get notifications', async () => {
   const notificationsData = [
     {
@@ -579,10 +564,8 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Error obteniendo notificaciones');
   });
 
-  // ======================
+  
   // PATCH /notifications/read-all
-  // ======================
-
   it('should mark all notifications as read', async () => {
     Notification.updateMany.mockResolvedValue({ modifiedCount: 2 });
 
@@ -618,11 +601,9 @@ describe('Friend Service', () => {
     expect(res.body.error).toBe('Internal error');
   });
 
-  // ======================
+  
   // POST /notifications/game-invite
-  // ======================
-
-  it('should send game invite notification', async () => {
+   it('should send game invite notification', async () => {
     axios.get.mockResolvedValue({
       data: { email: 'sender@test.com' }
     });

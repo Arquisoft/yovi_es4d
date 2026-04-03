@@ -23,9 +23,7 @@ const port = process.env.PORT || 8004;
 app.use(cors());
 app.use(express.json());
 
-// ----------------------
-// 🧑‍🤝‍🧑 AMIGOS
-// ----------------------
+// AMIGOS
 app.get('/friends', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -49,9 +47,8 @@ app.get('/friends', async (req, res) => {
   }
 });
 
-// ----------------------
-// 🔍 EXPLORAR USUARIOS
-// ----------------------
+//  EXPLORAR USUARIOS
+
 app.get('/friends/explore', async (req, res) => {
   try {
     const { userId, search = '', page = 1 } = req.query;
@@ -101,9 +98,9 @@ const pendingIds = pendingRequests.map(r =>
   }
 });
 
-// ----------------------
-// 📩 SOLICITUDES
-// ----------------------
+
+// SOLICITUDES
+
 app.post('/friends/request', async (req, res) => {
   try {
     const { senderId, receiverId } = req.body;
@@ -170,7 +167,6 @@ app.get('/friends/requests', async (req, res) => {
 });
 
 // PATCH aceptar solicitud
-// PATCH aceptar solicitud
 app.patch('/friends/accept', async (req, res) => {
   try {
     const { requestId, userId } = req.body;
@@ -183,7 +179,7 @@ app.patch('/friends/accept', async (req, res) => {
 
     // Actualizar solo status
     request.status = 'accepted';
-    await request.save(); // Mongoose ya tiene senderEmail y receiverEmail
+    await request.save(); 
   
     await Notification.findOneAndDelete({
       userId: userId, // el que recibe la notificación
@@ -238,9 +234,9 @@ app.delete('/friends/request/:id', async (req, res) => {
   }
 });
 
-// ----------------------
-// 🔔 NOTIFICACIONES
-// ----------------------
+
+// NOTIFICACIONES
+
 app.get('/notifications', async (req, res) => {
   try {
     const { userId, page = 1 } = req.query;
@@ -321,7 +317,7 @@ app.post('/notifications/game-invite', async (req, res) => {
   }
 });
 
-// ----------------------
+
 if (require.main === module) {
   app.listen(port, '0.0.0.0', () =>
     console.log(`Friend Service listening on ${port}`)
