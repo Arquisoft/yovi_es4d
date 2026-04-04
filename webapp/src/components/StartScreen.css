@@ -499,3 +499,76 @@ html, body {
   max-width: 500px;
   margin: 60px auto;
 }
+/* Contenedor principal */
+.notifications-content {
+  max-width: 720px;
+  margin: 20px auto;
+  padding: 28px 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Tarjeta de notificación */
+.notification-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.notification-card.unread {
+  border-left: 4px solid #00d4ff;
+}
+
+.notification-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Avatar */
+.notification-card .avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Texto de notificación */
+.notification-card .notification-text p {
+  margin: 0;
+  color: white;
+  font-weight: 500;
+}
+
+.notification-card .notification-text small {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Botón aceptar */
+.accept-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg, #0095ff, #0004ff);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.accept-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 4, 255, 0.3);
+}

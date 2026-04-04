@@ -10,6 +10,9 @@ import EditProfile from "../pages/EditProfilePage";
 import Historial from "../pages/Historial";
 import ModeSelector from "../components/game/ModeSelector";
 import OnlineLobby from "../components/game/Onlinelobby";
+import Friends  from "../pages/Friends";
+import Notifications from "../components/Notifications";
+
 
 
 const router = createBrowserRouter([
@@ -60,6 +63,14 @@ const router = createBrowserRouter([
   {
     path: "/online-lobby",
     element: <OnlineLobby  />
+  },
+  {
+    path: "/friends",
+    element: <Friends /> 
+  },
+  {
+    path: "/notifications",
+    element: <Notifications />
   }
 
 ]);

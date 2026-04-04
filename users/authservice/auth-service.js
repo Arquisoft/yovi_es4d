@@ -1,3 +1,18 @@
+/**
+ * Servicio de Autenticación de YOVI ES4D
+ *
+ * Este módulo proporciona la autenticación de usuarios mediante JWT.
+ * Gestiona login, logout, validación de credenciales, limitación de intentos fallidos
+ * y gestión de tokens seguros en cookies.
+ *
+ * @module auth-service
+ * @requires express
+ * @requires mongoose
+ * @requires bcrypt
+ * @requires jsonwebtoken
+ * @requires express-validator
+ */
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -14,13 +29,31 @@ app.use(express.json());
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/usersdb';
 mongoose.connect(mongoUri);
 
+/** Clave privada para firmar JWT */
 const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
 
-const failedAttempts = new Map(); // Store failed login attempts per IP address
-const MAX_ATTEMPTS = 5; // Maximum number of failed attempts before blocking
-const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+/**
+ * Mapa para almacenar intentos de login fallidos por dirección IP.
+ * Estructura: { ip: { count: número, lastAttempt: timestamp } }
+ * @type {Map<string, {count: number, lastAttempt: number}>}
+ */
+const failedAttempts = new Map();
+/** Número máximo de intentos de login fallidos antes de bloquear */
+const MAX_ATTEMPTS = 5;
+/** Ventana de tiempo en milisegundos para contar intentos fallidos (5 minutos) */
+const WINDOW_MS = 5 * 60 * 1000;
 
-// Middleware to limit the number of login attempts per IP
+/**
+ * Middleware para limitar el número de intentos de login fallidos por dirección IP.
+ * Si se excede el número máximo de intentos dentro de la ventana de tiempo,
+ * devuelve error 429 (Too Many Requests).
+ *
+ * @middleware
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {Object} res - Objeto de respuesta Express
+ * @param {Function} next - Función para pasar al siguiente middleware
+ * @returns {void} Llama a next() si se permite continuar, o devuelve error 429
+ */
 function loginLimiter(req, res, next) {
   const ip = req.ip;
   const entry = failedAttempts.get(ip);
@@ -32,7 +65,15 @@ function loginLimiter(req, res, next) {
   next();
 }
 
-// Function to validate required fields in the request body
+/**
+ * Valida que los campos requeridos estén presentes en el cuerpo de la solicitud.
+ *
+ * @function
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {string[]} requiredFields - Array de nombres de campos requeridos
+ * @throws {Error} Si falta algún campo requerido
+ * @returns {void}
+ */
 function validateRequiredFields(req, requiredFields) {
   for (const field of requiredFields) {
     if (!(field in req.body)) {
@@ -41,20 +82,31 @@ function validateRequiredFields(req, requiredFields) {
   }
 }
 
-// Route for user login
+/**
+ * Endpoint para autenticación de usuarios.
+ * Valida las credenciales del usuario contra la base de datos,
+ * implementa limitación de intentos fallidos y genera un token JWT.
+ *
+ * @route {POST} /login
+ * @param {Object} req.body - Credenciales del usuario
+ * @param {string} req.body.email - Email del usuario
+ * @param {string} req.body.password - Contraseña del usuario
+ * @returns {Object} Datos del usuario autenticado con token JWT en cookie
+ * @throws {400} Si faltan campos o validación falla
+ * @throws {401} Si las credenciales son inválidas
+ * @throws {429} Si se excede el número de intentos fallidos
+ * @throws {500} Si hay error del servidor
+ */
 app.post('/login', loginLimiter, [
   check('email').isLength({ min: 3 }).trim().escape(),
   check('password').isLength({ min: 3 }).trim().escape()
 ], async (req, res) => {
   const ip = req.ip;
   try {
-    // Check if required fields are present in the request body
     validateRequiredFields(req, ['email', 'password']);
 
-    // Validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Enviar solo los mensajes legibles
       return res.status(400).json({ 
         error: errors.array().map(e => e.msg).join(', ')
       });
@@ -64,21 +116,16 @@ app.post('/login', loginLimiter, [
     const email = req.body.email.toString();
     const password = req.body.password.toString();
     console.log(email);
-    // Find the user by email in the database
     const user = await User.findOne({ email });
     console.log("la que mete el user" + password);
     console.log("AAAAAAAAAAAAAAAAAAA" + user);
     console.log("la de la bd de mierda" + user.password);
     
-    // Check if the user exists and verify the password
     if (user && await bcrypt.compare(password, user.password)) {
-      // Reset failed attempts on successful login
       failedAttempts.delete(ip);
       
-      // Generate a JWT token
       const token = jwt.sign({ userId: user._id }, privateKey, { expiresIn: '1h' });
 
-      // Respond with the token and user information
       res.cookie('token', token, {
         httpOnly: true,
         secure: false,
@@ -88,7 +135,6 @@ app.post('/login', loginLimiter, [
 
       res.json({ email: email, createdAt: user.createdAt, id: user._id });
     } else {
-      // Increment failed attempts for the IP address
       const entry = failedAttempts.get(ip) || { count: 0, lastAttempt: Date.now() };
       failedAttempts.set(ip, { count: entry.count + 1, lastAttempt: Date.now() });
       console.log(res.status(401).json({ error: 'Invalid credentials' }));
@@ -101,22 +147,32 @@ app.post('/login', loginLimiter, [
   }
 });
 
+/**
+ * Endpoint para cerrar sesión del usuario.
+ * Elimina la cookie de token JWT del cliente.
+ *
+ * @route {POST} /logout
+ * @returns {Object} Mensaje de confirmación de logout
+ */
 app.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     sameSite: 'lax',
-    secure: false // true en producción
+    secure: false 
   });
   res.json({ message: 'Logged out' });
 });
 
-// Start the server
+/**
+ * Iniciar el servidor de autenticación en el puerto especificado.
+ * Al cerrar el servidor, se cierra la conexión a MongoDB.
+ * @type {Server}
+ */
 const server = app.listen(port, () => {
   console.log(`User service running on ${port}`);
 });
 
 server.on('close', () => {
-  // Close the Mongoose connection
   mongoose.connection.close();
 });
 
