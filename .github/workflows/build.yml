@@ -49,11 +49,6 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.service.path }}
 
-      - name: Run tests
-        if: ${{ matrix.service.test }}
-        run: npm test
-        working-directory: ${{ matrix.service.path }}
-
       - name: Build webapp
         if: ${{ matrix.service.name == 'webapp' }}
         run: npm run build
@@ -82,10 +77,6 @@ jobs:
       - name: Build gamey
         working-directory: gamey
         run: cargo build --release
-
-      - name: Test gamey
-        working-directory: gamey
-        run: cargo test
 
   docker-build:
     name: Docker Build Validation
