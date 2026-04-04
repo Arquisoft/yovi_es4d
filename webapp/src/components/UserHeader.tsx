@@ -31,7 +31,7 @@ const UserHeader: React.FC = () => {
       <button
         onClick={() => navigate("/")}
         className="flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
-        style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+        style={{ background: "none", border: "none", padding: 0, color: "var(--subtle)", cursor: "pointer" }}
       >
         <span style={{ fontSize: "1rem" }}>←</span>
         <span>Inicio</span>
