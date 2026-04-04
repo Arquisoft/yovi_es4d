@@ -30,7 +30,7 @@ const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/usersdb';
 mongoose.connect(mongoUri);
 
 /** Clave privada para firmar JWT */
-const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
+const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 
 /**
  * Mapa para almacenar intentos de login fallidos por dirección IP.

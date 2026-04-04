@@ -4,7 +4,7 @@ const jwt     = require('jsonwebtoken');
 
 jest.mock('axios');
 
-const privateKey = process.env.TOKEN_SECRET_KEY || 'your-secret-key';
+const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 
 const createCookie = (userId = 'testUser') => {
     const token = jwt.sign({ userId }, privateKey);
