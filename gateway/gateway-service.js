@@ -41,10 +41,19 @@ const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8001';
 const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
 const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:8004';
 
+
+// Lista de orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:5173',        // desarrollo local
+  'http://20.188.62.231:5173',   // VM/frontend en Azure
+  'https://midominio.com'         // producción (tu dominio)
+];
+
 app.use(cors({
   origin: 'http://localhost:5173', 
-  credentials: true              
+  credentials: true             
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -104,6 +113,7 @@ app.get('/api/game/history', verifyToken, async (req, res) => {
     res.json(gameRes.data);
 
   } catch (error) {
+    console.log(error);
     const status = error.response?.status || 500;
     const message = error.response?.data?.error || error.message;
     res.status(status).json({ error: message });
@@ -304,6 +314,7 @@ app.post('/logout', async (req, res) => {
     res.json(authResponse.data);
 
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || 'Logout error'
     });
@@ -336,6 +347,7 @@ app.post('/api/user/editUsername', verifyToken, async (req, res) => {
         const response = await axios.post(`${userServiceUrl}/editUser`, { userId, username });
         res.json(response.data);
     } catch (error) {
+      console.log(error);
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
@@ -373,6 +385,7 @@ app.post('/api/user/changePassword', verifyToken, async (req, res) => {
         });
         res.json(response.data);
     } catch (error) {
+      console.log(error);
         res.status(error.response?.status || 500).json({
             error: error.response?.data?.error || 'Internal error'
         });
