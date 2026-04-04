@@ -1,7 +1,15 @@
 const request = require('supertest');
 const axios   = require('axios');
+const jwt     = require('jsonwebtoken');
 
 jest.mock('axios');
+
+const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
+
+const createCookie = (userId = 'testUser') => {
+    const token = jwt.sign({ userId }, privateKey);
+    return `token=${token}`;
+};
 
 // El gateway exporta el server, no app, así que lo cerramos al acabar
 let server;
@@ -40,10 +48,11 @@ describe('GET /api/game/bot-modes', () => {
 // ============================================================
 describe('POST /api/game/start', () => {
 
-    test('inicia una partida y devuelve gameId (sin token → guest)', async () => {
+    test('inicia una partida y devuelve gameId', async () => {
         axios.post.mockResolvedValueOnce(gameStartOk);
         const res = await request(server)
             .post('/api/game/start')
+            .set('Cookie', createCookie())
             .send({ gameMode: 'vsBot', botMode: 'random_bot' });
         expect(res.status).toBe(200);
         expect(res.body.gameId).toBe('game_abc123');
@@ -54,6 +63,7 @@ describe('POST /api/game/start', () => {
         axios.post.mockResolvedValueOnce(gameStartOk);
         await request(server)
             .post('/api/game/start')
+            .set('Cookie', createCookie())
             .send({ gameMode: 'vsBot', botMode: 'intermediate_bot' });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('/api/game/start'),
@@ -65,6 +75,7 @@ describe('POST /api/game/start', () => {
         axios.post.mockRejectedValueOnce({ response: { status: 500, data: { error: 'Error' } } });
         const res = await request(server)
             .post('/api/game/start')
+            .set('Cookie', createCookie())
             .send({ gameMode: 'vsBot', botMode: 'random_bot' });
         expect(res.status).toBe(500);
     });
@@ -77,6 +88,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
         axios.post.mockResolvedValueOnce(validateOk);
         const res = await request(server)
             .post('/api/game/game_abc123/validateMove')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)' });
         expect(res.status).toBe(200);
         expect(res.body.valid).toBe(true);
@@ -86,6 +98,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
         axios.post.mockRejectedValueOnce({ response: { status: 400, data: { error: 'Movimiento inválido' } } });
         const res = await request(server)
             .post('/api/game/game_abc123/validateMove')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(0,0,0)' });
         expect(res.status).toBe(400);
     });
@@ -94,10 +107,11 @@ describe('POST /api/game/:gameId/validateMove', () => {
         axios.post.mockResolvedValueOnce(validateOk);
         await request(server)
             .post('/api/game/game_abc123/validateMove')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)' });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('/validateMove'),
-            expect.objectContaining({ move: '(10,0,0)', userId: 'j1' })
+            expect.objectContaining({ move: '(10,0,0)' })
         );
     });
 });
@@ -109,6 +123,7 @@ describe('POST /api/game/:gameId/move', () => {
         axios.post.mockResolvedValueOnce(moveOk);
         const res = await request(server)
             .post('/api/game/game_abc123/move')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)', mode: 'vsBot' });
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('board');
@@ -118,6 +133,7 @@ describe('POST /api/game/:gameId/move', () => {
         axios.post.mockResolvedValueOnce(moveOk);
         await request(server)
             .post('/api/game/game_abc123/move')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)', mode: 'vsBot' });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('vsBot/move'),
@@ -129,6 +145,7 @@ describe('POST /api/game/:gameId/move', () => {
         axios.post.mockResolvedValueOnce(moveOk);
         await request(server)
             .post('/api/game/game_abc123/move')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)', mode: 'multiplayer' });
         expect(axios.post).toHaveBeenCalledWith(
             expect.stringContaining('multiplayer/move'),
@@ -139,13 +156,15 @@ describe('POST /api/game/:gameId/move', () => {
     test('devuelve 400 si falta move o userId', async () => {
         const res = await request(server)
             .post('/api/game/game_abc123/move')
-            .send({ mode: 'vsBot' }); // sin move ni userId
+            .set('Cookie', createCookie())
+            .send({ mode: 'vsBot' }); // sin move ni userId (userId lo pone el token, pero move falta)
         expect(res.status).toBe(400);
     });
 
     test('devuelve 400 para un mode inválido', async () => {
         const res = await request(server)
             .post('/api/game/game_abc123/move')
+            .set('Cookie', createCookie())
             .send({ userId: 'j1', move: '(10,0,0)', mode: 'unknown_mode' });
         expect(res.status).toBe(400);
     });
@@ -154,16 +173,20 @@ describe('POST /api/game/:gameId/move', () => {
 // ============================================================
 describe('GET /api/game/:gameId', () => {
 
-    test('devuelve el estado de la partida (sin token → guest)', async () => {
+    test('devuelve el estado de la partida', async () => {
         axios.get.mockResolvedValueOnce(gameStateOk);
-        const res = await request(server).get('/api/game/game_abc123');
+        const res = await request(server)
+            .get('/api/game/game_abc123')
+            .set('Cookie', createCookie());
         expect(res.status).toBe(200);
         expect(res.body.gameId).toBe('game_abc123');
     });
 
-    test('devuelve 500 si el game-service falla', async () => {
+    test('devuelve 404 si el game-service falla con 404', async () => {
         axios.get.mockRejectedValueOnce({ response: { status: 404, data: { error: 'Not found' } } });
-        const res = await request(server).get('/api/game/fake_id');
+        const res = await request(server)
+            .get('/api/game/fake_id')
+            .set('Cookie', createCookie());
         expect(res.status).toBe(404);
     });
 });

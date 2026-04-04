@@ -128,7 +128,7 @@ Frontend (GameBoard.tsx)
 GAME_SERVICE_URL=http://localhost:8003
 AUTH_SERVICE_URL=http://localhost:8002
 USER_SERVICE_URL=http://localhost:8001
-TOKEN_SECRET_KEY=your-secret-key
+TOKEN_SECRET_KEY=mi_clave_secreta
 ```
 
 ### Game Service (.env)

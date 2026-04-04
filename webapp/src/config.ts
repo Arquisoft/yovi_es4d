@@ -1,2 +1,2 @@
 // src/config.ts
-export const API_URL = "http://20.188.62.231:8000";
+export const API_URL = "http://localhost:8000";

@@ -1,8 +1,3 @@
-//! A hard bot implementation for the Game of Y.
-//!
-//! This module provides [`HardBot`], a bot that uses a sophisticated multi-layer
-//! heuristic to evaluate and choose moves on the triangular board.
-//!
 //! ## Algorithm
 //!
 //! The bot pre-computes six BFS win-distance maps (one per side per player) and
@@ -49,33 +44,18 @@ use std::collections::{HashSet, VecDeque};
 
 use crate::{Coordinates, GameY, PlayerId, YBot};
 
-// ── Side bitmask constants ────────────────────────────────────────────────────
+
 
 const SIDE_A: u8 = 0b001; // x == 0
 const SIDE_B: u8 = 0b010; // y == 0
 const SIDE_C: u8 = 0b100; // z == 0
 
-// ── Public struct ─────────────────────────────────────────────────────────────
-
-/// A bot that uses advanced multi-layer heuristics to select moves.
-///
-/// # Example
-///
-/// ```
-/// use gamey::{GameY, YBot};
-/// use gamey::bot::HardBot;
-///
-/// let bot = HardBot;
-/// let game = GameY::new(7);
-/// let chosen_move = bot.choose_move(&game);
-/// assert!(chosen_move.is_some());
-/// ```
 pub struct HardBot;
 
-// ── Internal helpers ──────────────────────────────────────────────────────────
+
 
 impl HardBot {
-    // ── Neighbourhood ─────────────────────────────────────────────────────────
+
 
     /// Returns the up-to-6 neighbours of `coords` in barycentric space.
     fn neighbors(coords: &Coordinates) -> Vec<Coordinates> {
@@ -96,8 +76,6 @@ impl HardBot {
         nb
     }
 
-    // ── Side masks ────────────────────────────────────────────────────────────
-
     /// Returns a bitmask of which sides `coords` touches.
     #[inline]
     fn side_mask(coords: &Coordinates) -> u8 {
@@ -107,8 +85,6 @@ impl HardBot {
         if coords.touches_side_c() { m |= SIDE_C; }
         m
     }
-
-    // ── 0-1 BFS win-distance ──────────────────────────────────────────────────
 
     /// Computes the minimum number of *additional empty cells* that `player`
     /// must fill to create a connected path starting from cells on `side`.
@@ -138,7 +114,6 @@ impl HardBot {
             }
         }
 
-        // 0-1 BFS (deque-based Dijkstra for {0,1} weights).
         while let Some(idx) = queue.pop_front() {
             let d = dist[idx];
             let c = Coordinates::from_index(idx as u32, size);
@@ -158,8 +133,6 @@ impl HardBot {
         }
         dist
     }
-
-    // ── Flood-fill ────────────────────────────────────────────────────────────
 
     /// BFS flood-fill of `player`'s connected component containing `start`.
     /// Returns `(set_of_cell_indices, side_bitmask_touched)`.
@@ -188,8 +161,6 @@ impl HardBot {
         (visited, sides)
     }
 
-    // ── Immediate-win check ───────────────────────────────────────────────────
-
     /// Returns `true` if placing `player`'s piece at `candidate` would
     /// immediately win the game (connect all three sides).
     fn is_winning_move(candidate: &Coordinates, board: &GameY, player: PlayerId) -> bool {
@@ -206,8 +177,6 @@ impl HardBot {
         }
         sides == 0b111
     }
-
-    // ── Junction side-count ───────────────────────────────────────────────────
 
     /// Returns how many distinct sides would be touched by the friendly
     /// component that includes `candidate` after a hypothetical placement.
@@ -231,8 +200,6 @@ impl HardBot {
         }
         sides.count_ones() as u8
     }
-
-    // ── Virtual connection (bridge) bonus ─────────────────────────────────────
 
     /// Returns a bonus if `candidate` is a carrier of a virtual connection
     /// between two friendly pieces.
@@ -268,8 +235,6 @@ impl HardBot {
         bonus
     }
 
-    // ── Largest adjacent chain size ───────────────────────────────────────────
-
     /// Returns the size of the largest friendly chain adjacent to `candidate`.
     fn largest_adjacent_chain(candidate: &Coordinates, board: &GameY, player: PlayerId) -> usize {
         let size = board.board_size();
@@ -294,8 +259,6 @@ impl HardBot {
         best
     }
 
-    // ── Skip-bridge bonus ────────────────────────────────────────────────────
-
     /// Returns a bonus for cells that extend our network via a "skip" pattern.
     fn skip_bridge_bonus(candidate: &Coordinates, board: &GameY, player: PlayerId) -> f64 {
         let direct_nbs: HashSet<Coordinates> = Self::neighbors(candidate).into_iter().collect();
@@ -319,8 +282,6 @@ impl HardBot {
 
         skip_count as f64 * 3.0 + (own_nbs_count.saturating_sub(1)) as f64 * 2.0
     }
-
-    // ── Near-win detection ────────────────────────────────────────────────────
 
     /// Returns true if `player` can win in at most 2 moves from `candidate`.
     fn is_near_win(candidate: &Coordinates, board: &GameY, player: PlayerId) -> bool {
@@ -362,8 +323,6 @@ impl HardBot {
         false
     }
 
-    // ── Main scoring function ─────────────────────────────────────────────────
-
     #[allow(clippy::too_many_arguments)]
     fn score_cell(
         candidate: &Coordinates,
@@ -381,20 +340,11 @@ impl HardBot {
         let idx = candidate.to_index(size) as usize;
         let (x, y, z) = (candidate.x(), candidate.y(), candidate.z());
 
-        // ── Layer 1 & 2: immediate win / block ────────────────────────────────
+        // Layer 1 & 2: immediate win / block
         if Self::is_winning_move(candidate, board, my_id)  { return  1_000_000.0; }
         if Self::is_winning_move(candidate, board, opp_id) { return    900_000.0; }
 
-        // ── Layer 3: own win-path score ───────────────────────────────────────
-        //
-        // BUG FIX: the original code used the *sum* of the three distances,
-        // which a bot minimises by sprinting toward one nearby side while
-        // ignoring the other two — causing the "single-line" behaviour.
-        //
-        // Fix: penalise the *worst* individual side distance (minimax).
-        // The bot now reduces its weakest connection instead of over-extending
-        // along one edge.  The sum component is kept at lower weight to still
-        // reward overall proximity.
+        // Layer 3: own win-path score
         let cap = (size * 3) as f64;
         let my_a = da_me[idx].min(size * 2) as f64;
         let my_b = db_me[idx].min(size * 2) as f64;
@@ -406,8 +356,6 @@ impl HardBot {
         let my_path_score = (cap - my_combined).max(0.0)
             + 2.0 * (cap / 3.0 - my_worst).max(0.0);
 
-        // Extra bonus when the cell lies on a short path to *all three* sides.
-        // Threshold is now relative to board size so it activates on large boards.
         let side_thresh = (size as f64 * 0.6).max(3.0);
         let all_paths_bonus = if my_a <= side_thresh && my_b <= side_thresh && my_c <= side_thresh {
             30.0 * (side_thresh * 2.0 - (my_a + my_b + my_c) / 3.0).max(0.0)
@@ -416,7 +364,7 @@ impl HardBot {
             0.0
         };
 
-        // ── Layer 4: opponent blocking score ──────────────────────────────────
+        //Layer 4: opponent blocking score
         let opp_a  = da_opp[idx].min(size * 2) as f64;
         let opp_b  = db_opp[idx].min(size * 2) as f64;
         let opp_c  = dc_opp[idx].min(size * 2) as f64;
@@ -435,7 +383,7 @@ impl HardBot {
         };
         let blocking_score = (cap - opp_combined).max(0.0) * urgency;
 
-        // ── Layer 5: junction / side-count bonus ──────────────────────────────
+        //Layer 5: junction / side-count bonus
         let sides = Self::sides_after_placement(candidate, board, my_id);
         let junction_score = match sides {
             3 => 120.0,
@@ -444,20 +392,20 @@ impl HardBot {
             _ => 0.0,
         };
 
-        // ── Layer 6: virtual connection (bridge) bonus ────────────────────────
+        //Layer 6: virtual connection (bridge) bonus
         let bridge = Self::bridge_bonus(candidate, board, my_id);
 
-        // ── Layer 6b: skip-bridge bonus ───────────────────────────────────────
+        //Layer 6b: skip-bridge bonus
         let skip = Self::skip_bridge_bonus(candidate, board, my_id);
 
-        // ── Layer 6c: near-win bonus ──────────────────────────────────────────
+        //Layer 6c: near-win bonus
         let near_win_bonus = if Self::is_near_win(candidate, board, my_id) { 40.0 } else { 0.0 };
 
-        // ── Layer 7: chain-size weighted adjacency ────────────────────────────
+        //Layer 7: chain-size weighted adjacency
         let chain_len = Self::largest_adjacent_chain(candidate, board, my_id) as f64;
         let chain_score = (chain_len + 1.0).ln() * 1.5;
 
-        // ── Layer 8: centrality ───────────────────────────────────────────────
+        //Layer 8: centrality
         let max_centrality = ((size - 1) as f64) / 3.0;
         let centrality = if max_centrality > 0.0 {
             x.min(y).min(z) as f64 / max_centrality
@@ -465,21 +413,19 @@ impl HardBot {
             0.0
         };
 
-        // ── Weighted combination ──────────────────────────────────────────────
-        //
-        // Weight rationale (updated vs original):
-        //   • my_path_score   → now includes minimax term, so weight kept at 5.0
-        //   • all_paths_bonus → raised weight: all-three-sides proximity is key
-        //   • blocking_score  → urgency-scaled; still top defensive priority
-        //   • junction_score  → raised weight: side-count progress is the goal
-        //   • skip/bridge     → virtual connections expand reach safely
-        //   • near_win_bonus  → close the game when possible
-        //   • chain_score     → secondary; mere adjacency is less important
-        //   • centrality      → tiebreaker
+        // Weight rationale
+        //   • my_path_score
+        //   • all_paths_bonus
+        //   • blocking_score
+        //   • junction_score
+        //   • skip/bridge
+        //   • near_win_bonus
+        //   • chain_score
+        //   • centrality
         4.0 * my_path_score
-            + 2.0 * all_paths_bonus      // ↑ was 1.0 — all-sides proximity matters more
+            + 2.0 * all_paths_bonus
             + 4.0 * blocking_score
-            + 1.0 * junction_score       // ↑ was 1.5 — side-count progress is the goal
+            + 1.0 * junction_score
             + 1.2 * skip
             + 1.0 * near_win_bonus
             + 1.0 * bridge
@@ -488,7 +434,7 @@ impl HardBot {
     }
 }
 
-// ── YBot implementation ───────────────────────────────────────────────────────
+
 
 impl YBot for HardBot {
     fn name(&self) -> &str {
@@ -506,7 +452,7 @@ impl YBot for HardBot {
 
         let size = board.board_size();
 
-        // Fast-path: immediate win.
+
         for &idx in available.iter() {
             let c = Coordinates::from_index(idx, size);
             if Self::is_winning_move(&c, board, my_id) {
@@ -514,7 +460,7 @@ impl YBot for HardBot {
             }
         }
 
-        // Fast-path: block opponent's immediate win.
+
         for &idx in available.iter() {
             let c = Coordinates::from_index(idx, size);
             if Self::is_winning_move(&c, board, opp_id) {
@@ -522,7 +468,6 @@ impl YBot for HardBot {
             }
         }
 
-        // Pre-compute six 0-1 BFS distance maps.
         let da_me  = Self::win_distance(board, my_id,  SIDE_A);
         let db_me  = Self::win_distance(board, my_id,  SIDE_B);
         let dc_me  = Self::win_distance(board, my_id,  SIDE_C);
@@ -546,7 +491,7 @@ impl YBot for HardBot {
     }
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+
 
 #[cfg(test)]
 mod tests {
