@@ -1,3 +1,12 @@
+/**
+ * Módulo del Servicio de Juego
+ *
+ * Este módulo proporciona el servicio de juego para la aplicación YOVI ES4D.
+ * Maneja la inicialización de juegos, movimientos, interacciones con bots y persistencia de juegos usando MongoDB.
+ * El servicio se integra con un servidor de bots basado en Rust para la lógica del juego.
+ *
+ * @module game-service
+ */
 require('dotenv').config();
 
 const express = require('express');
@@ -14,8 +23,8 @@ const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
 
 if (process.env.SKIP_MONGO !== 'true') {
   mongoose.connect(mongoUri)
-    .then(() => console.log('✅ Conectado a MongoDB'))
-    .catch(err => console.error('❌ Error conectando a MongoDB:', err));
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch(err => console.error('Error conectando a MongoDB:', err));
 }
 
 // Esquema de Game
@@ -55,13 +64,22 @@ const BOT_ROUTES = {
   hard_bot:      '/v1/ybot/choose/hard_bot',
 };
 
+/**
+ * Obtener modos de bot disponibles
+ * @route {GET} /api/game/bot-modes
+ * @returns {Object} Objeto JSON con array de botModes
+ */
 app.get('/api/game/bot-modes', (req, res) => {
   res.json({ botModes: Object.keys(BOT_ROUTES) });
 });
 
 /**
- * Endpoint for the history of games of a user.
- * @route {GET} /api/game/history?userId=...
+ * Obtener historial de juegos de un usuario
+ * @route {GET} /api/game/history
+ * @param {string} req.query.userId - El ID de usuario para obtener el historial
+ * @returns {Array} Array de objetos de juego ordenados por fecha de creación
+ * @throws {400} Si falta userId
+ * @throws {500} Si hay un error al obtener el historial
  */
 app.get('/api/game/history', async (req, res) => {
   try {
@@ -88,6 +106,15 @@ app.get('/api/game/history', async (req, res) => {
 
 /**
  * Iniciar un nuevo juego
+ * @route {POST} /api/game/start
+ * @param {Object} req.body
+ * @param {string} req.body.userId - El ID de usuario que inicia el juego
+ * @param {string} [req.body.role='j1'] - El rol del usuario (j1 o j2)
+ * @param {string} [req.body.gameMode='vsBot'] - El modo de juego (vsBot o multiplayer)
+ * @param {string} [req.body.botMode='random_bot'] - La dificultad del bot (para modo vsBot)
+ * @param {number} [req.body.boardSize=11] - El tamaño del tablero (8, 11, 15, 19)
+ * @returns {Object} Datos de inicialización del juego
+ * @throws {500} Si hay un error al iniciar el juego
  */
 app.post('/api/game/start', async (req, res) => {
   try {
@@ -106,7 +133,6 @@ app.post('/api/game/start', async (req, res) => {
 
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Inicializa juego en Rust (solo logging por ahora)
     await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
 
     // Crear estado del juego en Node
@@ -148,7 +174,15 @@ app.post('/api/game/start', async (req, res) => {
 });
 
 /**
- * Validar movimiento del usuario antes de enviarlo a Rust
+ * Validar y procesar un movimiento del usuario
+ * @route {POST} /api/game/:gameId/validateMove
+ * @param {string} req.params.gameId - El ID del juego
+ * @param {Object} req.body
+ * @param {string} req.body.move - La posición del movimiento en formato (x,y,z)
+ * @param {string} req.body.userId - El ID de usuario que hace el movimiento
+ * @returns {Object} Resultado de validación con estado del juego
+ * @throws {404} Si el juego no se encuentra
+ * @throws {500} Si hay un error al validar el movimiento
  */
 app.post('/api/game/:gameId/validateMove', async (req, res) => {
   const { gameId } = req.params;
@@ -168,7 +202,6 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     player: playerNum
   });
 
-  //  GUARDAR MOVIMIENTO EN MEMORIA
   game.moves.push({
     position: move,
     userId: userId
@@ -194,7 +227,15 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 });
 
 /**
- * Movimiento del bot en modo vsBot
+ * Procesar movimiento del bot en modo vsBot
+ * @route {POST} /api/game/:gameId/vsBot/move
+ * @param {string} req.params.gameId - El ID del juego
+ * @param {Object} req.body
+ * @param {string} req.body.role - El rol (debe ser j2 para el bot)
+ * @returns {Object} Estado actualizado del juego después del movimiento del bot
+ * @throws {404} Si el juego no se encuentra
+ * @throws {400} Si no es el turno del bot
+ * @throws {500} Si hay un error al procesar el movimiento del bot
  */
 app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   try {
@@ -243,7 +284,6 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     if (rustResponse.data.status === 'finished') {
       game.status = 'finished';
       game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
-        // Guardar automáticamente
       await finishGameAndSave(game);
     }
 
@@ -263,14 +303,21 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 });
 
 /**
- * Movimiento 1vs1 (vacío de momento)
+ * Procesar movimiento en modo multijugador (placeholder)
+ * @route {POST} /api/game/:gameId/multiplayer/move
+ * @param {string} req.params.gameId - El ID del juego
+ * @returns {Object} Respuesta placeholder
  */
 app.post('/api/game/:gameId/multiplayer/move', (req, res) => {
   res.json({ message: 'Multiplayer move endpoint (empty)' });
 });
 
 /**
- * Obtener estado del juego
+ * Obtener estado actual del juego
+ * @route {GET} /api/game/:gameId
+ * @param {string} req.params.gameId - El ID del juego
+ * @returns {Object} Estado actual del juego
+ * @throws {404} Si el juego no se encuentra
  */
 app.get('/api/game/:gameId', (req, res) => {
   const { gameId } = req.params;
@@ -288,6 +335,20 @@ app.get('/api/game/:gameId', (req, res) => {
   });
 });
 
+/**
+ * Finalizar el juego y guardarlo en la base de datos
+ * @param {Object} game - El objeto del juego a guardar
+ * @param {string} game.gameId - Identificador único del juego
+ * @param {string} game.userId - ID de usuario
+ * @param {string} game.gameMode - Modo de juego
+ * @param {number} game.boardSize - Tamaño del tablero
+ * @param {Array} game.players - Array de jugadores
+ * @param {Array} game.moves - Array de movimientos
+ * @param {string} game.status - Estado del juego
+ * @param {string} game.winner - Identificador del ganador
+ * @param {Date} game.createdAt - Fecha de creación
+ * @param {Date} game.finishedAt - Fecha de finalización
+ */
 async function finishGameAndSave(game) {
   game.status = 'finished';
   game.finishedAt = new Date();
@@ -310,9 +371,9 @@ async function finishGameAndSave(game) {
       { upsert: true, new: true }
     );
 
-    console.log(`✅ Juego ${game.gameId} guardado en DB`);
+    console.log(`Juego ${game.gameId} guardado en DB`);
   } catch (err) {
-    console.error('❌ Error guardando juego:', err);
+    console.error('Error guardando juego:', err);
   }
 }
 
@@ -348,13 +409,19 @@ app.post('/api/game/endAndSaveGame', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('❌ Error saving game:', err);
+    console.error('Error saving game:', err);
     res.status(500).json({ error: 'Error saving game' });
   }
 });*/
 
 
 // ================= FUNCIONES AUXILIARES =================
+
+/**
+ * Inicializar el tablero del juego con celdas vacías
+ * @param {number} boardSize - El tamaño del tablero (ej. 11)
+ * @returns {Array} Array de celdas del tablero con posición y jugador
+ */
 function initializeBoard(boardSize) {
   const total = (boardSize * (boardSize + 1)) / 2;
   const board = [];
@@ -365,6 +432,14 @@ function initializeBoard(boardSize) {
   return board;
 }
 
+/**
+ * Convertir estado del juego a formato YEN para el bot de Rust
+ * @param {Object} game - El objeto del juego
+ * @param {number} game.boardSize - Tamaño del tablero
+ * @param {string} game.currentPlayer - Jugador actual (j1 o j2)
+ * @param {Array} game.board - Celdas del tablero
+ * @returns {Object} Estado del juego en formato YEN
+ */
 function convertToYEN(game) {
   const size = game.boardSize;
   const players = ['B', 'R'];
@@ -385,6 +460,12 @@ function convertToYEN(game) {
   return { size, turn, players, layout: rows.join('/') };
 }
 
+/**
+ * Convertir índice del tablero a coordenadas (x, y, z)
+ * @param {number} index - El índice lineal de la celda
+ * @param {number} boardSize - El tamaño del tablero
+ * @returns {Object} Objeto de coordenadas con x, y, z
+ */
 function indexToCoords(index, boardSize) {
   const r = Math.floor((Math.sqrt(8 * index + 1) - 1) / 2);
   const rowStart = (r * (r + 1)) / 2;
@@ -395,6 +476,11 @@ function indexToCoords(index, boardSize) {
   return { x, y, z };
 }
 
+/**
+ * Dormir durante un número especificado de milisegundos
+ * @param {number} ms - Milisegundos a dormir
+ * @returns {Promise} Promesa que se resuelve después del sueño
+ */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

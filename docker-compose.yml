@@ -23,7 +23,7 @@ services:
       - es4d-net
     environment:
       MONGODB_URI: mongodb://mongodb:27017/usersdb
-      JWT_SECRET: your-secret-key
+      JWT_SECRET: mi_clave_secreta
 
   userservice:
     container_name: userservice_es4d
@@ -78,7 +78,7 @@ services:
       AUTH_SERVICE_URL: http://authservice:8002
       USER_SERVICE_URL: http://userservice:8001
       GAME_SERVICE_URL: http://game:8003
-      TOKEN_SECRET_KEY: your-secret-key
+      TOKEN_SECRET_KEY: mi_clave_secreta
 
   webapp:
     container_name: webapp_es4d
