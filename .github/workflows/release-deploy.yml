@@ -11,7 +11,7 @@ permissions:
 env:
   IMAGE_TAG: ${{ github.event.release.tag_name }}
   REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: ghcr.io/${{ github.repository_owner }}/yovi_es4d
+  IMAGE_NAMESPACE: ghcr.io/arquisoft/yovi_es4d
 
 jobs:
   build-and-push:
@@ -24,18 +24,25 @@ jobs:
         service:
           - name: authservice
             path: users/authservice
+            is_webapp: false
           - name: userservice
             path: users/userservice
+            is_webapp: false
           - name: friends
             path: friends
+            is_webapp: false
           - name: gamey
             path: gamey
+            is_webapp: false
           - name: game
             path: game
+            is_webapp: false
           - name: gateway
             path: gateway
+            is_webapp: false
           - name: webapp
             path: webapp
+            is_webapp: true
 
     steps:
       - name: Checkout repository
@@ -52,6 +59,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
+        if: ${{ !matrix.service.is_webapp }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.service.path }}
@@ -60,7 +68,19 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAMESPACE }}/${{ matrix.service.name }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAMESPACE }}/${{ matrix.service.name }}:latest
-          build-args: ${{ matrix.service.name == 'webapp' && 'VITE_API_URL=https://your-domain.example' || '' }}
+
+      - name: Build and push webapp image
+        if: ${{ matrix.service.is_webapp }}
+        uses: docker/build-push-action@v6
+        with:
+          context: webapp
+          file: webapp/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=${{ secrets.WEBAPP_API_URL }}
+          tags: |
+            ${{ env.IMAGE_NAMESPACE }}/webapp:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAMESPACE }}/webapp:latest
 
   deploy:
     name: Deploy on Server
@@ -76,9 +96,6 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             set -e
-
-            export IMAGE_TAG=${{ env.IMAGE_TAG }}
-            export IMAGE_NAMESPACE=${{ env.IMAGE_NAMESPACE }}
 
             mkdir -p ~/yovi_es4d
             cd ~/yovi_es4d
