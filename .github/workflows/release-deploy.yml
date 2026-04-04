@@ -97,6 +97,9 @@ jobs:
           script: |
             set -e
 
+            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            export IMAGE_NAMESPACE="${{ env.IMAGE_NAMESPACE }}"
+
             mkdir -p ~/yovi_es4d
             cd ~/yovi_es4d
 
