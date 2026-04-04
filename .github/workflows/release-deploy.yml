@@ -1,4 +1,4 @@
-name: Release — Build & Deploy
+name: Release - Build & Deploy
 
 on:
   release:
@@ -10,41 +10,57 @@ permissions:
 
 env:
   IMAGE_TAG: ${{ github.event.release.tag_name }}
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ghcr.io/${{ github.repository_owner }}/yovi_es4d
 
 jobs:
-
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         service:
-          - name: userservice
-            path: users/userservice
           - name: authservice
             path: users/authservice
-          - name: webapp
-            path: webapp
+          - name: userservice
+            path: users/userservice
+          - name: friends
+            path: friends
           - name: gamey
             path: gamey
           - name: game
             path: game
           - name: gateway
             path: gateway
+          - name: webapp
+            path: webapp
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Publish Docker Image
-        uses: elgohr/Publish-Docker-Github-Action@v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: ${{ github.repository_owner }}/yovi_es4d/${{ matrix.service.name }}:${{ env.IMAGE_TAG }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-          workdir: ${{ matrix.service.path }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.path }}
+          file: ${{ matrix.service.path }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.service.name }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAMESPACE }}/${{ matrix.service.name }}:latest
+          build-args: ${{ matrix.service.name == 'webapp' && 'VITE_API_URL=https://your-domain.example' || '' }}
 
   deploy:
     name: Deploy on Server
@@ -53,23 +69,193 @@ jobs:
 
     steps:
       - name: Deploy over SSH
-        uses: fifsky/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
-          user: ${{ secrets.DEPLOY_USER }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          command: |
+          script: |
+            set -e
 
             export IMAGE_TAG=${{ env.IMAGE_TAG }}
+            export IMAGE_NAMESPACE=${{ env.IMAGE_NAMESPACE }}
 
-            echo "Logging into GHCR..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            mkdir -p ~/yovi_es4d
+            cd ~/yovi_es4d
 
-            echo "Downloading docker-compose.yml for release $IMAGE_TAG"
-            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/yovi_es4d/$IMAGE_TAG/docker-compose.yml -O docker-compose.yml
+            cat > docker-compose.yml <<EOF
+            services:
+              mongodb:
+                container_name: mongodb_es4d
+                image: mongo:latest
+                ports:
+                  - "27017:27017"
+                volumes:
+                  - mongodb_data:/data/db
+                networks:
+                  - es4d-net
+                healthcheck:
+                  test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
 
-            echo "Stopping previous containers"
+              authservice:
+                container_name: authservice_es4d
+                image: ${IMAGE_NAMESPACE}/authservice:${IMAGE_TAG}
+                depends_on:
+                  mongodb:
+                    condition: service_healthy
+                ports:
+                  - "8002:8002"
+                networks:
+                  - es4d-net
+                environment:
+                  MONGODB_URI: mongodb://mongodb:27017/usersdb
+                  TOKEN_SECRET_KEY: \${TOKEN_SECRET_KEY}
+
+              userservice:
+                container_name: userservice_es4d
+                image: ${IMAGE_NAMESPACE}/userservice:${IMAGE_TAG}
+                depends_on:
+                  mongodb:
+                    condition: service_healthy
+                ports:
+                  - "8001:8001"
+                networks:
+                  - es4d-net
+                environment:
+                  MONGODB_URI: mongodb://mongodb:27017/usersdb
+
+              gamey:
+                container_name: gamey_es4d
+                image: ${IMAGE_NAMESPACE}/gamey:${IMAGE_TAG}
+                ports:
+                  - "4000:4000"
+                networks:
+                  - es4d-net
+                environment:
+                  PORT: 4000
+
+              game:
+                container_name: game_es4d
+                image: ${IMAGE_NAMESPACE}/game:${IMAGE_TAG}
+                depends_on:
+                  userservice:
+                    condition: service_started
+                  gamey:
+                    condition: service_started
+                  mongodb:
+                    condition: service_healthy
+                ports:
+                  - "8003:8003"
+                networks:
+                  - es4d-net
+                environment:
+                  PORT: 8003
+                  MONGODB_URI: mongodb://mongodb:27017/gamedb
+                  GAMEY_BOT_URL: http://gamey:4000
+
+              friends:
+                container_name: friends_es4d
+                image: ${IMAGE_NAMESPACE}/friends:${IMAGE_TAG}
+                depends_on:
+                  userservice:
+                    condition: service_started
+                  authservice:
+                    condition: service_started
+                  mongodb:
+                    condition: service_healthy
+                ports:
+                  - "8004:8004"
+                networks:
+                  - es4d-net
+                environment:
+                  PORT: 8004
+                  MONGODB_URI: mongodb://mongodb:27017/friendsdb
+                  USER_SERVICE_URL: http://userservice:8001
+                  TOKEN_SECRET_KEY: \${TOKEN_SECRET_KEY}
+
+              gateway:
+                container_name: gateway_es4d
+                image: ${IMAGE_NAMESPACE}/gateway:${IMAGE_TAG}
+                depends_on:
+                  authservice:
+                    condition: service_started
+                  userservice:
+                    condition: service_started
+                  game:
+                    condition: service_started
+                  friends:
+                    condition: service_started
+                ports:
+                  - "8000:8000"
+                networks:
+                  - es4d-net
+                environment:
+                  AUTH_SERVICE_URL: http://authservice:8002
+                  USER_SERVICE_URL: http://userservice:8001
+                  GAME_SERVICE_URL: http://game:8003
+                  FRIEND_SERVICE_URL: http://friends:8004
+                  TOKEN_SECRET_KEY: \${TOKEN_SECRET_KEY}
+
+              webapp:
+                container_name: webapp_es4d
+                image: ${IMAGE_NAMESPACE}/webapp:${IMAGE_TAG}
+                depends_on:
+                  gateway:
+                    condition: service_started
+                ports:
+                  - "80:80"
+                networks:
+                  - es4d-net
+
+              prometheus:
+                image: prom/prometheus
+                container_name: prometheus_es4d
+                depends_on:
+                  gateway:
+                    condition: service_started
+                ports:
+                  - "9090:9090"
+                volumes:
+                  - prometheus_data:/prometheus
+                networks:
+                  - es4d-net
+
+              grafana:
+                image: grafana/grafana
+                container_name: grafana_es4d
+                depends_on:
+                  prometheus:
+                    condition: service_started
+                ports:
+                  - "9091:9091"
+                volumes:
+                  - grafana_data:/var/lib/grafana
+                environment:
+                  GF_SERVER_HTTP_PORT: 9091
+                  GF_AUTH_DISABLE_LOGIN_FORM: true
+                  GF_AUTH_ANONYMOUS_ENABLED: true
+                  GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+                networks:
+                  - es4d-net
+
+            volumes:
+              mongodb_data:
+              prometheus_data:
+              grafana_data:
+
+            networks:
+              es4d-net:
+                driver: bridge
+            EOF
+
+            cat > .env <<EOF
+            TOKEN_SECRET_KEY=${{ secrets.TOKEN_SECRET_KEY }}
+            EOF
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            docker compose pull
             docker compose down
-
-            echo "Starting new containers"
-            docker compose --profile dev up -d --pull always
+            docker compose up -d
