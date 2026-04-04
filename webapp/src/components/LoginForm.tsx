@@ -14,17 +14,39 @@ const LoginForm: React.FC = () => {
   const { t } = useTranslation();
   const { checkAuth } = useContext(AuthContext);
 
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
+    // Validación frontend robusta
+    const errorEmail = t('registerForm.errorEmail') || 'Invalid email';
+    const errorPassword = t('registerForm.errorPasswordContent') || 'Password is required';
+
+    if (!email) {
+      setError(errorEmail);
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError(errorEmail);
+      return;
+    }
+    if (!password) {
+      setError(errorPassword);
+      return;
+    }
+
+    setLoading(true);
     try {
       await login({ email, password });
       await checkAuth(); // Actualiza el contexto con la nueva sesión
       navigate("/");
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.response?.data?.error || err.message || 'Login failed');
       console.log(err);
     } finally {
       setLoading(false);

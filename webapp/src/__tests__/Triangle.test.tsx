@@ -89,4 +89,26 @@ describe('Triangle', () => {
     const div = container.querySelector('.triangle-container')
     expect(div).toHaveStyle({ position: 'relative' })
   })
+
+  test('actualiza windowSize cuando ocurre resize', () => {
+    render(<Triangle hexData={board3} onHexClick={() => {}} />)
+
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 500 })
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 400 })
+
+    window.dispatchEvent(new Event('resize'))
+
+    expect(screen.getAllByTestId('hexagon').length).toBeGreaterThan(0)
+ })
+
+ test('remueve el listener de resize al desmontar', () => {
+  const removeSpy = vi.spyOn(window, 'removeEventListener')
+
+  const { unmount } = render(<Triangle hexData={board3} onHexClick={() => {}} />)
+
+  unmount()
+
+  expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function))
+})
+
 })

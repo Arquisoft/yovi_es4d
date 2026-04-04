@@ -35,6 +35,28 @@ h1 {
   line-height: 1.1;
 }
 
+h2 {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  margin: 8px 0 14px;
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  vertical-align: middle;
+  position: relative;
+  z-index: 3;
+}
+
+label {
+  color: rgba(255,255,255,0.95);
+}
+
+p{
+  color: rgba(255,255,255,0.95);
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -57,13 +79,13 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: #1b2b4b;
   }
   a:hover {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #1a1a1a;
   }
 }
 .profile-page {

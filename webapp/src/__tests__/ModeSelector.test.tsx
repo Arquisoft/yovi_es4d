@@ -136,4 +136,40 @@ describe('ModeSelector', () => {
             })
         })
     })
+
+
+    test('navega con el tamaño de tablero seleccionado', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+
+        await screen.findByText('Aleatorio')
+
+        const grandeBtn = screen.getByText('Grande').closest('button')!
+        await user.click(grandeBtn)
+
+        await user.click(screen.getByRole('button', { name: /jugar/i }))
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/game', {
+            state: {
+                gameMode: 'vsBot',
+                botMode: 'random_bot',
+                boardSize: 15,
+            },
+            })
+        })
+    })
+
+    test('no muestra modos cuando botModes es undefined', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({}),
+        } as Response)
+
+        renderSelector()
+
+        await waitFor(() => {
+            expect(screen.queryByText('Aleatorio')).not.toBeInTheDocument()
+        })
+    })
 })

@@ -40,23 +40,28 @@ const RegisterForm: React.FC = () => {
     setSuccess(false);
 
     // ✅ Validaciones frontend
+    const errorUsername = t('registerForm.errorUsername') || 'Username must be at least 3 characters';
+    const errorEmail = t('registerForm.errorEmail') || 'Invalid email';
+    const errorPassword = t('registerForm.errorPasswordContent') || 'Password must have at least 8 characters, one uppercase and one number, and no spaces';
+    const errorPasswordMatch = t('registerForm.errorPasswordMatch') || 'Passwords do not match';
+
     if (!username || username.length < 3) {
-      setError(t('registerForm.errorUsername'));
+      setError(errorUsername);
       return;
     }
 
     if (!validateEmail(email)) {
-      setError(t('registerForm.errorEmail'));
+      setError(errorEmail);
       return;
     }
 
     if (!validatePassword(password)) {
-      setError(t('registerForm.errorPasswordContent'));
+      setError(errorPassword);
       return;
     }
 
     if (!validatePasswordMatch(password, repassword)) {
-      setError(t('registerForm.errorPasswordMatch'));
+      setError(errorPasswordMatch);
       return;
     }
 

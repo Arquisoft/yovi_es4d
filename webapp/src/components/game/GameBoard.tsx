@@ -5,6 +5,7 @@ import Triangle from "./Triangle";
 import Jugador from "./player";
 import { API_URL } from "../../config";
 import "./game.css";
+import { useTranslation } from "../../i18n";
 
 interface HexData {
   position: string;
@@ -36,6 +37,8 @@ interface LocationState {
 const GameBoard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+
 
   const {
     gameMode  = "vsBot",
@@ -164,31 +167,31 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  const player1 = gameState.players[0] || { id: "jugador1", name: "Jugador", points: 0 };
-  const player2 = gameState.players[1] || { id: "bot",      name: "Bot",     points: 0 };
+  const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
+  const player2 = gameState.players[1] || { id: "bot",      name: t('gameBoard.player2'),     points: 0 };
 
   return (
     <div className="game-bg min-h-screen flex flex-col">
 
       {/* ── Header ─────────────────────────────────────── */}
       <header className="gb-header">
-        <span className="gb-header-logo">YOVI</span>
+        <span className="gb-header-logo">YOVI_ES4D</span>
 
         <div className="gb-header-status">
           {gameState.status === "finished" ? (
             <span className="gb-status-winner">
-              🏆 {gameState.winner === "j1" ? player1.name : player2.name} gana
+              🏆 {gameState.winner === "j1" ? player1.name : player2.name} {t('gameBoard.won')}
             </span>
           ) : gameState.botPlaying ? (
             <span className="gb-status-thinking">
-              <span>Bot pensando</span>
+              <span>{t('gameBoard.botPlaying')}</span>
               <span className="gb-thinking-dots">
                 {[0,1,2].map(i => <span key={i} className="thinking-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />)}
               </span>
             </span>
           ) : (
             <span className="gb-status-turn">
-              Turno:{" "}
+              {t('gameBoard.turn')}{" "}
               <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
                 {gameState.turn === "j1" ? player1.name : player2.name}
               </span>
@@ -224,7 +227,7 @@ const GameBoard: React.FC = () => {
                   <span key={i} className="thinking-dot" style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(124,111,247,0.3)", display: "inline-block" }} />
                 ))}
               </div>
-              <span className="gb-loading-text">Iniciando partida</span>
+              <span className="gb-loading-text">{t('gameBoard.gameStart')}</span>
             </div>
           )}
         </section>
@@ -245,7 +248,7 @@ const GameBoard: React.FC = () => {
       {/* ── Footer ─────────────────────────────────────── */}
       <footer className="gb-footer">
         <span className="gb-footer-text">
-          {botMode.replace("_", " ")} · tablero {boardSize}× · {gameMode}
+          {botMode.replace("_", " ")} · {t('gameBoard.board')} {boardSize}× · {gameMode}
         </span>
       </footer>
     </div>
