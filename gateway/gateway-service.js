@@ -31,6 +31,8 @@ const YAML = require('yaml');
 const jwt = require('jsonwebtoken');
 const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 
+const { Server } = require('socket.io'); //Para partidas online (WebSockets)
+
 const app = express();
 const port = 8000;
 
@@ -42,16 +44,22 @@ const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
 const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:8004';
 
 
+
 // Lista de orígenes permitidos
 const allowedOrigins = [
-  'http://localhost:5173',        // desarrollo local
-  'http://20.188.62.231:5173',   // VM/frontend en Azure
-  'https://midominio.com'         // producción (tu dominio)
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
 ];
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
-  credentials: true             
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 
 app.use(express.json());
@@ -774,5 +782,147 @@ if (fs.existsSync(openapiPath)) {
  * @type {Server}
  */
 const server = app.listen(port, () => {});
+
+// ================= WEBSOCKETS (Online mode) =================
+
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173',
+    credentials: true,
+  },
+});
+
+// rooms: código → { j1: socketId, j2: socketId|null, gameId: string|null, boardSize: number }
+const rooms = new Map();
+ 
+function generateCode() {
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+ 
+io.on('connection', (socket) => {
+  console.log(`🔌 Socket conectado: ${socket.id}`);
+ 
+  // ── Crear sala ──────────────────────────────────────────
+  socket.on('create_room', ({ boardSize = 11 } = {}) => {
+    let code;
+    do { code = generateCode(); } while (rooms.has(code));
+ 
+    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize });
+    socket.join(code);
+    socket.emit('room_created', { code });
+    console.log(`🏠 Sala creada: ${code} por ${socket.id}`);
+  });
+ 
+  // ── Unirse a sala ───────────────────────────────────────
+  socket.on('join_room', ({ code }) => {
+    const room = rooms.get(code?.toUpperCase());
+    if (!room) {
+      socket.emit('room_error', { message: 'Sala no encontrada' });
+      return;
+    }
+    if (room.j2) {
+      socket.emit('room_error', { message: 'Sala llena' });
+      return;
+    }
+
+    room.j2 = socket.id;
+    room.transitioning = true; // ambos navegan al GameBoard, no borrar sala al desconectar
+    socket.join(code.toUpperCase());
+
+    // Decir a cada jugador su rol
+    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
+    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
+
+    console.log(`🎮 Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
+  });
+
+  // ── Reconexión desde GameBoard ──────────────────────────
+  socket.on('rejoin_room', ({ code, role }) => {
+    const upperCode = code?.toUpperCase();
+    const room = rooms.get(upperCode);
+    if (!room) return;
+
+    if (role === 'j1') room.j1 = socket.id;
+    if (role === 'j2') room.j2 = socket.id;
+    socket.join(upperCode);
+
+    // Si j2 se une y la partida ya fue creada por j1, enviarle el gameId
+    if (role === 'j2' && room.gameId) {
+      socket.emit('game_joined', { gameId: room.gameId, code: upperCode });
+    }
+
+    // Si el rival ya envió su perfil, enviárselo al jugador que acaba de unirse
+    const otherRole = role === 'j1' ? 'j2' : 'j1';
+    if (room[`${otherRole}_name`]) {
+      socket.emit('opponent_info', {
+        name:   room[`${otherRole}_name`],
+        avatar: room[`${otherRole}_avatar`],
+      });
+    }
+
+    console.log(`🔄 Rejoin sala ${upperCode}: ${role}=${socket.id}`);
+  });
+
+  // ── Compartir perfil del jugador con el rival ───────────
+  socket.on('player_info', ({ code, name, avatar }) => {
+    const upperCode = code?.toUpperCase();
+    const room = rooms.get(upperCode);
+    if (!room) return;
+
+    // Guardar en la sala para jugadores que se unan después
+    const role = room.j1 === socket.id ? 'j1' : 'j2';
+    room[`${role}_name`]   = name;
+    room[`${role}_avatar`] = avatar;
+
+    // Reenviar al rival si ya está conectado
+    const otherRole = role === 'j1' ? 'j2' : 'j1';
+    if (room[otherRole]) {
+      io.to(room[otherRole]).emit('opponent_info', { name, avatar });
+    }
+  });
+ 
+  // ── Guardar gameId cuando la partida empieza ────────────
+  socket.on('game_started', ({ code, gameId }) => {
+    const room = rooms.get(code);
+    if (room) {
+      room.gameId = gameId;
+      room.transitioning = false; // transición completada, ya en partida
+      // Notificar a j2 con el gameId para que cargue la partida
+      if (room.j2) {
+        io.to(room.j2).emit('game_joined', { gameId, code });
+      }
+    }
+  });
+ 
+  // ── Reenviar movimiento al rival ────────────────────────
+  socket.on('move_made', ({ code, position, turn }) => {
+    // Enviar al otro jugador de la sala (no al que hizo el movimiento)
+    socket.to(code).emit('opponent_move', { position, turn });
+  });
+ 
+  // ── Reenviar fin de partida ─────────────────────────────
+  socket.on('game_over', ({ code, winner }) => {
+    socket.to(code).emit('game_over', { winner });
+  });
+ 
+  // ── Desconexión ─────────────────────────────────────────
+  socket.on('disconnect', () => {
+    console.log(`🔌 Socket desconectado: ${socket.id}`);
+    for (const [code, room] of rooms.entries()) {
+      if (room.j1 === socket.id || room.j2 === socket.id) {
+        if (room.transitioning) {
+          // Desconexión por navegación lobby → GameBoard: solo anular el socket, no borrar sala
+          if (room.j1 === socket.id) room.j1 = null;
+          if (room.j2 === socket.id) room.j2 = null;
+        } else {
+          // Desconexión real durante la espera o la partida
+          socket.to(code).emit('opponent_disconnected');
+          rooms.delete(code);
+        }
+        break;
+      }
+    }
+  });
+});
 
 module.exports = server;

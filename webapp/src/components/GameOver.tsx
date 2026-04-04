@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
+import UserHeader from "./UserHeader";
 import "./GameOver.css";
 import { useTranslation } from "../i18n";
 
@@ -26,11 +27,34 @@ const GameOver: React.FC = () => {
     const player1   = gameState.players[0];
     const player2   = gameState.players[1];
     const winnerId  = gameState.winner; // "j1" | "j2"
-    const winnerP   = winnerId === "j1" ? player1 : player2;
     const isJ2Win   = winnerId === "j2";
 
+    const userProfile     = gameState.userProfile     as { username: string; avatar: string } | undefined;
+    const opponentProfile = gameState.opponentProfile as { username: string; avatar: string } | undefined;
+    const gameMode        = gameState.gameMode        as string | undefined;
+    const onlineRole      = gameState.onlineRole      as string | undefined;
+
+    const myName         = userProfile?.username     || player1?.name;
+    const myAvatar       = userProfile?.avatar       || "logo.png";
+    const player2Name    = gameState.player2Name as string | undefined;
+    const opponentName   = opponentProfile?.username
+        || (gameMode === "multiplayer" ? player2Name : undefined)
+        || player2?.name;
+    const opponentAvatar = opponentProfile?.avatar   || "logo.png";
+
+    const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
+
+    const p1Name   = isMySlotJ1 ? myName         : opponentName;
+    const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
+    const p2Name   = isMySlotJ1 ? opponentName                                    : myName;
+    const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+
+    const winnerName = winnerId === "j1" ? p1Name : p2Name;
+
     return (
-        <div className="go-container">
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <UserHeader />
+        <div className="go-container" style={{ flex: 1 }}>
 
             {/* Trofeo */}
             <div className="go-trophy">🏆</div>
@@ -42,7 +66,7 @@ const GameOver: React.FC = () => {
 
             {/* Título */}
             <h1 className={`go-title${isJ2Win ? " winner-j2" : ""}`}>
-                <span className="go-winner-name">{winnerP?.name ?? t('gameOver.winner')}</span>
+                <span className="go-winner-name">{winnerName ?? t('gameOver.winner')}</span>
                 {" "}{t('gameOver.hasWon')}
             </h1>
             <p className="go-subtitle">
@@ -54,25 +78,31 @@ const GameOver: React.FC = () => {
 
                 {/* Jugadores */}
                 <div className="go-players">
-                    {[player1, player2].map((player, idx) => {
-                        const isWinner  = (idx === 0 && winnerId === "j1") || (idx === 1 && winnerId === "j2");
-                        const isCoralW  = isWinner && idx === 1;
+                    {[
+                        { name: p1Name,   avatar: p1Avatar, points: player1?.points ?? 0, role: "j1" },
+                        { name: p2Name,   avatar: p2Avatar, points: player2?.points ?? 0, role: "j2" },
+                    ].map((p, idx) => {
+                        const isWinner = (idx === 0 && winnerId === "j1") || (idx === 1 && winnerId === "j2");
+                        const isCoralW = isWinner && idx === 1;
                         return (
                             <div
-                                key={player.id}
+                                key={p.role}
                                 className={`go-player-card${isWinner ? ` winner-card${isCoralW ? " coral-winner" : ""}` : ""}`}
                             >
                                 {isWinner && <span className="go-winner-crown">👑</span>}
 
                                 <div className="go-player-avatar">
-                                    <img src="logo.png" alt={player.name} />
+                                    {p.avatar.includes(".") || p.avatar.includes("/")
+                                        ? <img src={p.avatar} alt={p.name} />
+                                        : <span style={{ fontSize: "2.5rem", lineHeight: 1 }}>{p.avatar}</span>
+                                    }
                                 </div>
 
-                                <span className="go-player-name">{player.name}</span>
+                                <span className="go-player-name">{p.name}</span>
 
                                 <div>
                                     <div className="go-score-label">{t('gameOver.score')}</div>
-                                    <div className="go-score">{String(player.points).padStart(4, "0")}</div>
+                                    <div className="go-score">{String(p.points).padStart(4, "0")}</div>
                                 </div>
                             </div>
                         );
@@ -107,6 +137,7 @@ const GameOver: React.FC = () => {
                 <div className="go-decoration-line" />
             </div>
 
+        </div>
         </div>
     );
 };

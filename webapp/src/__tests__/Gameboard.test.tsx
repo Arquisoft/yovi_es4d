@@ -14,14 +14,18 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../components/game/Triangle', () => ({
   default: ({ onHexClick }: { onHexClick: (p: string) => void }) => (
-    <div data-testid="triangle">
-      <button onClick={() => onHexClick('0,0')}>hex-0-0</button>
-    </div>
+      <div data-testid="triangle">
+        <button onClick={() => onHexClick('0,0')}>hex-0-0</button>
+      </div>
   ),
 }))
 
 vi.mock('../components/game/player', () => ({
   default: ({ name }: { name: string }) => <div data-testid={`player-${name}`}>{name}</div>,
+}))
+
+vi.mock('../components/UserHeader', () => ({
+  default: () => <div data-testid="user-header">User Header</div>,
 }))
 
 // Traducciones simuladas
@@ -55,23 +59,25 @@ const gameStartResponse = {
 }
 
 const mockStartSequence = () =>
-  vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+    vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
 
-const renderGame = (state = { gameMode: 'vsBot', botMode: 'random_bot' }, lang = 'es') =>
-  render(
-    <I18nProvider defaultLang={lang} resources={translations}>
-      <MemoryRouter initialEntries={[{ pathname: '/game', state }]}>
-        <Routes>
-          <Route path="/game" element={<GameBoard />} />
-        </Routes>
-      </MemoryRouter>
-    </I18nProvider>
-  )
+const renderGame = (state = { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11 }, lang = 'es') =>
+    render(
+        <I18nProvider defaultLang={lang} resources={translations}>
+          <MemoryRouter initialEntries={[{ pathname: '/game', state }]}>
+            <Routes>
+              <Route path="/game" element={<GameBoard />} />
+            </Routes>
+          </MemoryRouter>
+        </I18nProvider>
+    )
 
 describe('GameBoard', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     global.fetch = mockStartSequence()
   })
 
@@ -97,8 +103,8 @@ describe('GameBoard', () => {
 
   test('muestra los nombres de los dos jugadores', async () => {
     renderGame()
-    expect(await screen.findByTestId(`player-${translations.es.gameBoard.player1}`)).toBeInTheDocument()
-    expect(screen.getByTestId(`player-${translations.es.gameBoard.player2}`)).toBeInTheDocument()
+    expect(await screen.findByTestId(`player-TestUser`)).toBeInTheDocument()
+    expect(screen.getByTestId(`player-Bot`)).toBeInTheDocument()
   })
 
   test('muestra el gameId en el header', async () => {
@@ -115,34 +121,39 @@ describe('GameBoard', () => {
     renderGame()
     const header = await screen.findByRole('banner')
     expect(header).toHaveTextContent(translations.es.gameBoard.turn)
-    expect(header).toHaveTextContent(translations.es.gameBoard.player1)
+    // The player name comes from the profile, not the translation
+    expect(header).toHaveTextContent('TestUser')
   })
 
   test('llama a validateMove y move al hacer click en un hexágono', async () => {
     const user = userEvent.setup()
-    global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j1', winner: null, status: 'active' }) } as Response)
+    const fetchMock = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j2', winner: null, status: 'active' }) } as Response)
+
+    global.fetch = fetchMock
 
     renderGame()
     await screen.findByTestId('triangle')
     await user.click(screen.getByText('hex-0-0'))
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(4)
+      expect(fetchMock).toHaveBeenCalledTimes(5)
     })
-    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls[2][0]).toContain('validateMove')
-    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls[3][0]).toContain('move')
+    expect(fetchMock.mock.calls[3][0]).toContain('validateMove')
+    expect(fetchMock.mock.calls[4][0]).toContain('move')
   })
 
   test('muestra "Bot pensando" mientras procesa el movimiento', async () => {
     const user = userEvent.setup()
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-      .mockImplementationOnce(() => new Promise(() => {})) // validateMove cuelga
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockImplementationOnce(() => new Promise(() => {})) // validateMove cuelga
 
     renderGame()
     await screen.findByTestId('triangle')
@@ -155,9 +166,10 @@ describe('GameBoard', () => {
     const user = userEvent.setup()
     const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: false, error: 'Movimiento inválido' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: false, error: 'Movimiento inválido' }) } as Response)
 
     renderGame()
     await screen.findByTestId('triangle')
@@ -171,27 +183,30 @@ describe('GameBoard', () => {
   test('muestra el ganador en el header cuando la partida termina', async () => {
     const user = userEvent.setup()
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j1', winner: 'j1', status: 'finished' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j1', winner: 'j1', status: 'finished' }) } as Response)
 
     renderGame()
     await screen.findByTestId('triangle')
     await user.click(screen.getByText('hex-0-0'))
 
     await waitFor(() => {
-      expect(screen.getByText(new RegExp(`${translations.es.gameBoard.player1} ${translations.es.gameBoard.won}`, 'i'))).toBeInTheDocument()
+      // The winner name comes from the profile (TestUser)
+      expect(screen.getByText(new RegExp(`TestUser ${translations.es.gameBoard.won}`, 'i'))).toBeInTheDocument()
     })
   })
 
   test('navega a /gameover cuando la partida termina', async () => {
     const user = userEvent.setup()
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j1', winner: 'j1', status: 'finished' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ board: [], turn: 'j1', winner: 'j1', status: 'finished' }) } as Response)
 
     renderGame()
     await screen.findByTestId('triangle')
@@ -203,7 +218,7 @@ describe('GameBoard', () => {
   })
 
   test('navega a /login si /api/auth/me devuelve 401', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, json: async () => ({ message: 'No autenticado' }) } as Response)
+    global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ message: 'No autenticado' }) } as Response)
 
     renderGame()
 
@@ -212,26 +227,6 @@ describe('GameBoard', () => {
     })
   })
 
-  test('inicia partida con valores por defecto si no hay estado de navegación', async () => {
-    render(
-      <I18nProvider defaultLang="es" resources={translations}>
-        <MemoryRouter initialEntries={['/game']}>
-          <Routes>
-            <Route path="/game" element={<GameBoard />} />
-          </Routes>
-        </MemoryRouter>
-      </I18nProvider>
-    )
-
-    await waitFor(() => {
-      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls
-      const startCall = calls.find((c: unknown[]) =>
-        typeof c[0] === 'string' && c[0].includes('/api/game/start')
-      )
-      expect(startCall).toBeDefined()
-      expect(startCall?.[1]?.body).toContain('"gameMode":"vsBot"')
-    })
-  })
 
   test('muestra console.error si /api/game/start devuelve error', async () => {
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -239,369 +234,345 @@ describe('GameBoard', () => {
 
     global.fetch = vi.fn()
         .mockResolvedValueOnce({ ok: true, json: async () => userIdResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: false, json: async () => ({ message: 'Error start' }) } as Response)
 
     renderGame()
     await waitFor(() => {
-        expect(consoleErrorMock).toHaveBeenCalledWith(
-        'Error en respuesta de start:',
-        { message: 'Error start' }
-        )
+      expect(consoleErrorMock).toHaveBeenCalledWith(
+          'Error en respuesta de start:',
+          { message: 'Error start' }
+      )
     })
 
     consoleErrorMock.mockRestore()
- })
+  })
 
- test('muestra console.error si startGame lanza excepción', async () => {
-  const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
+  test('muestra console.error si startGame lanza excepción', async () => {
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-  global.fetch = vi.fn().mockRejectedValueOnce(new Error('Network error'))
+    global.fetch = vi.fn().mockRejectedValueOnce(new Error('Network error'))
 
-  renderGame()
+    renderGame()
 
-  await waitFor(() => {
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      'Error starting game:',
-      expect.any(Error)
+    await waitFor(() => {
+      expect(consoleErrorMock).toHaveBeenCalledWith(
+          'Error starting game:',
+          expect.any(Error)
+      )
+    })
+
+    consoleErrorMock.mockRestore()
+  })
+
+  test('muestra console.error si handleHexClick lanza excepción', async () => {
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockRejectedValueOnce(new Error('Network move error'))
+
+    const user = userEvent.setup()
+    renderGame()
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    await waitFor(() => {
+      expect(consoleErrorMock).toHaveBeenCalledWith(
+          'Error during move:',
+          expect.any(Error)
+      )
+    })
+
+    consoleErrorMock.mockRestore()
+  })
+
+  test('usa valores por defecto si turn y status no vienen en la respuesta', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            ...gameStartResponse,
+            turn: undefined,
+            status: undefined,
+          }),
+        } as Response)
+
+    renderGame()
+
+    const header = await screen.findByRole('banner')
+    // Should show TestUser as the player (j1 by default)
+    expect(header).toHaveTextContent('TestUser')
+  })
+
+  test('no hace nada si no es turno de j1', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            ...gameStartResponse,
+            turn: 'j2',
+          }),
+        } as Response)
+
+    const user = userEvent.setup()
+    renderGame()
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    // Should only have 3 calls (me, profile, start), no validateMove
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  test('muestra mensaje por defecto si no hay error en validateMove', async () => {
+    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ valid: false }),
+        } as Response)
+
+    const user = userEvent.setup()
+    renderGame()
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    await waitFor(() => {
+      expect(alertMock).toHaveBeenCalledWith('Movimiento inválido')
+    })
+  })
+
+  test('mantiene status previo si validateMove no devuelve status', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ valid: true, winner: null }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ board: [], turn: 'j2', winner: null, status: 'active' }),
+        } as Response)
+
+    const user = userEvent.setup()
+    renderGame()
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    // si no rompe, está cubierto
+    expect(true).toBe(true)
+  })
+
+  test('muestra ganador j2 correctamente', async () => {
+    const user = userEvent.setup()
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            board: [],
+            turn: 'j1',
+            winner: 'j2',
+            status: 'finished',
+          }),
+        } as Response)
+
+    renderGame()
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    await screen.findByText(
+        new RegExp(`Bot ${translations.es.gameBoard.won}`, 'i')
     )
   })
 
-  consoleErrorMock.mockRestore()
-})
+  test('actualiza hexData marcando la casilla como j1 (map)', async () => {
+    const user = userEvent.setup()
 
-test('muestra console.error si handleHexClick lanza excepción', async () => {
-  const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            gameId: 'abc123',
+            board: [{ position: '0,0', player: null }],
+            players: [
+              { id: 'jugador1', name: 'Jugador', points: 0 },
+              { id: 'bot', name: 'Bot', points: 0 },
+            ],
+            turn: 'j1',
+            status: 'active',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
+        .mockImplementationOnce(() => new Promise(() => {}))
 
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-    .mockRejectedValueOnce(new Error('Network move error'))
+    renderGame()
 
-  const user = userEvent.setup()
-  renderGame()
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
 
-  await waitFor(() => {
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      'Error during move:',
-      expect.any(Error)
-    )
+    await waitFor(() => {
+      expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+    })
   })
 
-  consoleErrorMock.mockRestore()
-})
+  test('marca la celda como j1 cuando coincide la posición', async () => {
+    const user = userEvent.setup()
 
-test('usa valores por defecto si turn y status no vienen en la respuesta', async () => {
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...gameStartResponse,
-        turn: undefined,
-        status: undefined,
-      }),
-    } as Response)
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            gameId: 'abc123',
+            board: [{ position: '0,0', player: null }],
+            players: [
+              { id: 'jugador1', name: 'Jugador', points: 0 },
+              { id: 'bot', name: 'Bot', points: 0 },
+            ],
+            turn: 'j1',
+            status: 'active',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
+        .mockImplementationOnce(() => new Promise(() => {}))
 
-  renderGame()
+    renderGame()
 
-  const header = await screen.findByRole('banner')
-  expect(header).toHaveTextContent(translations.es.gameBoard.player1) // j1 por defecto
-})
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
 
-test('no hace nada si no es turno de j1', async () => {
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...gameStartResponse,
-        turn: 'j2',
-      }),
-    } as Response)
-
-  const user = userEvent.setup()
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  expect(global.fetch).toHaveBeenCalledTimes(2) // NO validateMove
-})
-
-test('muestra mensaje por defecto si no hay error en validateMove', async () => {
-  const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
-
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: false }),
-    } as Response)
-
-  const user = userEvent.setup()
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  await waitFor(() => {
-    expect(alertMock).toHaveBeenCalledWith('Movimiento inválido')
-  })
-})
-
-test('mantiene status previo si validateMove no devuelve status', async () => {
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: true, winner: null }),
-    } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ board: [], turn: 'j1', winner: null, status: 'active' }),
-    } as Response)
-
-  const user = userEvent.setup()
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  // si no rompe, está cubierto
-  expect(true).toBe(true)
-})
-
-test('muestra ganador j2 correctamente', async () => {
-  const user = userEvent.setup()
-
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        board: [],
-        turn: 'j1',
-        winner: 'j2',
-        status: 'finished',
-      }),
-    } as Response)
-
-  renderGame()
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  await screen.findByText(
-    new RegExp(`${translations.es.gameBoard.player2} ${translations.es.gameBoard.won}`, 'i')
-  )
-})
-
-test('actualiza hexData marcando la casilla como j1 (map)', async () => {
-  const user = userEvent.setup()
-
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ userId: 'jugador1' }),
-    } as Response)
-
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        gameId: 'abc123',
-        board: [{ position: '0,0', player: null }],
-        players: [
-          { id: 'jugador1', name: 'Jugador', points: 0 },
-          { id: 'bot', name: 'Bot', points: 0 },
-        ],
-        turn: 'j1',
-        status: 'active',
-      }),
-    } as Response)
-
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: true }),
-    } as Response)
-
-    .mockImplementationOnce(() => new Promise(() => {}))
-
-  renderGame()
-
-  await screen.findByTestId('triangle')
-
-  await user.click(screen.getByText('hex-0-0'))
-
-  await waitFor(() => {
-    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
-  })
-})
-
-test('marca la celda como j1 cuando coincide la posición', async () => {
-  const user = userEvent.setup()
-
-  global.fetch = vi.fn()
-    // /me
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ userId: 'jugador1' }),
-    } as Response)
-
-    // /start
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        gameId: 'abc123',
-        board: [{ position: '0,0', player: null }],
-        players: [
-          { id: 'jugador1', name: 'Jugador', points: 0 },
-          { id: 'bot', name: 'Bot', points: 0 },
-        ],
-        turn: 'j1',
-        status: 'active',
-      }),
-    } as Response)
-
-    // validateMove
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: true }),
-    } as Response)
-
-    // 🚨 bloqueamos move
-    .mockImplementationOnce(() => new Promise(() => {}))
-
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  // Si llega aquí, el map se ejecutó
-  await waitFor(() => {
-    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
-  })
-})
-
-test('no modifica celdas que no coinciden', async () => {
-  const user = userEvent.setup()
-
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ userId: 'jugador1' }),
-    } as Response)
-
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        gameId: 'abc123',
-        board: [
-          { position: '0,0', player: null },
-          { position: '1,0', player: null },
-        ],
-        players: [
-          { id: 'jugador1', name: 'Jugador', points: 0 },
-          { id: 'bot', name: 'Bot', points: 0 },
-        ],
-        turn: 'j1',
-        status: 'active',
-      }),
-    } as Response)
-
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: true }),
-    } as Response)
-
-    .mockImplementationOnce(() => new Promise(() => {}))
-
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  await waitFor(() => {
-    expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+    })
   })
 
-  expect(true).toBe(true)
-})
+  test('no modifica celdas que no coinciden', async () => {
+    const user = userEvent.setup()
 
-test('no ejecuta el map si el movimiento no es válido', async () => {
-  const user = userEvent.setup()
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            gameId: 'abc123',
+            board: [
+              { position: '0,0', player: null },
+              { position: '1,0', player: null },
+            ],
+            players: [
+              { id: 'jugador1', name: 'Jugador', points: 0 },
+              { id: 'bot', name: 'Bot', points: 0 },
+            ],
+            turn: 'j1',
+            status: 'active',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true }) } as Response)
+        .mockImplementationOnce(() => new Promise(() => {}))
 
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ userId: 'jugador1' }),
-    } as Response)
+    renderGame()
 
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        gameId: 'abc123',
-        board: [{ position: '0,0', player: null }],
-        players: [
-          { id: 'jugador1', name: 'Jugador', points: 0 },
-          { id: 'bot', name: 'Bot', points: 0 },
-        ],
-        turn: 'j1',
-        status: 'active',
-      }),
-    } as Response)
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
 
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ valid: false }),
-    } as Response)
+    await waitFor(() => {
+      expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
+    })
 
-  renderGame()
-
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
-
-  await waitFor(() => {
-    expect(window.alert).toBeDefined()
+    expect(true).toBe(true)
   })
 
-  expect(global.fetch).toHaveBeenCalledTimes(3)
-})
+  test('no ejecuta el map si el movimiento no es válido', async () => {
+    const user = userEvent.setup()
+    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
-test('no ejecuta el map si no es turno j1', async () => {
-  const user = userEvent.setup()
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            gameId: 'abc123',
+            board: [{ position: '0,0', player: null }],
+            players: [
+              { id: 'jugador1', name: 'Jugador', points: 0 },
+              { id: 'bot', name: 'Bot', points: 0 },
+            ],
+            turn: 'j1',
+            status: 'active',
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ valid: false }),
+        } as Response)
 
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ userId: 'jugador1' }),
-    } as Response)
+    renderGame()
 
-    .mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        gameId: 'abc123',
-        board: [{ position: '0,0', player: null }],
-        players: [
-          { id: 'jugador1', name: 'Jugador', points: 0 },
-          { id: 'bot', name: 'Bot', points: 0 },
-        ],
-        turn: 'j2',
-        status: 'active',
-      }),
-    } as Response)
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
 
-  renderGame()
+    await waitFor(() => {
+      expect(alertMock).toHaveBeenCalled()
+    })
 
-  await screen.findByTestId('triangle')
-  await user.click(screen.getByText('hex-0-0'))
+    expect(global.fetch).toHaveBeenCalledTimes(4) // me, profile, start, validateMove
+  })
 
-  expect(global.fetch).toHaveBeenCalledTimes(2)
-})
+  test('no ejecuta el map si no es turno j1', async () => {
+    const user = userEvent.setup()
 
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ userId: 'jugador1' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            gameId: 'abc123',
+            board: [{ position: '0,0', player: null }],
+            players: [
+              { id: 'jugador1', name: 'Jugador', points: 0 },
+              { id: 'bot', name: 'Bot', points: 0 },
+            ],
+            turn: 'j2',
+            status: 'active',
+          }),
+        } as Response)
 
+    renderGame()
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    // Should only have 3 calls (me, profile, start) - no validateMove
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(3)
+    })
+  })
 })

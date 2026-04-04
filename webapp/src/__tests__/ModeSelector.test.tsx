@@ -11,6 +11,11 @@ vi.mock('react-router-dom', async () => {
     return { ...actual, useNavigate: () => mockNavigate }
 })
 
+// Mock del UserHeader para simplificar
+vi.mock('../UserHeader', () => ({
+    default: () => <div data-testid="user-header">UserHeader Mock</div>
+}))
+
 const renderSelector = () =>
     render(<MemoryRouter><ModeSelector /></MemoryRouter>)
 
@@ -39,8 +44,9 @@ describe('ModeSelector', () => {
 
     test('muestra el subtítulo de selección', async () => {
         renderSelector()
-        expect(await screen.findByText(/elige dificultad y tamaño del tablero/i)).toBeInTheDocument()
+        expect(await screen.findByText(/elige cómo quieres jugar/i)).toBeInTheDocument()
     })
+
 
     // ── Carga de bot modes ───────────────────────────────────
     test('carga y muestra los modos del bot desde la API', async () => {
@@ -51,8 +57,8 @@ describe('ModeSelector', () => {
 
     test('muestra las descripciones de cada modo', async () => {
         renderSelector()
-        expect(await screen.findByText(/se comporta de manera aleatoria/i)).toBeInTheDocument()
-        expect(screen.getByText(/evalúa el tablero/i)).toBeInTheDocument()
+        expect(await screen.findByText(/El bot elige casillas al azar/i)).toBeInTheDocument()
+        expect(screen.getByText(/evalúa el tablero y busca buenas jugadas/i)).toBeInTheDocument()
     })
 
     test('muestra random_bot como fallback si la API falla', async () => {
@@ -67,31 +73,32 @@ describe('ModeSelector', () => {
             json: async () => ({ botModes: ['random_bot', 'intermediate_bot', 'unknown_bot'] }),
         } as Response)
         renderSelector()
-        // unknown_bot no tiene meta en BOT_MODE_META, se muestra la key directamente
+        // unknown_bot no tiene meta en BOT_MODES, se muestra la key directamente
         expect(await screen.findByText('unknown_bot')).toBeInTheDocument()
     })
 
-    // ── Estado de carga ──────────────────────────────────────
     test('el botón Jugar está deshabilitado mientras carga', () => {
         global.fetch = vi.fn(() => new Promise(() => {})) as unknown as typeof fetch
         renderSelector()
-        expect(screen.getByRole('button', { name: /jugar/i })).toBeDisabled()
+        // Cambiado: usar getByText con el texto exacto
+        expect(screen.getByText('Jugar →')).toBeDisabled()
     })
 
     test('el botón Jugar se habilita tras cargar los modos', async () => {
         renderSelector()
         await screen.findByText('Aleatorio')
-        expect(screen.getByRole('button', { name: /jugar/i })).not.toBeDisabled()
+        // Cambiado: usar getByText con el texto exacto
+        expect(screen.getByText('Jugar →')).not.toBeDisabled()
     })
 
     // ── Selección ────────────────────────────────────────────
-    test('el primer modo está seleccionado por defecto (borde violeta)', async () => {
+    test('el primer modo está seleccionado por defecto', async () => {
         renderSelector()
         await screen.findByText('Aleatorio')
 
-        // El radio del primer botón tiene background violeta cuando está seleccionado
-        const botonesMode = screen.getAllByRole('button').filter(b => b.textContent?.includes('Aleatorio'))
-        expect(botonesMode[0]).toBeInTheDocument()
+        // Verifica que el card del primer modo tiene la clase selected
+        const randomCard = screen.getByText('Aleatorio').closest('.ms-mode-card')
+        expect(randomCard).toHaveClass('selected')
     })
 
     test('selecciona intermediate_bot al hacer click y aplica la clase selected', async () => {
@@ -107,17 +114,60 @@ describe('ModeSelector', () => {
         })
     })
 
+    // ── Modo de juego LOCAL ───────────────────────────────────
+    test('muestra los modos de juego local', async () => {
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        expect(screen.getByText('Contra la máquina')).toBeInTheDocument()
+        expect(screen.getByText('2 Jugadores')).toBeInTheDocument()
+    })
+
+    test('cambia entre modo vsBot y multiplayer', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        // Click en modo multiplayer
+        const multiplayerBtn = screen.getByText('2 Jugadores').closest('button')!
+        await user.click(multiplayerBtn)
+
+        // Debería mostrar el campo para nombre del jugador 2
+        expect(await screen.findByPlaceholderText(/Nombre del rival/i)).toBeInTheDocument()
+    })
+
+    test('muestra campo para nombre del jugador 2 en modo multiplayer', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        const multiplayerBtn = screen.getByText('2 Jugadores').closest('button')!
+        await user.click(multiplayerBtn)
+
+        expect(await screen.findByText('Nombre del jugador 2')).toBeInTheDocument()
+        expect(screen.getByPlaceholderText('Nombre del rival...')).toBeInTheDocument()
+    })
+
+    test('oculta campo de nombre del jugador 2 en modo vsBot', async () => {
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        // Por defecto está en vsBot
+        expect(screen.queryByText('Nombre del jugador 2')).not.toBeInTheDocument()
+    })
+
     // ── Navegación ───────────────────────────────────────────
     test('navega a /game con vsBot y random_bot por defecto al pulsar Jugar', async () => {
         const user = userEvent.setup()
         renderSelector()
         await screen.findByText('Aleatorio')
 
-        await user.click(screen.getByRole('button', { name: /jugar/i }))
+        // Cambiado: usar texto exacto con flecha
+        await user.click(screen.getByText('Jugar →'))
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/game', {
-                state: { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11 },
+                state: { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11, player2Name: 'Jugador 2' },
             })
         })
     })
@@ -128,15 +178,15 @@ describe('ModeSelector', () => {
         await screen.findByText('Aleatorio')
 
         await user.click(screen.getByText('Intermedio').closest('button')!)
-        await user.click(screen.getByRole('button', { name: /jugar/i }))
+        // Cambiado: usar texto exacto con flecha
+        await user.click(screen.getByText('Jugar →'))
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/game', {
-                state: { gameMode: 'vsBot', botMode: 'intermediate_bot', boardSize: 11 },
+                state: { gameMode: 'vsBot', botMode: 'intermediate_bot', boardSize: 11, player2Name: 'Jugador 2' },
             })
         })
     })
-
 
     test('navega con el tamaño de tablero seleccionado', async () => {
         const user = userEvent.setup()
@@ -147,19 +197,98 @@ describe('ModeSelector', () => {
         const grandeBtn = screen.getByText('Grande').closest('button')!
         await user.click(grandeBtn)
 
-        await user.click(screen.getByRole('button', { name: /jugar/i }))
+        // Cambiado: usar texto exacto con flecha
+        await user.click(screen.getByText('Jugar →'))
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/game', {
-            state: {
-                gameMode: 'vsBot',
-                botMode: 'random_bot',
-                boardSize: 15,
-            },
+                state: {
+                    gameMode: 'vsBot',
+                    botMode: 'random_bot',
+                    boardSize: 15,
+                    player2Name: 'Jugador 2',
+                },
             })
         })
     })
 
+    test('navega a /game con modo multiplayer y nombre personalizado', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        // Cambiar a modo multiplayer
+        const multiplayerBtn = screen.getByText('2 Jugadores').closest('button')!
+        await user.click(multiplayerBtn)
+
+        // Ingresar nombre del jugador 2
+        const nameInput = await screen.findByPlaceholderText('Nombre del rival...')
+        await user.type(nameInput, 'Mi Amigo')
+
+        // Cambiado: usar texto exacto con flecha
+        await user.click(screen.getByText('Jugar →'))
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/game', {
+                state: {
+                    gameMode: 'multiplayer',
+                    botMode: 'random_bot',
+                    boardSize: 11,
+                    player2Name: 'Mi Amigo',
+                },
+            })
+        })
+    })
+
+    test('usa "Jugador 2" como nombre por defecto en modo multiplayer si no se ingresa nombre', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        const multiplayerBtn = screen.getByText('2 Jugadores').closest('button')!
+        await user.click(multiplayerBtn)
+
+        // Cambiado: usar texto exacto con flecha
+        await user.click(screen.getByText('Jugar →'))
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/game', {
+                state: expect.objectContaining({
+                    gameMode: 'multiplayer',
+                    player2Name: 'Jugador 2',
+                }),
+            })
+        })
+    })
+    // ── Navegación online ────────────────────────────────────
+    test('navega a /online-lobby al hacer click en "Jugar online"', async () => {
+        const user = userEvent.setup()
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        const onlineBtn = screen.getByText('Jugar online').closest('button')!
+        await user.click(onlineBtn)
+
+        expect(mockNavigate).toHaveBeenCalledWith('/online-lobby')
+    })
+
+    test('muestra la sección "En línea"', async () => {
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        expect(screen.getByText('En línea')).toBeInTheDocument()
+        expect(screen.getByText('Jugar online')).toBeInTheDocument()
+        expect(screen.getByText(/Juega con un amigo a distancia/i)).toBeInTheDocument()
+    })
+
+    test('muestra separador LOCAL', async () => {
+        renderSelector()
+        await screen.findByText('Aleatorio')
+
+        expect(screen.getByText('LOCAL')).toBeInTheDocument()
+    })
+
+    // ── Edge cases ───────────────────────────────────────────
     test('no muestra modos cuando botModes es undefined', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -169,7 +298,17 @@ describe('ModeSelector', () => {
         renderSelector()
 
         await waitFor(() => {
+            // Debería mostrar el loading state o nada
             expect(screen.queryByText('Aleatorio')).not.toBeInTheDocument()
         })
+    })
+
+    test('muestra indicador de carga mientras se cargan los modos', () => {
+        global.fetch = vi.fn(() => new Promise(() => {})) as unknown as typeof fetch
+        renderSelector()
+
+        // Los thinking dots deberían estar presentes
+        const dots = document.querySelectorAll('.thinking-dot')
+        expect(dots.length).toBeGreaterThan(0)
     })
 })
