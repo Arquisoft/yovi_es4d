@@ -15,7 +15,9 @@
     "team": "yovi_es4d",
     "selectLanguage": "Select language",
     "initsession": "Log in",
-    "historial": "History"
+    "historial": "History",
+    "friends": "Friends",
+    "notifications": "🔔"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. All rights reserved."
@@ -58,18 +60,27 @@
     "enterRepassword": "Confirm your password",
     "errorPasswordMatch": "Passwords do not match"
   }, "gameOver": {
-    "title": "Game Over!",
-    "winner": "The winner is: {{winner}}",
+    "title": "Game finished",
+    "winner": "Winner",
     "playAgain": "Play Again",
     "goHome": "Go Home",
     "noGame": "No game available",
-    "hasWon": "has won"
+    "hasWon": "has won",
+    "finalScore": "Final score · board",
+    "completed": "completed",
+    "score": "Score:",
+    "newGame": "New Game"
   }, "gameBoard": {
-    "turn": "Turn",
+    "turn": "Turn:",
     "waiting": "Waiting for opponent...",
     "yourTurn": "It's your turn!",
     "botPlaying": "The bot is playing...",
-    "endGame": "End of the game! Winner"
+    "endGame": "End of the game! Winner",
+    "player1": "Player",
+    "player2": "Bot",
+    "won": "wins",
+    "gameStart": "Starting game",
+    "board": "board"
   }, "editUser": {
     "title": "Edit Profile",
     "email": "Email",
@@ -102,5 +113,46 @@
     "movesNotAvailable": "Moves not available",
     "table": "Board:",
     "cells": "cells"
+  },  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading notifications...",
+    "empty": "You have no notifications",
+    "friendRequest": "sent you a friend request",
+    "accept": "Accept",
+    "reject": "Reject",
+    "errorLoading": "Error loading notifications",
+    "errorAccept": "Error accepting request",
+    "errorReject": "Error rejecting request"
+  },
+  "common": {
+    "back": "Back"
+  },
+  "friends": {
+    "title": "Friends",
+    "loadingUser": "Loading user...",
+    "errorLoading": "Error loading data",
+    "errorSend": "Error sending request",
+    "errorAccept": "Error accepting request",
+    "errorReject": "Error rejecting request",
+
+    "tabs": {
+      "explore": "Explore",
+      "friends": "My Friends",
+      "requests": "Requests"
+    },
+
+    "search": "Search user...",
+    "add": "Add",
+    "accept": "Accept",
+    "reject": "Reject",
+
+    "emptyExplore": "No new users 😅",
+    "emptyRequests": "No pending requests 👍",
+
+    "page": "Page {{page}}"
+  },
+  "back": {
+    "loading": "Loading..."
   }
 }
+

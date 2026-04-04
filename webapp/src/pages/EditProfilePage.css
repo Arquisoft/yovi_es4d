@@ -110,6 +110,45 @@
 
 .error-message { color: #ff6b6b; }
 .success-message { color: #00ffae; }
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-container img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-refresh {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+  border: 2px solid white;
+
+  background: #0095ff;
+  color: white;
+
+  font-size: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  padding: 0;
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+}
 
 /* Ajustes móviles */
 @media (max-width: 480px) {

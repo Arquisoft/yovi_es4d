@@ -16,7 +16,9 @@
     "team": "yovi_es4d",
     "selectLanguage": "Seleccionar idioma",
     "initsession": "Iniciar sesión",
-    "historial": "Historial"
+    "historial": "Historial",
+    "friends": "Amigos",
+    "notification": "🔔"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. Todos los derechos reservados."
@@ -72,18 +74,27 @@
     "enterRepassword": "Confirma tu contraseña",
     "errorPasswordMatch": "Las contraseñas no coinciden"
   }, "gameOver": {
-    "title": "¡Juego terminado!",
-    "winner": "El ganador es: {{winner}}",
+    "title": "Partida finalizada",
+    "winner": "Ganador",
     "playAgain": "Jugar de nuevo",
     "goHome": "Volver al inicio",
     "noGame": "No hay juego disponible",
-    "hasWon": "ha ganado"
+    "hasWon": "ha ganado",
+    "finalScore": "Puntuación final · tablero",
+    "completed": "completado",
+    "score": "Puntuación:",
+    "newGame": "Nueva partida"
   }, "gameBoard": {
-    "turn": "Turno",
+    "turn": "Turno:",
     "waiting": "Esperando al oponente...",
     "yourTurn": "¡Es tu turno!",
     "botPlaying": "El bot está jugando...",
-    "endGame": "¡Juego terminado! Ganador"
+    "endGame": "¡Juego terminado! Ganador",
+    "player1": "Jugador",
+    "player2": "Bot",
+    "won": "gana",
+    "gameStart": "Iniciando partida",
+    "board": "tablero"
   }, "editUser": {
     "title": "Editar Perfil",
     "email": "Correo electrónico",
@@ -116,6 +127,46 @@
     "movesNotAvailable": "Movimientos no disponibles",
     "table": "Tablero:",
     "cells": "casillas"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "loading": "Cargando notificaciones...",
+    "empty": "No tienes notificaciones",
+    "friendRequest": "te ha enviado una solicitud de amistad",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "errorLoading": "Error al cargar notificaciones",
+    "errorAccept": "Error aceptando solicitud",
+    "errorReject": "Error rechazando solicitud"
+  },
+  "common": {
+    "back": "Volver"
+  }, "friends": {
+    "title": "Amigos",
+    "loadingUser": "Cargando usuario...",
+    "errorLoading": "Error cargando datos",
+    "errorSend": "Error enviando solicitud",
+    "errorAccept": "Error aceptando solicitud",
+    "errorReject": "Error rechazando solicitud",
+
+    "tabs": {
+      "explore": "Explorar",
+      "friends": "Mis Amigos",
+      "requests": "Solicitudes"
+    },
+
+    "search": "Buscar usuario...",
+    "add": "Añadir",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+
+    "emptyExplore": "No hay usuarios nuevos 😅",
+    "emptyRequests": "No tienes solicitudes pendientes 👍",
+
+    "page": "Página {{page}}"
+  },
+  "back": {
+    "loading": "Cargando..."
   }
 }
 

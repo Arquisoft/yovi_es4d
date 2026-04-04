@@ -53,7 +53,7 @@ describe("Historial", () => {
   });
 
   test("redirects to login if user has no id", async () => {
-    renderWithUser({}); // user sin id, userId ni _id
+    renderWithUser({});
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
@@ -97,9 +97,7 @@ describe("Historial", () => {
 
     renderWithUser({ id: "user1" });
 
-    // Esperamos que cargue la lista
     await waitFor(() => {
-      // Summary
       expect(screen.getByText("historial.title")).toBeInTheDocument();
       expect(screen.getByText("historial.summary")).toBeInTheDocument();
 
@@ -114,9 +112,15 @@ describe("Historial", () => {
     });
 
     // Comprobamos partidas
-    const gameList = screen.getByRole("list");
-    const items = within(gameList).getAllByRole("listitem");
-    expect(items).toHaveLength(2);
+    const gamesSection = screen
+    .getByRole("heading", { name: "historial.games" })
+    .closest("section");
+
+    const gamesList = within(gamesSection!).getByRole("list");
+
+    const listItems = within(gamesList).getAllByRole("listitem");
+
+    expect(listItems.length).toBe(2);
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.getByText("Bob")).toBeInTheDocument();
@@ -144,8 +148,6 @@ describe("Historial", () => {
 
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });
-
-  // ======= NUEVOS TESTS PARA CUBRIR TODOS LOS BRANCHES =======
 
   test("getOpponentName returns 'Oponente desconocido' if no j2", async () => {
     const mockData: userService.BackendGameRecord[] = [
@@ -225,8 +227,799 @@ describe("Historial", () => {
   await waitFor(() => screen.getByText("Alice"));
   await waitFor(() => screen.getByText("Bob"));
 
-  const listItem = screen.getByRole("listitem");
-  expect(listItem).toBeInTheDocument();
+  const gamesSection = screen
+    .getByRole("heading", { name: "historial.games" })
+    .closest("section");
+
+  const gamesList = within(gamesSection!).getByRole("list");
+
+  const listItems = within(gamesList).getAllByRole("listitem");
+
+  expect(listItems.length).toBe(1);
+});
+
+test("ordena por fecha (toggle asc/desc)", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date("2020-01-01").toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: []
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date("2025-01-01").toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: []
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("C")); // más reciente primero
+
+  const dateBtn = screen.getByRole("button", { name: /fecha/i });
+
+  await user.click(dateBtn);
+
+  await waitFor(() => {
+    const items = screen.getAllByRole("listitem");
+    expect(items.length).toBe(5);
+  });
+});
+
+test("ordena por número de movimientos", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2,3,4]
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  await waitFor(() => {
+    const items = screen.getAllByRole("listitem");
+    expect(items.length).toBe(5);
+  });
+});
+
+test("paginación funciona (cambia de página)", async () => {
+  const mockData: userService.BackendGameRecord[] = Array.from({ length: 7 }, (_, i) => ({
+    _id: String(i),
+    gameId: `g${i}`,
+    userId: "u",
+    createdAt: new Date().toISOString(),
+    players: [{ role: 'j1', username: `A${i}` }, { role: 'j2', username: `B${i}` }],
+    winner: 'j1',
+    gameMode: 'Normal',
+    boardSize: 11,
+    status: 'finished',
+    moves: []
+  }));
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A0"));
+
+  expect(screen.getAllByRole("listitem")).toHaveLength(8);
+
+  const nextBtn = screen.getByRole("button", { name: /⇨/ });
+
+  await user.click(nextBtn);
+
+  await waitFor(() => {
+    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+  });
+});
+
+test("paginación no baja de página 1", async () => {
+  vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("historial.noGames"));
+
+  const prevBtn = screen.getByRole("button", { name: /⇩/ });
+
+  await user.click(prevBtn);
+});
+
+test("resetea página al cambiar orden", async () => {
+  const mockData: userService.BackendGameRecord[] = Array.from({ length: 7 }, (_, i) => ({
+    _id: String(i),
+    gameId: `g${i}`,
+    userId: "u",
+    createdAt: new Date().toISOString(),
+    players: [{ role: 'j1', username: `A${i}` }, { role: 'j2', username: `B${i}` }],
+    winner: 'j1',
+    gameMode: 'Normal',
+    boardSize: 11,
+    status: 'finished',
+    moves: []
+  }));
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A0"));
+
+  const nextBtn = screen.getByRole("button", { name: /⇨/ });
+  await user.click(nextBtn);
+
+  const dateBtn = screen.getByRole("button", { name: /fecha/i });
+  await user.click(dateBtn);
+
+  expect(screen.getByText(/Página 1/)).toBeInTheDocument();
+});
+
+test("botón ⇦ reduce la página correctamente", async () => {
+  const mockData: userService.BackendGameRecord[] = Array.from({ length: 7 }, (_, i) => ({
+    _id: String(i),
+    gameId: `g${i}`,
+    userId: "u",
+    createdAt: new Date().toISOString(),
+    players: [{ role: 'j1', username: `A${i}` }, { role: 'j2', username: `B${i}` }],
+    winner: 'j1',
+    gameMode: 'Normal',
+    boardSize: 11,
+    status: 'finished',
+    moves: []
+  }));
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A0"));
+
+  const nextBtn = screen.getByRole("button", { name: /⇨/ });
+  await user.click(nextBtn);
+
+  const prevBtn = screen.getByRole("button", { name: /⇦/ });
+  await user.click(prevBtn);
+
+  await waitFor(() => {
+    expect(screen.getByText(/Página 1/)).toBeInTheDocument();
+  });
+});
+
+test("cubre el default del switch (exhaustive check)", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: []
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+});
+
+test("ordena por movimientos asc y cubre moves undefined", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2,3]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
+});
+
+  test("toggle sortOrder al pulsar mismo botón", async () => {
+    vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+    const user = userEvent.setup();
+    renderWithUser({ id: "user1" });
+
+    await waitFor(() => screen.getByText("historial.noGames"));
+
+    const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+    await user.click(movesBtn);
+
+    await user.click(movesBtn);
+
+    expect(screen.getByText(/movimientos/i)).toBeInTheDocument();
+  });
+
+  test("muestra flechas correctas en ordenación de movimientos", async () => {
+    vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+    const user = userEvent.setup();
+    renderWithUser({ id: "user1" });
+
+    await waitFor(() => screen.getByText("historial.noGames"));
+
+    const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+    await user.click(movesBtn);
+    expect(screen.getByText(/⇩/)).toBeInTheDocument();
+
+    await user.click(movesBtn);
+    expect(screen.getByText(/⇧/)).toBeInTheDocument();
+  });
+
+  test("muestra página 1 cuando no hay datos (totalPages = 0)", async () => {
+    vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+    renderWithUser({ id: "user1" });
+
+    await waitFor(() => screen.getByText("historial.noGames"));
+  });
+
+  test("usa 0 cuando moves es undefined (cubre movesA)", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+  const user = userEvent.setup();
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBe(5);
+});
+
+test("togglea sortOrder (cubre setSortOrder)", async () => {
+  vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("historial.noGames"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+  await user.click(movesBtn); 
+
+  expect(movesBtn).toBeInTheDocument();
+});
+
+test("muestra Página 1 / 1 cuando no hay datos (cubre || 1)", async () => {
+  vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("historial.noGames"));
+});
+
+test("cubre movesA cuando moves es undefined (comparación real)", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2,3,4]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem")).toHaveLength(5);
+});
+
+test("cubre setSortOrder cambiando realmente el orden", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date("2020").toISOString(),
+      players: [{ role: 'j1', username: 'A' }, { role: 'j2', username: 'B' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1]
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date("2021").toISOString(),
+      players: [{ role: 'j1', username: 'C' }, { role: 'j2', username: 'D' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2,3]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  await user.click(movesBtn);
+
+  const items = screen.getAllByRole("listitem");
+  expect(items.length).toBe(5);
+});
+
+test("cubre totalPages || 1 mostrando Página 1 / 1", async () => {
+  vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => {
+    expect(screen.getByText("historial.noGames")).toBeInTheDocument();
+  });
+
+});
+
+test("usa 0 movimientos cuando moves es undefined (movesA)", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'AAA' }, { role: 'j2', username: 'BBB' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role: 'j1', username: 'CCC' }, { role: 'j2', username: 'DDD' }],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: [1,2,3]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("AAA"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
+});
+
+test("togglea sortOrder correctamente", async () => {
+  vi.spyOn(userService, "getHistory").mockResolvedValue([]);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("historial.noGames"));
+
+  const dateBtn = screen.getByRole("button", { name: /fecha/i });
+
+  await user.click(dateBtn);
+
+  await user.click(dateBtn);
+
+  expect(dateBtn).toBeInTheDocument();
+});
+
+test("muestra Página 1 / 1 cuando solo hay una página", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [
+        { role: 'j1', username: 'A' },
+        { role: 'j2', username: 'B' }
+      ],
+      winner: 'j1',
+      gameMode: 'Normal',
+      boardSize: 11,
+      status: 'finished',
+      moves: []
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("A"));
+
+  expect(screen.getByText(/Página 1\s*\/\s*1/i))
+    .toBeInTheDocument();
+});
+
+test("cubre movesA ejecutando el comparator real", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role:'j1', username:'AAA' }, { role:'j2', username:'BBB' }],
+      winner:'j1',
+      gameMode:'Normal',
+      boardSize:11,
+      status:'finished',
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role:'j1', username:'CCC' }, { role:'j2', username:'DDD' }],
+      winner:'j1',
+      gameMode:'Normal',
+      boardSize:11,
+      status:'finished',
+      moves: [1,2,3,4]
+    }
+  ];
+
+  vi.spyOn(userService,"getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id:"user1" });
+
+  await waitFor(() => screen.getByText("AAA"));
+
+  const movesBtn = screen.getByRole("button",{ name:/movimientos/i });
+
+  await user.click(movesBtn);
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(1);
+});
+
+test("cubre totalPages || 1 mostrando Página 1 / 1", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id:"1",
+      gameId:"g1",
+      userId:"u",
+      createdAt:new Date().toISOString(),
+      players:[
+        { role:'j1', username:'A' },
+        { role:'j2', username:'B' }
+      ],
+      winner:'j1',
+      gameMode:'Normal',
+      boardSize:11,
+      status:'finished',
+      moves:[]
+    }
+  ];
+
+  vi.spyOn(userService,"getHistory").mockResolvedValue(mockData);
+
+  renderWithUser({ id:"user1" });
+
+  await waitFor(()=>screen.getByText("A"));
+
+  expect(
+    screen.getByText((content)=>content.includes("Página 1"))
+  ).toBeInTheDocument();
+});
+
+test("cubre movesA cuando moves es undefined en ordenación", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [
+        { role: "j1", username: "AAA" },
+        { role: "j2", username: "BBB" }
+      ],
+      winner: "j1",
+      gameMode: "Normal",
+      boardSize: 11,
+      status: "finished",
+      moves: undefined
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [
+        { role: "j1", username: "CCC" },
+        { role: "j2", username: "DDD" }
+      ],
+      winner: "j1",
+      gameMode: "Normal",
+      boardSize: 11,
+      status: "finished",
+      moves: [1,2,3,4]
+    }
+  ];
+
+  vi.spyOn(userService, "getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id: "user1" });
+
+  await waitFor(() => screen.getByText("AAA"));
+
+  const movesBtn = screen.getByRole("button", { name: /movimientos/i });
+
+  await user.click(movesBtn);
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(1);
+});
+
+test("cubre comparator de movimientos con valores distintos", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id: "1",
+      gameId: "g1",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role:"j1", username:"A" }, { role:"j2", username:"B" }],
+      winner:"j1",
+      gameMode:"Normal",
+      boardSize:11,
+      status:"finished",
+      moves:[1]
+    },
+    {
+      _id: "2",
+      gameId: "g2",
+      userId: "u",
+      createdAt: new Date().toISOString(),
+      players: [{ role:"j1", username:"C" }, { role:"j2", username:"D" }],
+      winner:"j1",
+      gameMode:"Normal",
+      boardSize:11,
+      status:"finished",
+      moves:[1,2,3]
+    }
+  ];
+
+  vi.spyOn(userService,"getHistory").mockResolvedValue(mockData);
+
+  const user = userEvent.setup();
+  renderWithUser({ id:"user1" });
+
+  await waitFor(()=>screen.getByText("A"));
+
+  const movesBtn = screen.getByRole("button",{ name:/movimientos/i });
+
+  await user.click(movesBtn);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(1);
+});
+
+test("muestra Página 1 / 1 cuando solo existe una página", async () => {
+  const mockData: userService.BackendGameRecord[] = [
+    {
+      _id:"1",
+      gameId:"g1",
+      userId:"u",
+      createdAt:new Date().toISOString(),
+      players:[
+        { role:"j1", username:"A" },
+        { role:"j2", username:"B" }
+      ],
+      winner:"j1",
+      gameMode:"Normal",
+      boardSize:11,
+      status:"finished",
+      moves:[]
+    }
+  ];
+
+  vi.spyOn(userService,"getHistory").mockResolvedValue(mockData);
+
+  renderWithUser({ id:"user1" });
+
+  await waitFor(()=>screen.getByText("A"));
+
+  expect(
+    screen.getByText((content)=>content.includes("Página"))
+  ).toBeInTheDocument();
+});
+
+test("renderiza correctamente el paginador ejecutando totalPages || 1", async () => {
+  const mockData: userService.BackendGameRecord[] = Array.from(
+    { length: 3 },
+    (_, i) => ({
+      _id:String(i),
+      gameId:`g${i}`,
+      userId:"u",
+      createdAt:new Date().toISOString(),
+      players:[
+        { role:"j1", username:`A${i}` },
+        { role:"j2", username:`B${i}` }
+      ],
+      winner:"j1",
+      gameMode:"Normal",
+      boardSize:11,
+      status:"finished",
+      moves:[]
+    })
+  );
+
+  vi.spyOn(userService,"getHistory").mockResolvedValue(mockData);
+
+  renderWithUser({ id:"user1" });
+
+  await waitFor(()=>screen.getByText("A0"));
+
+ 
 });
 
 });

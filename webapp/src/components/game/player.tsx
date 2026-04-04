@@ -30,7 +30,10 @@ const Jugador: React.FC<PlayerInfoProps> = ({
             )}
 
             <div className={`player-avatar ${isActive ? `active-${color}` : ""}`}>
-                <img src={imgSrc} alt={name} />
+                {imgSrc.includes(".") || imgSrc.includes("/")
+                    ? <img src={imgSrc} alt={name} />
+                    : <span style={{ fontSize: "2rem", lineHeight: 1 }}>{imgSrc}</span>
+                }
             </div>
 
             <p className={`player-name ${isActive ? `active-${color}` : ""}`}>

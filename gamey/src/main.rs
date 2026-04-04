@@ -10,15 +10,17 @@ use std::sync::{Arc, Mutex};
 mod bot;
 use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
 
-/* =========================
-   STRUCTS (lo que recibimos)
-   ========================= */
+/* STRUCTS (lo que recibimos)*/
 
+/// Estructura para la solicitud de iniciar un juego.
+/// Contiene el tamaño del tablero.
 #[derive(Debug, Deserialize)]
 struct StartGameRequest {
     board_size: u32,
 }
 
+/// Estructura para la solicitud de movimiento.
+/// Contiene las coordenadas y el jugador que hace el movimiento.
 #[derive(Debug, Deserialize)]
 struct MoveRequest {
     x: i32,
@@ -27,17 +29,25 @@ struct MoveRequest {
     player: u32,
 }
 
+/// Estructura para la solicitud de finalizar un juego.
+/// Contiene el ID del juego.
 #[derive(Debug, Deserialize)]
 struct EndGameRequest {
     game_id: String,
 }
 
-/* =========================
-   HELPERS
-   ========================= */
+/* HELPERS */
 
 /// Lógica compartida para ejecutar el movimiento de cualquier bot.
 /// Recibe el nombre del bot para buscarlo en el registro.
+/// 
+/// # Parámetros
+/// - `bot_name`: Nombre del bot a usar.
+/// - `state`: Estado compartido del juego.
+/// - `registry`: Registro de bots disponibles.
+/// 
+/// # Retorna
+/// Una respuesta HTTP con el resultado del movimiento del bot.
 async fn execute_bot_move(
     bot_name: &str,
     state: web::Data<Mutex<Option<GameY>>>,
@@ -54,7 +64,7 @@ async fn execute_bot_move(
         }
     };
 
-    // ¿Ya terminó el juego?
+    // Verificar si se termino el juego
     if let GameStatus::Finished { winner } = game.status() {
         return HttpResponse::Ok().json(json!({
             "valid": false,
@@ -100,7 +110,7 @@ async fn execute_bot_move(
     };
 
     println!(
-        "🤖 [{}] elige: x={} y={} z={} (player {})",
+        "[{}] elige: x={} y={} z={} (player {})",
         bot_name,
         bot_coords.x(),
         bot_coords.y(),
@@ -115,7 +125,7 @@ async fn execute_bot_move(
 
     match game.add_move(movement) {
         Ok(_) => {
-            println!("✅ Movimiento del bot '{}' aplicado", bot_name);
+            println!("Movimiento del bot '{}' aplicado", bot_name);
 
             let board = game
                 .board_state()
@@ -151,7 +161,7 @@ async fn execute_bot_move(
             }))
         }
         Err(e) => {
-            println!("❌ Movimiento inválido del bot: {:?}", e);
+            println!("Movimiento inválido del bot: {:?}", e);
             HttpResponse::BadRequest().json(json!({
                 "valid": false,
                 "message": format!("Movimiento inválido: {:?}", e),
@@ -160,11 +170,16 @@ async fn execute_bot_move(
     }
 }
 
-/* =========================
-   ENDPOINTS
-   ========================= */
+/* ENDPOINTS */
 
-// 🟢 Iniciar juego
+/// Inicia un nuevo juego con el tamaño de tablero especificado.
+/// 
+/// # Parámetros
+/// - `req`: Solicitud JSON con el tamaño del tablero.
+/// - `state`: Estado compartido del juego.
+/// 
+/// # Retorna
+/// Una respuesta HTTP confirmando el inicio del juego.
 async fn start_game(
     req: web::Json<StartGameRequest>,
     state: web::Data<Mutex<Option<GameY>>>,
@@ -172,7 +187,7 @@ async fn start_game(
     let mut game_lock = state.lock().unwrap();
     *game_lock = Some(GameY::new(req.board_size));
 
-    println!("🟢 [Rust] start_game — tamaño: {}", req.board_size);
+    println!("[Rust] start_game — tamaño: {}", req.board_size);
 
     HttpResponse::Ok().json(json!({
         "status": "started",
@@ -180,7 +195,14 @@ async fn start_game(
     }))
 }
 
-// 🎯 Movimiento del usuario
+/// Procesa el movimiento de un usuario en el juego.
+/// 
+/// # Parámetros
+/// - `req`: Solicitud JSON con las coordenadas y el jugador.
+/// - `state`: Estado compartido del juego.
+/// 
+/// # Retorna
+/// Una respuesta HTTP con el resultado del movimiento.
 pub async fn user_move(
     req: web::Json<MoveRequest>,
     state: web::Data<Mutex<Option<GameY>>>,
@@ -188,7 +210,7 @@ pub async fn user_move(
     use std::convert::TryInto;
 
     println!(
-        "🎯 [Rust] user_move — player={} x={} y={} z={}",
+        "[Rust] user_move — player={} x={} y={} z={}",
         req.player, req.x, req.y, req.z
     );
 
@@ -203,7 +225,7 @@ pub async fn user_move(
         }
     };
 
-    // ¿Ya terminó el juego?
+    // Verificar si se termino el juego
     if let GameStatus::Finished { winner } = game.status() {
         return HttpResponse::Ok().json(json!({
             "valid": false,
@@ -226,7 +248,7 @@ pub async fn user_move(
     };
 
     if next_player.id() != req.player {
-        println!("❌ No es el turno del jugador {}!", req.player);
+        println!("No es el turno del jugador {}!", req.player);
         return HttpResponse::BadRequest().json(json!({
             "valid": false,
             "message": "No es tu turno"
@@ -251,7 +273,7 @@ pub async fn user_move(
 
     match game.add_move(movement) {
         Ok(_) => {
-            println!("✅ Movimiento aplicado para player {}", req.player);
+            println!("Movimiento aplicado para player {}", req.player);
 
             let board = game
                 .board_state()
@@ -282,7 +304,7 @@ pub async fn user_move(
             }))
         }
         Err(e) => {
-            println!("❌ Movimiento inválido: {:?}", e);
+            println!("Movimiento inválido: {:?}", e);
             HttpResponse::BadRequest().json(json!({
                 "valid": false,
                 "message": format!("Movimiento inválido: {:?}", e),
@@ -291,13 +313,26 @@ pub async fn user_move(
     }
 }
 
-// 🔴 Finalizar juego
+/// Finaliza un juego dado su ID.
+/// 
+/// # Parámetros
+/// - `req`: Solicitud JSON con el ID del juego.
+/// 
+/// # Retorna
+/// Una respuesta JSON confirmando la finalización.
 async fn end_game(req: web::Json<EndGameRequest>) -> web::Json<serde_json::Value> {
-    println!("🔴 Finalizando juego — game_id: {}", req.game_id);
+    println!("Finalizando juego — game_id: {}", req.game_id);
     web::Json(json!({ "status": "finished" }))
 }
 
-// 🤖 Movimiento del RandomBot
+/// Ejecuta el movimiento del bot aleatorio.
+/// 
+/// # Parámetros
+/// - `state`: Estado compartido del juego.
+/// - `registry`: Registro de bots.
+/// 
+/// # Retorna
+/// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_random(
     state: web::Data<Mutex<Option<GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
@@ -305,7 +340,14 @@ pub async fn bot_move_random(
     execute_bot_move("random_bot", state, registry).await
 }
 
-// 🧠 Movimiento del IntermediateBot
+/// Ejecuta el movimiento del bot intermedio.
+/// 
+/// # Parámetros
+/// - `state`: Estado compartido del juego.
+/// - `registry`: Registro de bots.
+/// 
+/// # Retorna
+/// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_intermediate(
     state: web::Data<Mutex<Option<GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
@@ -313,7 +355,14 @@ pub async fn bot_move_intermediate(
     execute_bot_move("intermediate_bot", state, registry).await
 }
 
-// 🧠 Movimiento del HardBot
+/// Ejecuta el movimiento del bot difícil.
+/// 
+/// # Parámetros
+/// - `state`: Estado compartido del juego.
+/// - `registry`: Registro de bots.
+/// 
+/// # Retorna
+/// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_hard(
     state: web::Data<Mutex<Option<GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
@@ -321,13 +370,14 @@ pub async fn bot_move_hard(
     execute_bot_move("hard_bot", state, registry).await
 }
 
-/* =========================
-   MAIN
-   ========================= */
+/* MAIN */
 
+/// Función principal que inicia el servidor web.
+/// Configura el estado compartido del juego y el registro de bots,
+/// luego inicia el servidor HTTP en el puerto 4000.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("🚀 Servidor Rust escuchando en el puerto 4000");
+    println!("Servidor Rust escuchando en el puerto 4000");
 
     let shared_game = web::Data::new(Mutex::new(None::<GameY>));
 
