@@ -81,4 +81,18 @@ describe('Jugador', () => {
     })
 
 
+    test('los puntos de pensando usan color coral cuando el jugador es coral', () => {
+        const { container } = render(
+            <Jugador {...defaultProps} isPlaying={true} color="coral" />
+        )
+
+        const dots = container.querySelectorAll('.thinking-dot')
+        expect(dots).toHaveLength(3)
+
+        dots.forEach(dot => {
+            expect(dot).toHaveStyle('background: var(--coral)')
+        })
+    })
+
+
 })

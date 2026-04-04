@@ -10,7 +10,7 @@ const BOT_MODE_META: Record<string, { label: string; description: string; tag: s
 };
 
 const BOARD_SIZES = [
-    { value: 8,  label: "Pequeño", description: "36 celdas · Partida rápida",  tag: "8×"  }, // ← añade esto
+    { value: 8,  label: "Pequeño", description: "36 celdas · Partida rápida",  tag: "8×"  },
     { value: 11, label: "Normal",  description: "66 celdas · Partida ágil",    tag: "11×" },
     { value: 15, label: "Grande",  description: "120 celdas · Más estrategia", tag: "15×" },
     { value: 19, label: "Extra",   description: "190 celdas · Para expertos",  tag: "19×" },
