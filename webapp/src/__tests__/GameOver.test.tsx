@@ -198,4 +198,82 @@ describe('GameOver', () => {
     ).toBeInTheDocument()
   })
 
+  test('online j2: p1 es el rival y p2 es el usuario logueado', () => {
+    vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+      state: {
+        ...baseState,
+        gameMode: 'online',
+        onlineRole: 'j2',
+        userProfile: { username: 'Yo', avatar: 'yo.png' },
+        opponentProfile: { username: 'Rival', avatar: 'rival.png' },
+        winner: 'j1',
+      },
+    } as any)
+
+    renderWithProviders(<GameOver />)
+
+    // El ganador es j1 → en modo online j2 el slot j1 es el rival
+    const title = screen.getByRole('heading', { level: 1 })
+    expect(title).toHaveTextContent('Rival')
+  })
+
+  test('online j1: p1 es el usuario logueado y p2 es el rival', () => {
+    vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+      state: {
+        ...baseState,
+        gameMode: 'online',
+        onlineRole: 'j1',
+        userProfile: { username: 'Yo', avatar: 'yo.png' },
+        opponentProfile: { username: 'Rival', avatar: 'rival.png' },
+        winner: 'j2',
+      },
+    } as any)
+
+    renderWithProviders(<GameOver />)
+
+    const title = screen.getByRole('heading', { level: 1 })
+    expect(title).toHaveTextContent('Rival')
+  })
+
+  test('online j1 vsBot: p2Avatar es bot_icon.png', () => {
+    vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+      state: {
+        ...baseState,
+        gameMode: 'vsBot',
+        onlineRole: 'j1',
+        userProfile: { username: 'Yo', avatar: 'yo.png' },
+        winner: 'j1',
+      },
+    } as any)
+
+    renderWithProviders(<GameOver />)
+
+    // bot_icon.png contiene "." así que renderiza <img>
+    const imgs = screen.getAllByRole('img')
+    const botImg = imgs.find(img => (img as HTMLImageElement).src.includes('bot_icon'))
+    expect(botImg).toBeDefined()
+  })
+
+  test('avatar sin punto ni barra se renderiza como emoji/span, no como img', () => {
+    vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+      state: {
+        ...baseState,
+        players: [
+          { id: 'p1', name: 'Alice', points: 5 },
+          { id: 'p2', name: 'Bot',   points: 3 },
+        ],
+        userProfile:     { username: 'Alice', avatar: '🦊' },
+        opponentProfile: { username: 'Bot',   avatar: '🤖' },
+        gameMode: 'online',
+        onlineRole: 'j1',
+        winner: 'j1',
+      },
+    } as any)
+
+    renderWithProviders(<GameOver />)
+
+    expect(screen.getByText('🦊')).toBeInTheDocument()
+    expect(screen.getByText('🤖')).toBeInTheDocument()
+  })
+
 })
