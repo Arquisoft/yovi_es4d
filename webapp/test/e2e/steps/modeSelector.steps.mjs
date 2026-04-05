@@ -24,7 +24,7 @@ Given('the mode selector page is open', async function () {
         }
     })
 
-    await page.goto('http://localhost:5173')
+    await page.goto('http://localhost:5173/select')
     await page.waitForSelector('.ms-header', { timeout: 5000 })
 })
 
