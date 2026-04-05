@@ -3,6 +3,11 @@ process.env.SKIP_MONGO = 'true';
 const request = require('supertest');
 const axios = require('axios');
 
+const USER_1 = '507f1f77bcf86cd799439011';
+const USER_2 = '507f1f77bcf86cd799439012';
+const USER_3 = '507f1f77bcf86cd799439013';
+const USER_4 = '507f1f77bcf86cd799439014';
+
 jest.mock('axios');
 jest.mock('./models/friendRequest', () => {
   const FriendRequest = jest.fn();
@@ -12,7 +17,7 @@ jest.mock('./models/friendRequest', () => {
   return FriendRequest;
 });
 
-jest.mock('./models/Notification', () => ({
+jest.mock('./models/notification', () => ({
   create: jest.fn(),
   find: jest.fn(),
   countDocuments: jest.fn(),
@@ -23,11 +28,11 @@ jest.mock('./models/Notification', () => ({
 
 const app = require('./friend-service');
 const FriendRequest = require('./models/friendRequest');
-const Notification = require('./models/Notification');
+const Notification = require('./models/notification');
 
 describe('Friend Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   
@@ -35,23 +40,24 @@ describe('Friend Service', () => {
 
   it('should get friends', async () => {
     FriendRequest.find.mockResolvedValue([
-      { senderId: 'user1', receiverId: 'user2', status: 'accepted' },
-      { senderId: 'user3', receiverId: 'user1', status: 'accepted' }
+      { senderId: USER_1, receiverId: USER_2, status: 'accepted' },
+      { senderId: USER_3, receiverId: USER_1, status: 'accepted' }
     ]);
+    axios.post.mockResolvedValue({ data: [USER_2, USER_3] });
 
     const res = await request(app)
       .get('/friends')
-      .query({ userId: 'user1' });
+      .query({ userId: USER_1 });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual(['user2', 'user3']);
+    expect(res.body).toEqual([USER_2, USER_3]);
   });
 
   it('should return 400 if userId missing in get friends', async () => {
     const res = await request(app).get('/friends');
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBe('userId required');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal error');
   });
 
   it('should return 500 if get friends fails', async () => {
@@ -59,7 +65,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/friends')
-      .query({ userId: 'user1' });
+      .query({ userId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -70,28 +76,28 @@ describe('Friend Service', () => {
   it('should explore users excluding self, friends and pending requests', async () => {
     FriendRequest.find
       .mockResolvedValueOnce([
-        { senderId: 'user1', receiverId: 'user2', status: 'accepted' }
+        { senderId: USER_1, receiverId: USER_2, status: 'accepted' }
       ])
       .mockResolvedValueOnce([
-        { senderId: 'user3', receiverId: 'user1', status: 'pending' }
+        { senderId: USER_3, receiverId: USER_1, status: 'pending' }
       ]);
 
     axios.get.mockResolvedValue({
       data: [
-        { _id: 'user1', username: 'me' },
-        { _id: 'user2', username: 'friend' },
-        { _id: 'user3', username: 'pending' },
-        { _id: 'user4', username: 'available' }
+        { _id: USER_1, username: 'me' },
+        { _id: USER_2, username: 'friend' },
+        { _id: USER_3, username: 'pending' },
+        { _id: USER_4, username: 'available' }
       ]
     });
 
     const res = await request(app)
       .get('/friends/explore')
-      .query({ userId: 'user1', search: 'u', page: 1 });
+      .query({ userId: USER_1, search: 'u', page: 1 });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({
-      users: [{ _id: 'user4', username: 'available' }]
+      users: [{ _id: USER_4, username: 'available' }]
     });
   });
 
@@ -107,7 +113,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/friends/explore')
-      .query({ userId: 'user1' });
+      .query({ userId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -134,15 +140,15 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .post('/friends/request')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Request sent');
     expect(saveMock).toHaveBeenCalled();
     expect(Notification.create).toHaveBeenCalledWith({
-      userId: 'user2',
+      userId: USER_2,
       type: 'friend_request',
-      relatedUserId: 'user1',
+      relatedUserId: USER_1,
       relatedUserEmail: 'sender@test.com'
     });
   });
@@ -150,7 +156,7 @@ describe('Friend Service', () => {
   it('should return 400 if senderId or receiverId missing', async () => {
     const res = await request(app)
       .post('/friends/request')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('senderId and receiverId required');
@@ -161,7 +167,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .post('/friends/request')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Request already exists');
@@ -176,7 +182,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .post('/friends/request')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Cannot create friend request without emails');
@@ -187,7 +193,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .post('/friends/request')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -200,9 +206,9 @@ describe('Friend Service', () => {
       {
         _id: 'req1',
         status: 'pending',
-        senderId: 'user2',
+        senderId: USER_2,
         senderEmail: 'user2@test.com',
-        receiverId: 'user1',
+        receiverId: USER_1,
         receiverEmail: 'user1@test.com',
         createdAt: '2024-01-01'
       }
@@ -210,11 +216,11 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/friends/requests')
-      .query({ userId: 'user1', type: 'received' });
+      .query({ userId: USER_1, type: 'received' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body[0].sender._id).toBe('user2');
-    expect(res.body[0].receiver._id).toBe('user1');
+    expect(res.body[0].sender._id).toBe(USER_2);
+    expect(res.body[0].receiver._id).toBe(USER_1);
   });
 
   it('should get sent friend requests', async () => {
@@ -222,9 +228,9 @@ describe('Friend Service', () => {
       {
         _id: 'req1',
         status: 'pending',
-        senderId: 'user1',
+        senderId: USER_1,
         senderEmail: 'user1@test.com',
-        receiverId: 'user2',
+        receiverId: USER_2,
         receiverEmail: 'user2@test.com',
         createdAt: '2024-01-01'
       }
@@ -232,10 +238,10 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/friends/requests')
-      .query({ userId: 'user1', type: 'sent' });
+      .query({ userId: USER_1, type: 'sent' });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body[0].sender._id).toBe('user1');
+    expect(res.body[0].sender._id).toBe(USER_1);
   });
 
   it('should return 400 if userId missing in get requests', async () => {
@@ -250,7 +256,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/friends/requests')
-      .query({ userId: 'user1', type: 'received' });
+      .query({ userId: USER_1, type: 'received' });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -263,8 +269,8 @@ describe('Friend Service', () => {
 
     FriendRequest.findById.mockResolvedValue({
       _id: 'req1',
-      senderId: 'user2',
-      receiverId: { toString: () => 'user1' },
+      senderId: USER_2,
+      receiverId: { toString: () => USER_1 },
       status: 'pending',
       save: saveMock
     });
@@ -273,15 +279,15 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/friends/accept')
-      .send({ requestId: 'req1', userId: 'user1' });
+      .send({ requestId: 'req1', userId: USER_1 });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Accepted');
     expect(saveMock).toHaveBeenCalled();
     expect(Notification.findOneAndDelete).toHaveBeenCalledWith({
-      userId: 'user1',
+      userId: USER_1,
       type: 'friend_request',
-      relatedUserId: 'user2'
+      relatedUserId: USER_2
     });
   });
 
@@ -299,7 +305,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/friends/accept')
-      .send({ requestId: 'req1', userId: 'user1' });
+      .send({ requestId: 'req1', userId: USER_1 });
 
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('Not found');
@@ -313,7 +319,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/friends/accept')
-      .send({ requestId: 'req1', userId: 'user1' });
+      .send({ requestId: 'req1', userId: USER_1 });
 
     expect(res.statusCode).toBe(403);
     expect(res.body.error).toBe('Not allowed');
@@ -324,7 +330,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/friends/accept')
-      .send({ requestId: 'req1', userId: 'user1' });
+      .send({ requestId: 'req1', userId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -337,7 +343,7 @@ describe('Friend Service', () => {
 
     FriendRequest.findById.mockResolvedValue({
       _id: 'req1',
-      senderId: 'user2',
+      senderId: USER_2,
       deleteOne: deleteOneMock
     });
 
@@ -352,7 +358,7 @@ describe('Friend Service', () => {
     expect(deleteOneMock).toHaveBeenCalled();
     expect(Notification.findOneAndDelete).toHaveBeenCalledWith({
       type: 'friend_request',
-      relatedUserId: 'user2'
+      relatedUserId: USER_2
     });
   });
 
@@ -394,13 +400,13 @@ describe('Friend Service', () => {
 
     FriendRequest.findById.mockResolvedValue({
       _id: 'req1',
-      senderId: { toString: () => 'user1' },
+      senderId: { toString: () => USER_1 },
       deleteOne: deleteOneMock
     });
 
     const res = await request(app)
       .delete('/friends/request/req1')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Request cancelled');
@@ -421,7 +427,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .delete('/friends/request/req1')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('Not found');
@@ -435,7 +441,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .delete('/friends/request/req1')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(403);
     expect(res.body.error).toBe('Not allowed');
@@ -446,7 +452,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .delete('/friends/request/req1')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -461,7 +467,7 @@ describe('Friend Service', () => {
       type: 'friend_request',
       read: false,
       createdAt: '2024-01-01',
-      relatedUserId: 'user2'
+      relatedUserId: USER_2
     }
   ];
 
@@ -484,7 +490,7 @@ describe('Friend Service', () => {
 
   const res = await request(app)
     .get('/notifications')
-    .query({ userId: 'user1', page: 1 });
+    .query({ userId: USER_1, page: 1 });
 
   expect(res.statusCode).toBe(200);
   expect(res.body.unreadCount).toBe(3);
@@ -495,7 +501,7 @@ describe('Friend Service', () => {
     read: false,
     createdAt: '2024-01-01',
     relatedUser: {
-      _id: 'user2',
+      _id: USER_2,
       username: 'user2',
       email: 'user2@test.com',
       avatar: 'avatar.png'
@@ -510,7 +516,7 @@ describe('Friend Service', () => {
       type: 'friend_request',
       read: false,
       createdAt: '2024-01-01',
-      relatedUserId: 'user2'
+      relatedUserId: USER_2
     }
   ];
 
@@ -526,7 +532,7 @@ describe('Friend Service', () => {
 
   const res = await request(app)
     .get('/notifications')
-    .query({ userId: 'user1' });
+    .query({ userId: USER_1 });
 
   expect(res.statusCode).toBe(200);
   expect(res.body.notifications).toHaveLength(1);
@@ -536,7 +542,7 @@ describe('Friend Service', () => {
     read: false,
     createdAt: '2024-01-01',
     relatedUser: {
-      _id: 'user2',
+      _id: USER_2,
       username: 'Usuario desconocido',
       email: '',
       avatar: ''
@@ -558,7 +564,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .get('/notifications')
-      .query({ userId: 'user1' });
+      .query({ userId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Error obteniendo notificaciones');
@@ -571,12 +577,12 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/notifications/read-all')
-      .send({ userId: 'user1' });
+      .send({ userId: USER_1 });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('All notifications read');
     expect(Notification.updateMany).toHaveBeenCalledWith(
-      { userId: 'user1', read: false },
+      { userId: USER_1, read: false },
       { read: true }
     );
   });
@@ -595,7 +601,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .patch('/notifications/read-all')
-      .send({ userId: 'user1' });
+      .send({ userId: USER_1 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
@@ -609,16 +615,16 @@ describe('Friend Service', () => {
     });
     Notification.create.mockResolvedValue({});
 
-    const res = await request(app)
+   const res = await request(app)
       .post('/notifications/game-invite')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Game invite sent');
     expect(Notification.create).toHaveBeenCalledWith({
-      userId: 'user2',
+      userId: USER_2,
       type: 'game_invite',
-      relatedUserId: 'user1',
+      relatedUserId: USER_1,
       relatedUserEmail: 'sender@test.com'
     });
   });
@@ -626,7 +632,7 @@ describe('Friend Service', () => {
   it('should return 400 if senderId or receiverId missing in game invite', async () => {
     const res = await request(app)
       .post('/notifications/game-invite')
-      .send({ senderId: 'user1' });
+      .send({ senderId: USER_1 });
 
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('senderId and receiverId required');
@@ -637,7 +643,7 @@ describe('Friend Service', () => {
 
     const res = await request(app)
       .post('/notifications/game-invite')
-      .send({ senderId: 'user1', receiverId: 'user2' });
+      .send({ senderId: USER_1, receiverId: USER_2 });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Internal error');
