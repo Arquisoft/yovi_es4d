@@ -5,6 +5,7 @@ import axios from 'axios'
 import Notifications from '../components/Notifications'
 import { I18nProvider } from '../i18n'
 import resources from '../i18n/resources'
+import * as friendService from '../services/friendService'
 import '@testing-library/jest-dom'
 
 const mockNavigate = vi.fn()
@@ -24,6 +25,11 @@ vi.mock('../components/Sidebar', () => ({
 
 vi.mock('../config', () => ({
   API_URL: 'http://localhost:8000',
+}))
+
+vi.mock('../services/friendService', () => ({
+  acceptFriendRequest: vi.fn(),
+  rejectFriendRequest: vi.fn(),
 }))
 
 const renderNotifications = () =>
@@ -127,7 +133,7 @@ describe('Notifications', () => {
         data: { notifications: [] },
       })
 
-    vi.mocked(axios.patch).mockResolvedValue({ data: { success: true } })
+    vi.mocked(friendService.acceptFriendRequest).mockResolvedValue({ success: true })
 
     const user = userEvent.setup()
     renderNotifications()
@@ -137,11 +143,7 @@ describe('Notifications', () => {
     })
     await user.click(acceptButton)
 
-    expect(axios.patch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/friends/accept',
-      { requestId: 'r1' },
-      { withCredentials: true }
-    )
+    expect(friendService.acceptFriendRequest).toHaveBeenCalledWith('r1')
 
     await waitFor(() => {
       expect(axios.get).toHaveBeenCalledTimes(2)
@@ -168,7 +170,7 @@ describe('Notifications', () => {
       },
     })
 
-    vi.mocked(axios.patch).mockRejectedValue(new Error('fail'))
+    vi.mocked(friendService.acceptFriendRequest).mockRejectedValue(new Error('fail'))
 
     const user = userEvent.setup()
     renderNotifications()
@@ -205,7 +207,7 @@ describe('Notifications', () => {
         data: { notifications: [] },
       })
 
-    vi.mocked(axios.patch).mockResolvedValue({ data: { success: true } })
+    vi.mocked(friendService.rejectFriendRequest).mockResolvedValue({ success: true })
 
     const user = userEvent.setup()
     renderNotifications()
@@ -215,11 +217,7 @@ describe('Notifications', () => {
     })
     await user.click(rejectButton)
 
-    expect(axios.patch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/friends/reject',
-      { requestId: 'r1' },
-      { withCredentials: true }
-    )
+    expect(friendService.rejectFriendRequest).toHaveBeenCalledWith('r1')
 
     await waitFor(() => {
       expect(axios.get).toHaveBeenCalledTimes(2)
@@ -246,7 +244,7 @@ describe('Notifications', () => {
       },
     })
 
-    vi.mocked(axios.patch).mockRejectedValue(new Error('fail'))
+    vi.mocked(friendService.rejectFriendRequest).mockRejectedValue(new Error('fail'))
 
     const user = userEvent.setup()
     renderNotifications()
@@ -286,7 +284,7 @@ describe('Notifications', () => {
     })
     await user.click(acceptButton)
 
-    expect(axios.patch).not.toHaveBeenCalled()
+    expect(friendService.acceptFriendRequest).not.toHaveBeenCalled()
   })
 
   test('does nothing on reject if notification has no requestId', async () => {
@@ -316,7 +314,7 @@ describe('Notifications', () => {
     })
     await user.click(rejectButton)
 
-    expect(axios.patch).not.toHaveBeenCalled()
+    expect(friendService.rejectFriendRequest).not.toHaveBeenCalled()
   })
 
   test('navigates back to home when back button is clicked', async () => {

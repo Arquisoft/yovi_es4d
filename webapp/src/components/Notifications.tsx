@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
 import Sidebar from './Sidebar';
 import { API_URL } from '../config';
+import { acceptFriendRequest, rejectFriendRequest } from '../services/friendService';
 import './StartScreen.css';
 
 interface RelatedUser {
@@ -37,12 +38,11 @@ const Notifications: React.FC = () => {
       const res = await axios.get(`${API_URL}/api/notifications`, { withCredentials: true });
       if (res.data && Array.isArray(res.data.notifications)) {
         setNotifications(res.data.notifications);
-        console.log('Notificaciones cargadas:', res.data.notifications);
       } else {
         setNotifications([]);
       }
     } catch (err: any) {
-      console.error('Error cargando notificaciones:', err.response?.data || err.message);
+      console.error(err);
       setError(t('notifications.errorLoading'));
     } finally {
       setLoading(false);
@@ -53,7 +53,29 @@ const Notifications: React.FC = () => {
     loadData();
   }, []);
 
- 
+  const handleAccept = async (notification: Notification) => {
+    if (!notification.requestId) return;
+
+    try {
+      await acceptFriendRequest(notification.requestId);
+      await loadData();
+    } catch (err: any) {
+      console.error(err);
+      setError(t('notifications.errorAccept'));
+    }
+  };
+
+  const handleReject = async (notification: Notification) => {
+    if (!notification.requestId) return;
+
+    try {
+      await rejectFriendRequest(notification.requestId);
+      await loadData();
+    } catch (err: any) {
+      console.error(err);
+      setError(t('notifications.errorReject'));
+    }
+  };
 
   return (
     <>
@@ -84,7 +106,12 @@ const Notifications: React.FC = () => {
                         </p>
                         <small>{new Date(n.createdAt).toLocaleString()}</small>
                       </div>
-                     
+                      <button onClick={() => handleAccept(n)}>
+                        {t('notifications.accept')}
+                      </button>
+                      <button onClick={() => handleReject(n)}>
+                        {t('notifications.reject')}
+                      </button>
                     </div>
                   ))
                 )}
