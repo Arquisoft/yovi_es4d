@@ -23,13 +23,12 @@ interface Notification {
 }
 
 const Notifications: React.FC = () => {
-  const { t } = useTranslation(); // 👈 hook i18n
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const navigate = useNavigate();
 
   const loadData = async () => {
     setLoading(true);
@@ -38,11 +37,12 @@ const Notifications: React.FC = () => {
       const res = await axios.get(`${API_URL}/api/notifications`, { withCredentials: true });
       if (res.data && Array.isArray(res.data.notifications)) {
         setNotifications(res.data.notifications);
+        console.log('Notificaciones cargadas:', res.data.notifications);
       } else {
         setNotifications([]);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Error cargando notificaciones:', err.response?.data || err.message);
       setError(t('notifications.errorLoading'));
     } finally {
       setLoading(false);
@@ -53,35 +53,7 @@ const Notifications: React.FC = () => {
     loadData();
   }, []);
 
-  const handleAccept = async (notification: Notification) => {
-    if (!notification.requestId) return;
-    try {
-      await axios.patch(
-        `${API_URL}/api/friends/accept`,
-        { requestId: notification.requestId },
-        { withCredentials: true }
-      );
-      await loadData();
-    } catch (err: any) {
-      console.error(err);
-      setError(t('notifications.errorAccept'));
-    }
-  };
-
-  const handleReject = async (notification: Notification) => {
-    if (!notification.requestId) return;
-    try {
-      await axios.patch(
-        `${API_URL}/api/friends/reject`,
-        { requestId: notification.requestId },
-        { withCredentials: true }
-      );
-      await loadData();
-    } catch (err: any) {
-      console.error(err);
-      setError(t('notifications.errorReject'));
-    }
-  };
+ 
 
   return (
     <>
@@ -91,15 +63,8 @@ const Notifications: React.FC = () => {
           <div className="content-inner">
             <h1>{t('notifications.title')}</h1>
 
-            {loading && (
-              <p style={{ color: 'white', textAlign: 'center' }}>
-                {t('notifications.loading')}
-              </p>
-            )}
-
-            {error && (
-              <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>
-            )}
+            {loading && <p style={{ color: 'white', textAlign: 'center' }}>{t('notifications.loading')}</p>}
+            {error && <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>}
 
             {!loading && !error && (
               <div className="notifications-content rules-content">
@@ -115,19 +80,11 @@ const Notifications: React.FC = () => {
                       />
                       <div className="notification-text">
                         <p>
-                          <strong>{n.relatedUser.username}</strong>{' '}
-                          {t('notifications.friendRequest')}
+                          <strong>{n.relatedUser.username}</strong> {t('notifications.friendRequest')}
                         </p>
-                        <small>
-                          {new Date(n.createdAt).toLocaleString()}
-                        </small>
+                        <small>{new Date(n.createdAt).toLocaleString()}</small>
                       </div>
-                      <button onClick={() => handleAccept(n)}>
-                        {t('notifications.accept')}
-                      </button>
-                      <button onClick={() => handleReject(n)}>
-                        {t('notifications.reject')}
-                      </button>
+                     
                     </div>
                   ))
                 )}

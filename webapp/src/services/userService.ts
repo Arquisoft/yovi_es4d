@@ -22,7 +22,7 @@ export interface BackendGameRecord {
   finishedAt?: string;
   players: Player[];
   status: string;
-  winner: string | null; // "j1" or "j2"
+  winner: string | null; 
   moves?: unknown[];
 }
 
