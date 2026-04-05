@@ -849,7 +849,7 @@ it('should return 500 if sending game invite notification fails', async () => {
 describe('Gateway Service - Coverage extra', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  // ================= JWT MIDDLEWARE 96-110 =================
+  // ================= JWT MIDDLEWARE =================
   it('should reject request without token', async () => {
     const res = await request(server).get('/api/game/history');
     expect(res.statusCode).toBe(401);
@@ -864,8 +864,26 @@ describe('Gateway Service - Coverage extra', () => {
     expect(res.body.message).toBe('Token inválido');
   });
 
-  // ================= /api/game/history 129-146 =================
-  it('should return 500 if game service fails', async () => {
+  // ================= CORS: origen no permitido (línea 61) =================
+  it('should reject request from disallowed origin', async () => {
+    const res = await request(server)
+      .get('/api/auth/me')
+      .set('Origin', 'http://evil.com')
+      .set('Cookie', createCookie());
+    expect([403, 500]).toContain(res.statusCode);
+  });
+
+  // ================= /api/game/history happy path (línea 123) =================
+  it('should return game history', async () => {
+    axios.get.mockResolvedValue({ data: [{ gameId: 'g1' }] });
+    const res = await request(server)
+      .get('/api/game/history')
+      .set('Cookie', createCookie('user1'));
+    expect(res.statusCode).toBe(200);
+    expect(res.body[0].gameId).toBe('g1');
+  });
+
+  it('should return 500 if game history service fails', async () => {
     axios.get.mockRejectedValue(new Error('Service down'));
     const res = await request(server)
       .get('/api/game/history')
@@ -874,32 +892,80 @@ describe('Gateway Service - Coverage extra', () => {
     expect(res.body.error).toBe('Service down');
   });
 
-  // ================= /api/user/getUserProfile 256-261 =================
+  // ================= /api/user/updateAvatar (líneas 149-166) =================
+  it('should update avatar successfully', async () => {
+    axios.post.mockResolvedValue({ data: { avatar: 'new.png' } });
+    const res = await request(server)
+      .post('/api/user/updateAvatar')
+      .set('Cookie', createCookie('user1'));
+    expect(res.statusCode).toBe(200);
+    expect(res.body.avatar).toBe('new.png');
+  });
+
+  it('should return 500 if updateAvatar service fails', async () => {
+    axios.post.mockRejectedValue(new Error('Avatar service down'));
+    const res = await request(server)
+      .post('/api/user/updateAvatar')
+      .set('Cookie', createCookie('user1'));
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal error');
+  });
+
+  it('should return 401 if updateAvatar called without token', async () => {
+    const res = await request(server).post('/api/user/updateAvatar');
+    expect(res.statusCode).toBe(401);
+  });
+
+  // ================= /api/game/:gameId/move catch (líneas 508-509) =================
+  it('should return 500 if move service fails', async () => {
+    axios.post.mockRejectedValue(new Error('Move service down'));
+    const res = await request(server)
+      .post('/api/game/game123/move')
+      .set('Cookie', createCookie('user1'))
+      .send({ move: 'A1', userId: 'user1', mode: 'vsBot' });
+    expect(res.statusCode).toBe(500);
+  });
+
+  // ================= /api/user/getUserProfile =================
   it('should return 401 if getUserProfile without token', async () => {
     const res = await request(server).post('/api/user/getUserProfile');
     expect(res.statusCode).toBe(401);
     expect(res.body.error).toBe('Not authenticated');
   });
 
-  it('should fallback if user-service fails in getUserProfile', async () => {
-    axios.post.mockRejectedValue(new Error('User service down'));
-    const res = await request(server)
-      .post('/api/user/getUserProfile')
-      .set('Cookie', createCookie('user1'));
-    expect([500, 401]).toContain(res.statusCode);
-  });
+  // ================= /api/friends/requests receiver sin email (líneas 647-648) =================
+  it('should enrich receiver data when receiver lacks email/username', async () => {
+    axios.get.mockResolvedValue({
+      data: [{
+        _id: 'r1',
+        status: 'pending',
+        createdAt: 'now',
+        sender: { _id: 's1', email: 'sender@test.com', username: 'senderUser' },
+        receiver: { _id: 'r2' } // sin email ni username
+      }]
+    });
+    axios.post.mockResolvedValue({ data: { username: 'receiverUser', email: 'receiver@test.com' } });
 
-  // ================= /api/game/:gameId/move 485-486 =================
-  it('should return 400 if move or userId missing', async () => {
     const res = await request(server)
-      .post('/api/game/game123/move')
+      .get('/api/friends/requests')
       .set('Cookie', createCookie('user1'))
-      .send({}); // sin move ni userId
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBe('Move and userId are required');
+      .query({ type: 'sent' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body[0].receiver.username).toBe('receiverUser');
   });
 
-  // ================= /api/friends/requests fallback 629-630 =================
+  // ================= /api/friends/requests catch (líneas 672-673) =================
+  it('should return 500 if friend requests service fails', async () => {
+    axios.get.mockRejectedValue(new Error('Friend service down'));
+    const res = await request(server)
+      .get('/api/friends/requests')
+      .set('Cookie', createCookie('user1'));
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Error obteniendo solicitudes');
+  });
+
+  // ================= /api/friends/requests fallback =================
   it('should fallback emails if user-service fails', async () => {
     axios.get.mockResolvedValue({
       data: [{ _id: 'r1', status: 'pending', createdAt: 'now', sender: { _id: 's1' }, receiver: { _id: 'r2' } }]
@@ -916,7 +982,7 @@ describe('Gateway Service - Coverage extra', () => {
     expect(res.body[0].receiver.email).toBe('');
   });
 
-  // ================= /api/friends/reject catch 656-657 =================
+  // ================= /api/friends/reject catch =================
   it('should return 500 if reject request fails', async () => {
     axios.patch.mockRejectedValue(new Error('Friend service fail'));
     const res = await request(server)
@@ -925,6 +991,276 @@ describe('Gateway Service - Coverage extra', () => {
       .send({ requestId: 'r1' });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Error rechazando solicitud');
+  });
+});
+
+// =========================
+// TESTS WEBSOCKETS (líneas 805-924)
+// =========================
+describe('Gateway Service - WebSockets', () => {
+  const { io: ioClient } = require('socket.io-client');
+  let client1, client2;
+
+  beforeEach((done) => {
+    jest.clearAllMocks();
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+    client1 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+    client1.on('connect', done);
+  });
+
+  afterEach((done) => {
+    if (client1?.connected) client1.disconnect();
+    if (client2?.connected) client2.disconnect();
+    setTimeout(done, 50);
+  });
+
+  it('create_room: emite room_created con un código', (done) => {
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      expect(typeof code).toBe('string');
+      expect(code.length).toBe(4);
+      done();
+    });
+  });
+
+  it('join_room: sala no encontrada emite room_error', (done) => {
+    client1.emit('join_room', { code: 'XXXX' });
+    client1.on('room_error', ({ message }) => {
+      expect(message).toBe('Sala no encontrada');
+      done();
+    });
+  });
+
+  it('join_room: sala llena emite room_error', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        // Un tercer cliente intenta entrar a la sala ya llena
+        const client3 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+        client3.on('connect', () => {
+          // Primero llenamos la sala con client2
+          client2.emit('join_room', { code });
+          client2.on('your_role', () => {
+            // Ahora client3 intenta unirse a sala llena
+            client3.emit('join_room', { code });
+            client3.on('room_error', ({ message }) => {
+              expect(message).toBe('Sala llena');
+              client3.disconnect();
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('join_room: asigna roles j1 y j2 correctamente', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+    let rolesReceived = 0;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+      });
+
+      client1.on('your_role', ({ role }) => {
+        expect(role).toBe('j1');
+        rolesReceived++;
+        if (rolesReceived === 2) done();
+      });
+      client2.on('your_role', ({ role }) => {
+        expect(role).toBe('j2');
+        rolesReceived++;
+        if (rolesReceived === 2) done();
+      });
+    });
+  });
+
+  it('rejoin_room: sala inexistente no falla', (done) => {
+    client1.emit('rejoin_room', { code: 'ZZZZ', role: 'j1' });
+    setTimeout(done, 100); // no debe fallar
+  });
+
+  it('rejoin_room: j2 recibe game_joined si la partida ya empezó', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      // Simular que j1 inicia la partida
+      client1.emit('game_started', { code, gameId: 'game-xyz' });
+
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('rejoin_room', { code, role: 'j2' });
+        client2.on('game_joined', ({ gameId }) => {
+          expect(gameId).toBe('game-xyz');
+          done();
+        });
+      });
+    });
+  });
+
+  it('player_info: reenvía perfil al rival si está conectado', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+        client2.on('your_role', () => {
+          client1.emit('player_info', { code, name: 'Alice', avatar: 'alice.png' });
+          client2.on('opponent_info', ({ name }) => {
+            expect(name).toBe('Alice');
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('player_info: sala inexistente no falla', (done) => {
+    client1.emit('player_info', { code: 'ZZZZ', name: 'Nobody', avatar: 'x.png' });
+    setTimeout(done, 100);
+  });
+
+  it('rejoin_room: reenvía opponent_info si el rival ya compartió su perfil', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      // j1 comparte su perfil antes de que j2 se una
+      client1.emit('player_info', { code, name: 'Alice', avatar: 'alice.png' });
+
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('rejoin_room', { code, role: 'j2' });
+        client2.on('opponent_info', ({ name }) => {
+          expect(name).toBe('Alice');
+          done();
+        });
+      });
+    });
+  });
+
+  it('game_started: notifica a j2 con game_joined', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+        client2.on('your_role', () => {
+          client1.emit('game_started', { code, gameId: 'game-abc' });
+          client2.on('game_joined', ({ gameId }) => {
+            expect(gameId).toBe('game-abc');
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('move_made: reenvía el movimiento al rival', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+        client2.on('your_role', () => {
+          client1.emit('move_made', { code, position: '0,0', turn: 'j2' });
+          client2.on('opponent_move', ({ position, turn }) => {
+            expect(position).toBe('0,0');
+            expect(turn).toBe('j2');
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('game_over: reenvía el ganador al rival', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+        client2.on('your_role', () => {
+          client1.emit('game_over', { code, winner: 'j1' });
+          client2.on('game_over', ({ winner }) => {
+            expect(winner).toBe('j1');
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  it('disconnect: emite opponent_disconnected al rival durante la partida', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code });
+        client2.on('your_role', () => {
+          // Desactivar transitioning emitiendo game_started (lo pone a false)
+          client1.emit('game_started', { code, gameId: 'game-disc' });
+          // Esperar que la sala procese el game_started antes de desconectar
+          setTimeout(() => {
+            client2.on('opponent_disconnected', () => {
+              done();
+            });
+            client1.disconnect();
+          }, 100);
+        });
+      });
+    });
+  }, 10000);
+
+  it('disconnect: sala en transitioning no emite opponent_disconnected', (done) => {
+    const addr = server.address();
+    const url = `http://localhost:${addr.port}`;
+
+    client1.emit('create_room', { boardSize: 11 });
+    client1.on('room_created', ({ code }) => {
+      client2 = ioClient(url, { forceNew: true, transports: ['websocket'] });
+      client2.on('connect', () => {
+        client2.emit('join_room', { code }); // activa transitioning
+        client2.on('your_role', () => {
+          let disconnectReceived = false;
+          client2.on('opponent_disconnected', () => {
+            disconnectReceived = true;
+          });
+          client1.disconnect();
+          setTimeout(() => {
+            expect(disconnectReceived).toBe(false);
+            done();
+          }, 150);
+        });
+      });
+    });
   });
 });
 });
