@@ -33,7 +33,7 @@ Feature: Mode Selector - Configuración de partida
     When I select "multiplayer" game mode
     And I enter "Rival" as player 2 name
     And I select "Extra" board size
-    And I click the play button
+    And I click the mode selector play button
     Then I should navigate to "/game"
     And the game should have board size "19"
     And player 2 should be named "Rival"
@@ -42,7 +42,7 @@ Feature: Mode Selector - Configuración de partida
     When I select "vsBot" game mode
     And I select "Difícil" difficulty
     And I select "Normal" board size
-    And I click the play button
+    And I click the mode selector play button
     Then I should navigate to "/game"
     And the game should have bot mode "hard_bot"
 
@@ -51,7 +51,7 @@ Feature: Mode Selector - Configuración de partida
     Then I should navigate to "/online-lobby"
 
   Scenario: Verificar carga de modos de bot desde API
-    Given the bot modes API returns ["random_bot", "intermediate_bot", "hard_bot"]
+    Given the bot modes API returns all three modes
     Then I should see 3 difficulty options
     And "Aleatorio" difficulty should be present
     And "Intermedio" difficulty should be present
