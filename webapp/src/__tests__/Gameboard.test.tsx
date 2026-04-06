@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import GameBoard from '../components/game/GameBoard'
@@ -11,6 +11,31 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return { ...actual, useNavigate: () => mockNavigate }
 })
+
+// ── Socket.io mock ────────────────────────────────────────────────────────────
+type SocketEventCallback = (...args: unknown[]) => void
+
+interface MockSocket {
+  on: ReturnType<typeof vi.fn>
+  emit: ReturnType<typeof vi.fn>
+  disconnect: ReturnType<typeof vi.fn>
+  _trigger: (event: string, ...args: unknown[]) => void
+}
+
+let mockSocket: MockSocket
+
+vi.mock('socket.io-client', () => ({
+  io: () => {
+    const handlers: Record<string, SocketEventCallback> = {}
+    mockSocket = {
+      on: vi.fn((event: string, cb: SocketEventCallback) => { handlers[event] = cb }),
+      emit: vi.fn(),
+      disconnect: vi.fn(),
+      _trigger: (event: string, ...args: unknown[]) => handlers[event]?.(...args),
+    }
+    return mockSocket
+  },
+}))
 
 vi.mock('../components/game/Triangle', () => ({
   default: ({ onHexClick }: { onHexClick: (p: string) => void }) => (
@@ -574,5 +599,229 @@ describe('GameBoard', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(3)
     })
+  })
+
+  // ── Tests modo online ─────────────────────────────────────────────────────
+
+  test('online: crea el socket y hace rejoin_room al conectar', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    // Simular evento connect del socket
+    act(() => { mockSocket._trigger('connect') })
+
+    await waitFor(() => {
+      expect(mockSocket.emit).toHaveBeenCalledWith('rejoin_room', { code: 'ROOM1', role: 'j1' })
+    })
+  })
+
+  test('online: recibe opponent_info y actualiza el perfil del rival', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    act(() => { mockSocket._trigger('opponent_info', { name: 'Rival', avatar: 'rival.png' }) })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('player-Rival')).toBeInTheDocument()
+    })
+  })
+
+  test('online: j2 recibe game_joined y carga la partida via fetch', async () => {
+    const gameData = { ...gameStartResponse, gameId: 'onlineGame1' }
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        // j2 no llama a /start, así que no hay 3ª llamada de inicio
+        .mockResolvedValueOnce({ ok: true, json: async () => gameData } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j2', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    await act(async () => {
+      mockSocket._trigger('game_joined', { gameId: 'onlineGame1' })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('triangle')).toBeInTheDocument()
+    })
+  })
+
+  test('online: recibe opponent_move y actualiza el tablero', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByTestId('triangle')
+
+    act(() => { mockSocket._trigger('opponent_move', { position: '0,0', turn: 'j1' }) })
+
+    // No debe lanzar error y el tablero sigue visible
+    expect(screen.getByTestId('triangle')).toBeInTheDocument()
+  })
+
+  test('online: recibe opponent_disconnected y muestra pantalla de desconexión', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    act(() => { mockSocket._trigger('opponent_disconnected') })
+
+    await waitFor(() => {
+      expect(screen.getByText('Tu rival se ha desconectado')).toBeInTheDocument()
+    })
+  })
+
+  test('online: botón "Volver al inicio" navega a /select tras desconexión del rival', async () => {
+    const user = userEvent.setup()
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    act(() => { mockSocket._trigger('opponent_disconnected') })
+
+    await screen.findByText('Tu rival se ha desconectado')
+    await user.click(screen.getByText('Volver al inicio'))
+
+    expect(mockNavigate).toHaveBeenCalledWith('/select')
+  })
+
+  test('online: recibe game_over del socket y cambia status a finished', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByTestId('triangle')
+
+    act(() => { mockSocket._trigger('game_over', { winner: 'j1' }) })
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/gameover', expect.anything())
+    })
+  })
+
+  test('online j1: handleHexClick emite move_made y no llama a /move', async () => {
+    const user = userEvent.setup()
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    await waitFor(() => {
+      expect(mockSocket.emit).toHaveBeenCalledWith('move_made', expect.objectContaining({ position: '0,0' }))
+    })
+
+    // Solo 4 llamadas fetch: me, profile, start, validateMove — NO /move
+    expect(global.fetch).toHaveBeenCalledTimes(4)
+  })
+
+  test('online j1: emite game_over cuando validateMove devuelve un ganador', async () => {
+    const user = userEvent.setup()
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: 'j1', status: 'active' }) } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByTestId('triangle')
+    await user.click(screen.getByText('hex-0-0'))
+
+    await waitFor(() => {
+      expect(mockSocket.emit).toHaveBeenCalledWith('game_over', { code: 'ROOM1', winner: 'j1' })
+    })
+  })
+
+  test('online: emite player_info con el perfil del usuario al iniciar', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await waitFor(() => {
+      expect(mockSocket.emit).toHaveBeenCalledWith('player_info', {
+        code: 'ROOM1',
+        name: 'TestUser',
+        avatar: 'avatar.png',
+      })
+    })
+  })
+
+  test('online: desconecta el socket al desmontar el componente', async () => {
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+
+    const { unmount } = renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+    unmount()
+
+    expect(mockSocket.disconnect).toHaveBeenCalled()
+  })
+
+  test('online j2: game_joined con error en fetch muestra console.error', async () => {
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+        .mockRejectedValueOnce(new Error('fetch game error'))
+
+    renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j2', roomCode: 'ROOM1' } as any)
+
+    await screen.findByText('YOVI_ES4D')
+
+    await act(async () => {
+      mockSocket._trigger('game_joined', { gameId: 'brokenGame' })
+    })
+
+    await waitFor(() => {
+      expect(consoleErrorMock).toHaveBeenCalledWith('Error cargando partida para j2:', expect.any(Error))
+    })
+
+    consoleErrorMock.mockRestore()
   })
 })

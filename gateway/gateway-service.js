@@ -49,6 +49,8 @@ const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:800
 const allowedOrigins = [
   'http://localhost:5173',
   'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
 ];
 
 app.use(cors({
@@ -935,3 +937,4 @@ if (require.main === module) {
 
 module.exports = app;
 module.exports.startServer = startServer;
+

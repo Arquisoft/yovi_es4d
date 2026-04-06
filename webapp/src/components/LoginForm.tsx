@@ -23,9 +23,15 @@ const LoginForm: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Validación frontend robusta
-    const errorEmail = t('registerForm.errorEmail') || 'Invalid email';
-    const errorPassword = t('registerForm.errorPasswordContent') || 'Password is required';
+    const errorEmail =
+    t('registerForm.errorEmail') === 'registerForm.errorEmail'
+      ? 'Correo electrónico no válido'
+      : t('registerForm.errorEmail');
+
+    const errorPassword =
+      t('registerForm.errorPasswordContent') === 'registerForm.errorPasswordContent'
+        ? 'Contraseña es obligatoria'
+        : t('registerForm.errorPasswordContent');
 
     if (!email) {
       setError(errorEmail);
@@ -56,7 +62,7 @@ const LoginForm: React.FC = () => {
   return (
     <div className="auth-container">
       <h2>{t("menu.initsession")}</h2>
-      <form onSubmit={handleSubmit} className="auth-form">
+      <form onSubmit={handleSubmit} className="auth-form" noValidate>
         <div className="form-group">
           <label htmlFor="email">{t("registerForm.email")}:</label>
           <input

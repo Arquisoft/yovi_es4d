@@ -110,4 +110,116 @@ describe('LoginForm', () => {
 
     expect(button).toBeDisabled()
   })
+
+  test('shows error if email is empty', async () => {
+    renderForm()
+    const user = userEvent.setup()
+    const passwordInput = screen.getByLabelText(/Contraseña:/i)
+    await user.type(passwordInput, 'Password1')
+    await user.click(screen.getByRole('button'))
+    expect(await screen.findByText(/correo electrónico no válido|correo electrónico es obligatorio|invalid email|email is required/i)).toBeInTheDocument()
+  })
+
+  test('shows error if email is invalid', async () => {
+    renderForm()
+    const user = userEvent.setup()
+    const emailInput = screen.getByLabelText(/Correo electrónico:/i)
+    const passwordInput = screen.getByLabelText(/Contraseña:/i)
+    await user.type(emailInput, 'invalid-email')
+    await user.type(passwordInput, 'Password1')
+    await user.click(screen.getByRole('button'))
+    expect(await screen.findByText(/correo electrónico no válido|invalid email/i)).toBeInTheDocument()
+  })
+
+  test('shows error if password is empty', async () => {
+    renderForm()
+    const user = userEvent.setup()
+    const emailInput = screen.getByLabelText(/Correo electrónico:/i)
+    await user.type(emailInput, 'test@example.com')
+    await user.click(screen.getByRole('button'))
+    expect(await screen.findByText(/contraseña es obligatoria|password is required/i)).toBeInTheDocument()
+  })
+
+  test('continues when email is valid', async () => {
+  mockedLogin.mockResolvedValue({})
+
+  renderForm()
+  const user = userEvent.setup()
+
+  await user.type(
+    screen.getByLabelText(/Correo electrónico:/i),
+    'valid@example.com'
+  )
+
+  await user.type(
+    screen.getByLabelText(/Contraseña:/i),
+    'Password1'
+  )
+
+  await user.click(screen.getByRole('button'))
+
+  await waitFor(() => {
+    expect(mockedLogin).toHaveBeenCalled()
+  })
+})
+
+test('shows backend response error if exists', async () => {
+  mockedLogin.mockRejectedValue({
+    response: {
+      data: { error: 'Backend error' },
+    },
+  })
+
+  renderForm()
+  const user = userEvent.setup()
+
+  await user.type(
+    screen.getByLabelText(/Correo electrónico:/i),
+    'test@example.com'
+  )
+
+  await user.type(
+    screen.getByLabelText(/Contraseña:/i),
+    'Password1'
+  )
+
+  await user.click(screen.getByRole('button'))
+
+  expect(await screen.findByText(/backend error/i))
+    .toBeInTheDocument()
+})
+
+test('shows backend response error', async () => {
+  mockedLogin.mockRejectedValue({
+    response: {
+      data: { error: 'Backend error' },
+    },
+  })
+
+  renderForm()
+  const user = userEvent.setup()
+
+  await user.type(screen.getByLabelText(/Correo electrónico/i),'test@test.com')
+  await user.type(screen.getByLabelText(/Contraseña/i),'Password1')
+
+  await user.click(screen.getByRole('button'))
+
+  expect(await screen.findByText(/backend error/i))
+    .toBeInTheDocument()
+})
+
+test('shows generic error when no message exists', async () => {
+  mockedLogin.mockRejectedValue({})
+
+  renderForm()
+  const user = userEvent.setup()
+
+  await user.type(screen.getByLabelText(/Correo electrónico/i),'test@test.com')
+  await user.type(screen.getByLabelText(/Contraseña/i),'Password1')
+
+  await user.click(screen.getByRole('button'))
+
+  expect(await screen.findByText(/login failed/i))
+    .toBeInTheDocument()
+})
 })

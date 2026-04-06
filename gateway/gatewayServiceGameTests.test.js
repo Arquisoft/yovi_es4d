@@ -81,7 +81,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
     });
 
     test('devuelve 400 si el game-service rechaza el movimiento', async () => {
-        axios.post.mockRejectedValueOnce({ response: { status: 400, data: { error: 'Movimiento inválido' } } });
+        axios.post.mockRejectedValueOnce({ response: { status: 400, data: { error: 'Movimiento invï¿½lido' } } });
         const res = await request(app)
             .post('/api/game/game_abc123/validateMove')
             .set('Cookie', createCookie())
@@ -89,7 +89,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
         expect(res.status).toBe(400);
     });
 
-    test('reenvía move y userId al game-service', async () => {
+    test('reenvï¿½a move y userId al game-service', async () => {
         axios.post.mockResolvedValueOnce(validateOk);
         await request(app)
             .post('/api/game/game_abc123/validateMove')
@@ -145,7 +145,7 @@ describe('POST /api/game/:gameId/move', () => {
         expect(res.status).toBe(400);
     });
 
-    test('devuelve 400 para un mode inválido', async () => {
+    test('devuelve 400 para un mode invï¿½lido', async () => {
         const res = await request(app)
             .post('/api/game/game_abc123/move')
             .set('Cookie', createCookie())

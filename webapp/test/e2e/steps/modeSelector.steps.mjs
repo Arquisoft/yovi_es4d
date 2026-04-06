@@ -1,7 +1,8 @@
 // features/step_definitions/modeSelector.steps.js
 import { Given, When, Then } from '@cucumber/cucumber'
 import assert from 'assert'
-import { API_URL } from '../../../src/config'
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'
 
 // ─────────────────────────────────────────────────────────────
 // GIVEN
@@ -23,12 +24,12 @@ Given('the mode selector page is open', async function () {
         }
     })
 
-    await page.goto('http://localhost:5173')
+    await page.goto('http://localhost:5173/select')
     await page.waitForSelector('.ms-header', { timeout: 5000 })
 })
 
-Given('the bot modes API returns {string}', async function (modesJson) {
-    this.mockBotModesData = JSON.parse(modesJson)
+Given('the bot modes API returns all three modes', async function () {
+    this.mockBotModesData = ['random_bot', 'intermediate_bot', 'hard_bot']
     this.mockBotModesResponse = true
     this.mockBotModesStatus = 200
 })
@@ -79,7 +80,7 @@ When('I enter {string} as player 2 name', async function (name) {
     await page.waitForTimeout(300)
 })
 
-When('I click the play button', async function () {
+When('I click the mode selector play button', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
@@ -144,12 +145,18 @@ Then('a checkmark should appear', async function () {
     assert.ok(isVisible, 'Checkmark should appear')
 })
 
+const difficultyLabels = {
+    'random_bot': 'Aleatorio',
+    'intermediate_bot': 'Intermedio',
+    'hard_bot': 'Difícil'
+}
+
 Then('the {string} difficulty should be selected', async function (botModeId) {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    // Verify the radio button is checked for that mode
-    const modeButton = page.locator(`.ms-mode-card:has-text("${this.getDifficultyLabel(botModeId)}")`)
+    const label = difficultyLabels[botModeId] || botModeId
+    const modeButton = page.locator(`.ms-mode-card:has-text("${label}")`)
     const hasSelectedClass = await modeButton.evaluate(el => el.classList.contains('selected'))
     assert.ok(hasSelectedClass, `${botModeId} should be selected`)
 })
@@ -236,13 +243,3 @@ Then('I should see at least {string} difficulty', async function (difficultyLabe
     const isVisible = await button.isVisible()
     assert.ok(isVisible, `At least "${difficultyLabel}" difficulty should be present as fallback`)
 })
-
-// Helper method
-Then.prototype.getDifficultyLabel = function(botModeId) {
-    const labels = {
-        'random_bot': 'Aleatorio',
-        'intermediate_bot': 'Intermedio',
-        'hard_bot': 'Difícil'
-    }
-    return labels[botModeId] || botModeId
-}
