@@ -452,13 +452,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_stakeholders">1.3. Stakeholders</a></li>
 </ul>
 </li>
-<li><a href="#section-architecture-constraints">2. <strong> Restricciones de Arquitectura</strong></a>
+<li><a href="#section-architecture-constraints">2. Restricciones de Arquitectura</a>
 <ul class="sectlevel2">
-<li><a href="#_restricciones_técnicas">2.1. <strong>Restricciones técnicas </strong></a></li>
-<li><a href="#_restricciones_organizacionales">2.2. <strong>Restricciones organizacionales </strong></a></li>
-<li><a href="#_restricciones_funcionales">2.3. <strong>Restricciones Funcionales </strong></a></li>
-<li><a href="#_restricciones_de_api">2.4. <strong>Restricciones de API </strong></a></li>
-<li><a href="#_restricciones_de_usuario_y_datos">2.5. <strong>Restricciones de Usuario y Datos</strong></a></li>
+<li><a href="#_restricciones_técnicas">2.1. Restricciones técnicas</a></li>
+<li><a href="#_restricciones_organizacionales">2.2. Restricciones organizacionales</a></li>
+<li><a href="#_restricciones_funcionales">2.3. Restricciones Funcionales</a></li>
+<li><a href="#_restricciones_de_api">2.4. Restricciones de API</a></li>
+<li><a href="#_restricciones_de_usuario_y_datos">2.5. Restricciones de Usuario y Datos</a></li>
 </ul>
 </li>
 <li><a href="#section-context-and-scope">3. Contexto y alcance</a>
@@ -948,7 +948,7 @@ respecto a la arquitectura y su documentación.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="section-architecture-constraints">2. <strong> Restricciones de Arquitectura</strong></h2>
+<h2 id="section-architecture-constraints">2. Restricciones de Arquitectura</h2>
 <div class="sectionbody">
 <div class="sidebarblock arc42help">
 <div class="content">
@@ -978,7 +978,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 <p>Esta sección se describen las restricciones técnicas, funcionales y de alcance que condicionan el diseño del sistema.</p>
 </div>
 <div class="sect2">
-<h3 id="_restricciones_técnicas">2.1. <strong>Restricciones técnicas </strong></h3>
+<h3 id="_restricciones_técnicas">2.1. Restricciones técnicas</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1015,7 +1015,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 </table>
 </div>
 <div class="sect2">
-<h3 id="_restricciones_organizacionales">2.2. <strong>Restricciones organizacionales </strong></h3>
+<h3 id="_restricciones_organizacionales">2.2. Restricciones organizacionales</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1044,7 +1044,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 </table>
 </div>
 <div class="sect2">
-<h3 id="_restricciones_funcionales">2.3. <strong>Restricciones Funcionales </strong></h3>
+<h3 id="_restricciones_funcionales">2.3. Restricciones Funcionales</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1081,7 +1081,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 </table>
 </div>
 <div class="sect2">
-<h3 id="_restricciones_de_api">2.4. <strong>Restricciones de API </strong></h3>
+<h3 id="_restricciones_de_api">2.4. Restricciones de API</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1112,7 +1112,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 </table>
 </div>
 <div class="sect2">
-<h3 id="_restricciones_de_usuario_y_datos">2.5. <strong>Restricciones de Usuario y Datos</strong></h3>
+<h3 id="_restricciones_de_usuario_y_datos">2.5. Restricciones de Usuario y Datos</h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -1249,6 +1249,11 @@ Gestiona registro, inicio y cierre de sesión.</p></td>
 Gestiona los datos cuando se juega una partida.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FriendDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos de los amigos.<br>
+Gestiona los datos referente a los amigos del usuario y las solicitudes de amistad.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Yovi</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Aplicación principal para mostrar el juego.</p></td>
 </tr>
@@ -1304,6 +1309,10 @@ Se conecta a través del navegador web a la aplicación Yovi.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos hecha en MondoDB, donde, se guardan los datos de las partidas.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FriendDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos hecha en MondoDB, donde, se guardan los datos referentes a los amigos del usuario y las solicitudes de amistad.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Microservicios</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Son los diferentes microservicios que componen el sistema, cada uno con su función específica.</p></td>
 </tr>
@@ -1338,6 +1347,11 @@ Se conecta a través del navegador web a la aplicación Yovi.</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">GameDB</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Pueden ser consultas variadas, como pueden ser datos de las partidas, o inserciones, como el registro de una nueva partida.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Los resultados de esas consultas o de las inserciones.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FriendDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pueden ser consultas variadas, como pueden ser datos de los amigos del usuario, o inserciones, como el registro de una nueva solicitud de amistad.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Los resultados de esas consultas o de las inserciones.</p></td>
 </tr>
 </tbody>
@@ -1735,12 +1749,24 @@ del nivel 1, junto con las descripciones en caja negra de sus bloques internos.<
 <td class="tableblock halign-left valign-top"><p class="tableblock">Intermediario de acceso a la base de datos de usuarios.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Friend Service</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Intermediario de acceso a la base de datos de amigos.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Backend (Microservicios)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Conjunto de microservicios que gestionan la lógica de negocio del sistema, incluyendo la gestión de usuarios, partidas y estadísticas.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Base de Datos</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sistema de almacenamiento donde se persisten los usuarios y las estadísticas de las partidas.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FriendDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sistema de almacenamiento donde se persisten los amigos.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GameDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sistema de almacenamiento donde se persisten los datos de las partidas.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">UserDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sistema de almacenamiento donde se persisten los datos de los usuarios.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2018,7 +2044,10 @@ hacer zoom dentro de esa caja negra utilizando diagramas de despliegue adicional
 <p>Auth: Gestiona la autenticación de los usuarios, incluyendo el inicio de sesión y cierre de sesión.</p>
 </li>
 <li>
-<p>User: Gestiona las operaciones relacionadas con el usuario, como el registro, edición del perfil y consulta del perfil.</p>
+<p>User service: Gestiona las operaciones relacionadas con el usuario, como el registro, edición del perfil y consulta del perfil.</p>
+</li>
+<li>
+<p>Friend service: Gestiona las operaciones relacionadas con los amigos, como la gestión de solicitudes de amistad y la consulta de la lista de amigos.</p>
 </li>
 </ul>
 </div>
@@ -2131,7 +2160,7 @@ Por lo tanto, son una contribución importante para lograr las cualidades intern
 <h3 id="_usabilidad_2">8.1. Usabilidad</h3>
 <div class="paragraph">
 <p>Usabilidad es la facilidad con la que un usuario puede interactuar con un sitio o aplicación, logrando sus objetivos de manera eficiente, efectiva y satisfactoria.
-La aplicación web será intuitiva, el tebloro mostrará en todo momento el estado del juego, se podrán consultar las reglas del juego durante una partida. La aplicación será también accesible para la mayor cantidad de usuarios posible.</p>
+La aplicación web será intuitiva, el tablero mostrará en todo momento el estado del juego, se podrán consultar las reglas del juego durante una partida. La aplicación será también accesible para la mayor cantidad de usuarios posible.</p>
 </div>
 </div>
 <div class="sect2">
@@ -2146,7 +2175,7 @@ La aplicación web será intuitiva, el tebloro mostrará en todo momento el esta
 <p>El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema. En la base se guardarán los datos de las credenciales de los usuarios.</p>
 </div>
 <div class="paragraph">
-<p>La base de datos es, de momento:</p>
+<p>La base de datos es:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -2659,7 +2688,7 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <div id="footer">
 <div id="footer-text">
 Version 8.2 EN<br>
-Last updated 2026-02-16 23:02:45 +0100
+Last updated 2026-03-14 18:45:43 +0100
 </div>
 </div>
 </body>
