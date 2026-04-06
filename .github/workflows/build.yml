@@ -49,6 +49,21 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.service.path }}
 
+      - name: Run unit tests
+        if: ${{ matrix.service.test == true }}
+        run: npm test
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Run webapp unit tests
+        if: ${{ matrix.service.name == 'webapp' }}
+        run: npm run test:coverage
+        working-directory: webapp
+
+      - name: Build webapp
+        if: ${{ matrix.service.name == 'webapp' }}
+        run: npm run build
+        working-directory: webapp
+
       - name: Build webapp
         if: ${{ matrix.service.name == 'webapp' }}
         run: npm run build
@@ -73,6 +88,10 @@ jobs:
             ~/.cargo/git
             gamey/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('gamey/Cargo.lock') }}
+          
+      - name: Run gamey unit tests
+        working-directory: gamey
+        run: cargo test --locked
 
       - name: Build gamey
         working-directory: gamey
