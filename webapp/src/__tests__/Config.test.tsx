@@ -8,7 +8,7 @@ describe("config API_URL", () => {
 
     const { API_URL } = await import("../config");
 
-    expect(API_URL).toBe("http://localhost:8000");
+    expect(API_URL).toBe("http://20.188.62.231:8000");
   });
 
 });

@@ -198,4 +198,48 @@ describe('GameOver', () => {
     ).toBeInTheDocument()
   })
 
+  test('intercambia jugadores cuando soy j2 en modo online', () => {
+  vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+    state: {
+      ...baseState,
+      gameMode: 'online',
+      onlineRole: 'j2',
+      userProfile: { username: 'YO', avatar: 'yo.png' },
+      opponentProfile: { username: 'Rival', avatar: 'rival.png' },
+    },
+  } as any)
+
+  renderWithProviders(<GameOver />)
+
+  expect(screen.getByText('YO')).toBeInTheDocument()
+  expect(screen.getAllByText('Rival')).toHaveLength(2) // Aparece en ambos lados
+})
+
+test('usa avatar del bot en modo vsBot', () => {
+  vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+    state: {
+      ...baseState,
+      gameMode: 'vsBot',
+    },
+  } as any)
+
+  renderWithProviders(<GameOver />)
+
+  const botImg = screen.getByRole('img', { name: /bot/i })
+  expect(botImg).toBeInTheDocument()
+})
+
+test('renderiza avatar como texto cuando no es imagen', () => {
+  vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+    state: {
+      ...baseState,
+      userProfile: { username: 'Alice', avatar: '😀' },
+    },
+  } as any)
+
+  renderWithProviders(<GameOver />)
+
+  expect(screen.getByText('😀')).toBeInTheDocument()
+})
+
 })
