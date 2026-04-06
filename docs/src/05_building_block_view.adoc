@@ -71,8 +71,11 @@ Yovi permite interactuar con el sistema, hace que los usuarios se puedan registr
 | Game Service | Interfaz API que valida las acciones de la partida.
 | Gamey Bot | Implementación del juego en Rust.
 | Users Service | Intermediario de acceso a la base de datos de usuarios.
+| Friend Service | Intermediario de acceso a la base de datos de amigos.
 | Backend (Microservicios) | Conjunto de microservicios que gestionan la lógica de negocio del sistema, incluyendo la gestión de usuarios, partidas y estadísticas.
-| Base de Datos | Sistema de almacenamiento donde se persisten los usuarios y las estadísticas de las partidas.
+| FriendDB | Sistema de almacenamiento donde se persisten los amigos.
+| GameDB | Sistema de almacenamiento donde se persisten los datos de las partidas.
+| UserDB | Sistema de almacenamiento donde se persisten los datos de los usuarios.
 |===
 
 
