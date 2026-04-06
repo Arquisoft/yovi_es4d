@@ -77,6 +77,10 @@ Gestiona registro, inicio y cierre de sesión.
 | Base de datos de las partidas. +
 Gestiona los datos cuando se juega una partida.
 
+| FriendDB
+| Base de datos de los amigos. +
+Gestiona los datos referente a los amigos del usuario y las solicitudes de amistad.
+
 | Yovi
 | Aplicación principal para mostrar el juego.
 
@@ -115,6 +119,9 @@ Se conecta a través del navegador web a la aplicación Yovi.
 | GameDB
 | Base de datos hecha en MondoDB, donde, se guardan los datos de las partidas.
 
+| FriendDB
+| Base de datos hecha en MondoDB, donde, se guardan los datos referentes a los amigos del usuario y las solicitudes de amistad.
+
 | Microservicios
 | Son los diferentes microservicios que componen el sistema, cada uno con su función específica.
 
@@ -138,6 +145,9 @@ Se conecta a través del navegador web a la aplicación Yovi.
 | Pueden ser consultas variadas, como pueden ser datos de las partidas, o inserciones, como el registro de una nueva partida.
 | Los resultados de esas consultas o de las inserciones.
 
+| FriendDB
+| Pueden ser consultas variadas, como pueden ser datos de los amigos del usuario, o inserciones, como el registro de una nueva solicitud de amistad.
+| Los resultados de esas consultas o de las inserciones.
 
 
 |===

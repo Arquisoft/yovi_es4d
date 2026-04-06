@@ -1,7 +1,7 @@
 ifndef::imagesdir[:imagesdir: ../images]
 
 [[section-architecture-constraints]]
-== ** Restricciones de Arquitectura**
+==  Restricciones de Arquitectura
 
 
 ifdef::arc42help[]
@@ -30,7 +30,7 @@ endif::arc42help[]
 
 Esta sección se describen las restricciones técnicas, funcionales y de alcance que condicionan el diseño del sistema.
 
-=== **Restricciones técnicas **
+=== Restricciones técnicas 
 [cols="1,3", options="header"]
 |===
 |Restricción |Explicación
@@ -52,7 +52,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 
 |===
 
-=== **Restricciones organizacionales **
+=== Restricciones organizacionales 
 
 [cols="1,3", options="header"]
 |===
@@ -67,7 +67,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 |Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas
 |===
 
-=== **Restricciones Funcionales **
+=== Restricciones Funcionales 
 
 [cols="1,3", options="header"]
 |===
@@ -89,7 +89,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 | El módulo desarrollado en Rust debe ser capaz de comprobar si una partida ha sido ganada, según las reglas del juego.
 |===
 
-=== **Restricciones de API **
+=== Restricciones de API 
 
 [cols="1,3", options="header"]
 |===
@@ -107,7 +107,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 - Devuelva el siguiente movimiento en notación YEN.
 |===
 
-=== **Restricciones de Usuario y Datos**
+=== Restricciones de Usuario y Datos
 
 [cols="1,3", options="header"]
 |===

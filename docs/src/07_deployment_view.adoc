@@ -92,6 +92,7 @@ image::DiagramaDespliegueNivel2.png["Diagrama de despliegue - Nivel 2"]
 * Gateway: Actúa como punto de entrada único para el fronted, enrutando las solicitudes a los microservicios correspondientes.
 * Game: Maneja la lógica del juego, incluyendo la gestión de partidas, movimientos y estadísticas.
 * Auth: Gestiona la autenticación de los usuarios, incluyendo el inicio de sesión y cierre de sesión.
-* User: Gestiona las operaciones relacionadas con el usuario, como el registro, edición del perfil y consulta del perfil.
+* User service: Gestiona las operaciones relacionadas con el usuario, como el registro, edición del perfil y consulta del perfil.
+* Friend service: Gestiona las operaciones relacionadas con los amigos, como la gestión de solicitudes de amistad y la consulta de la lista de amigos.
 endif::arc42help[]
 
