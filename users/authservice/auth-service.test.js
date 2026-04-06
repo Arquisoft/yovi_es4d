@@ -81,8 +81,8 @@ describe('Auth Service', () => {
       .post('/login')
       .send({ email: 'wrong@example.com', password: 'Password123' });
 
-    expect(response.status).toBe(500);
-    expect(response.body.error).toBe('Internal Server Error');
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe('Invalid credentials');
   });
 
   it('fails login with missing fields', async () => {
