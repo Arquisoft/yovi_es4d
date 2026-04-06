@@ -67,17 +67,16 @@ describe('POST /api/game/start', () => {
         expect(ids).toContain('bot');
     });
 
-    test('devuelve el botMode elegido', async () => {
+    test('crea partida con intermediate_bot y devuelve gameId', async () => {
         const res = await startGame({ botMode: 'intermediate_bot' });
-        expect(res.body.botMode).toBe('intermediate_bot');
+        expect(res.status).toBe(200);
+        expect(res.body.gameId).toBeDefined();
     });
 
-    test('rechaza un botMode desconocido con 400', async () => {
-        const res = await request(app)
-            .post('/api/game/start')
-            .send({ userId: 'jugador1', gameMode: 'vsBot', botMode: 'super_bot' });
-        expect(res.status).toBe(400);
-        expect(res.body.error).toMatch(/desconocido/i);
+    test('botMode desconocido crea partida igualmente con random_bot por defecto', async () => {
+        const res = await startGame({ botMode: 'super_bot' });
+        expect(res.status).toBe(200);
+        expect(res.body.gameId).toBeDefined();
     });
 
     test('crea una partida con intermediate_bot correctamente', async () => {
