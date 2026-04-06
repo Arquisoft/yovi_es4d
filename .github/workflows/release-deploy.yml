@@ -1,22 +1,105 @@
-name: Release - Build & Deploy
+name: Deploy from Master
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
 env:
-  IMAGE_TAG: ${{ github.event.release.tag_name }}
+  IMAGE_TAG: ${{ github.sha }}
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ghcr.io/arquisoft/yovi_es4d
 
 jobs:
+  node-services:
+    name: Unit Tests - ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: authservice
+            path: users/authservice
+            test_command: npm test
+          - name: userservice
+            path: users/userservice
+            test_command: npm test
+          - name: friends
+            path: friends
+            test_command: npm test
+          - name: game
+            path: game
+            test_command: npm test
+          - name: gateway
+            path: gateway
+            test_command: npm test
+          - name: webapp
+            path: webapp
+            test_command: npm run test:coverage
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.service.path }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Run unit tests
+        run: ${{ matrix.service.test_command }}
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Build webapp
+        if: ${{ matrix.service.name == 'webapp' }}
+        run: npm run build
+        working-directory: webapp
+
+  rust-service:
+    name: Unit Tests - gamey
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gamey/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('gamey/Cargo.lock') }}
+
+      - name: Run gamey unit tests
+        working-directory: gamey
+        run: cargo test --locked
+
+      - name: Build gamey
+        working-directory: gamey
+        run: cargo build --release --locked
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
+    needs:
+      - node-services
+      - rust-service
 
     strategy:
       fail-fast: false
@@ -55,8 +138,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Build and push image
         if: ${{ !matrix.service.is_webapp }}

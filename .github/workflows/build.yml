@@ -5,11 +5,13 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
     types: [opened, synchronize, reopened]
 
 jobs:
   node-services:
-    name: Node Services
+    name: Unit Tests - ${{ matrix.service.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -17,22 +19,22 @@ jobs:
         service:
           - name: authservice
             path: users/authservice
-            test: true
+            test_command: npm test
           - name: userservice
             path: users/userservice
-            test: true
+            test_command: npm test
           - name: friends
             path: friends
-            test: true
+            test_command: npm test
           - name: game
             path: game
-            test: true
+            test_command: npm test
           - name: gateway
             path: gateway
-            test: true
+            test_command: npm test
           - name: webapp
             path: webapp
-            test: false
+            test_command: npm run test:coverage
 
     steps:
       - name: Checkout repository
@@ -49,13 +51,17 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.service.path }}
 
+      - name: Run unit tests
+        run: ${{ matrix.service.test_command }}
+        working-directory: ${{ matrix.service.path }}
+
       - name: Build webapp
         if: ${{ matrix.service.name == 'webapp' }}
         run: npm run build
         working-directory: webapp
 
   rust-service:
-    name: Rust Service
+    name: Unit Tests - gamey
     runs-on: ubuntu-latest
 
     steps:
@@ -74,9 +80,13 @@ jobs:
             gamey/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('gamey/Cargo.lock') }}
 
+      - name: Run gamey unit tests
+        working-directory: gamey
+        run: cargo test --locked
+
       - name: Build gamey
         working-directory: gamey
-        run: cargo build --release
+        run: cargo build --release --locked
 
   docker-build:
     name: Docker Build Validation
