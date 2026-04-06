@@ -1,9 +1,8 @@
 name: Deploy from Master
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +10,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_TAG: ${{ github.event.release.tag_name || github.sha }}
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ghcr.io/arquisoft/yovi_es4d
 
