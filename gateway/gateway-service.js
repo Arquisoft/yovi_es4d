@@ -803,7 +803,7 @@ function generateCode() {
 }
  
 io.on('connection', (socket) => {
-  console.log(`🔌 Socket conectado: ${socket.id}`);
+  console.log(` Socket conectado: ${socket.id}`);
  
   // ── Crear sala ──────────────────────────────────────────
   socket.on('create_room', ({ boardSize = 11 } = {}) => {
@@ -813,7 +813,7 @@ io.on('connection', (socket) => {
     rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize });
     socket.join(code);
     socket.emit('room_created', { code });
-    console.log(`🏠 Sala creada: ${code} por ${socket.id}`);
+    console.log(`Sala creada: ${code} por ${socket.id}`);
   });
  
   // ── Unirse a sala ───────────────────────────────────────
@@ -836,7 +836,7 @@ io.on('connection', (socket) => {
     io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
     io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
 
-    console.log(`🎮 Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
+    console.log(`Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
   });
 
   // ── Reconexión desde GameBoard ──────────────────────────
@@ -863,7 +863,7 @@ io.on('connection', (socket) => {
       });
     }
 
-    console.log(`🔄 Rejoin sala ${upperCode}: ${role}=${socket.id}`);
+    console.log(` Rejoin sala ${upperCode}: ${role}=${socket.id}`);
   });
 
   // ── Compartir perfil del jugador con el rival ───────────
@@ -910,7 +910,7 @@ io.on('connection', (socket) => {
  
   // ── Desconexión ─────────────────────────────────────────
   socket.on('disconnect', () => {
-    console.log(`🔌 Socket desconectado: ${socket.id}`);
+    console.log(` Socket desconectado: ${socket.id}`);
     for (const [code, room] of rooms.entries()) {
       if (room.j1 === socket.id || room.j2 === socket.id) {
         if (room.transitioning) {

@@ -112,15 +112,10 @@ app.post('/login', loginLimiter, [
       });
     }
 
-    console.log(req.body.email);
     const email = req.body.email.toString();
     const password = req.body.password.toString();
-    console.log(email);
     const user = await User.findOne({ email });
-    console.log("la que mete el user" + password);
-    console.log("AAAAAAAAAAAAAAAAAAA" + user);
-    console.log("la de la bd de mierda" + user.password);
-    
+        
     if (user && await bcrypt.compare(password, user.password)) {
       failedAttempts.delete(ip);
       

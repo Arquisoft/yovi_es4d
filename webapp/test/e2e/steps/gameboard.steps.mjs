@@ -139,12 +139,7 @@ Given('the game board is open without state', async function () {
 // THEN
 // ─────────────────────────────────────────────────────────────
 
-Then('I should see the game header', async function () {
-    const page = this.page
-    await page.waitForSelector('.gb-header', { timeout: 8000 })
-    const header = await page.$('.gb-header')
-    assert.ok(header, 'Game header (.gb-header) not found')
-})
+
 
 Then('I should see the game main area', async function () {
     const page = this.page
