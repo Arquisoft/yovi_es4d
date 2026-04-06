@@ -14,6 +14,90 @@ env:
   IMAGE_NAMESPACE: ghcr.io/arquisoft/yovi_es4d
 
 jobs:
+  node-services:
+    name: Unit Tests - ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: authservice
+            path: users/authservice
+            test: true
+          - name: userservice
+            path: users/userservice
+            test: true
+          - name: friends
+            path: friends
+            test: true
+          - name: game
+            path: game
+            test: true
+          - name: gateway
+            path: gateway
+            test: true
+          - name: webapp
+            path: webapp
+            test: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.service.path }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Run unit tests
+        if: ${{ matrix.service.test == true }}
+        run: npm test
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Run webapp unit tests
+        if: ${{ matrix.service.name == 'webapp' }}
+        run: npm run test:coverage
+        working-directory: webapp
+
+      - name: Build webapp
+        if: ${{ matrix.service.name == 'webapp' }}
+        run: npm run build
+        working-directory: webapp
+
+  rust-service:
+    name: Unit Tests - gamey
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            gamey/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('gamey/Cargo.lock') }}
+
+      - name: Run gamey unit tests
+        working-directory: gamey
+        run: cargo test --locked
+
+      - name: Build gamey
+        working-directory: gamey
+        run: cargo build --release --locked
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
