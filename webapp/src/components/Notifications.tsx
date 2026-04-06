@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
 import Sidebar from './Sidebar';
 import { API_URL } from '../config';
+import { acceptFriendRequest, rejectFriendRequest } from '../services/friendService';
 import './StartScreen.css';
 
 interface RelatedUser {
@@ -23,13 +24,12 @@ interface Notification {
 }
 
 const Notifications: React.FC = () => {
-  const { t } = useTranslation(); // 👈 hook i18n
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const navigate = useNavigate();
 
   const loadData = async () => {
     setLoading(true);
@@ -55,12 +55,9 @@ const Notifications: React.FC = () => {
 
   const handleAccept = async (notification: Notification) => {
     if (!notification.requestId) return;
+
     try {
-      await axios.patch(
-        `${API_URL}/api/friends/accept`,
-        { requestId: notification.requestId },
-        { withCredentials: true }
-      );
+      await acceptFriendRequest(notification.requestId);
       await loadData();
     } catch (err: any) {
       console.error(err);
@@ -70,12 +67,9 @@ const Notifications: React.FC = () => {
 
   const handleReject = async (notification: Notification) => {
     if (!notification.requestId) return;
+
     try {
-      await axios.patch(
-        `${API_URL}/api/friends/reject`,
-        { requestId: notification.requestId },
-        { withCredentials: true }
-      );
+      await rejectFriendRequest(notification.requestId);
       await loadData();
     } catch (err: any) {
       console.error(err);
@@ -91,15 +85,8 @@ const Notifications: React.FC = () => {
           <div className="content-inner">
             <h1>{t('notifications.title')}</h1>
 
-            {loading && (
-              <p style={{ color: 'white', textAlign: 'center' }}>
-                {t('notifications.loading')}
-              </p>
-            )}
-
-            {error && (
-              <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>
-            )}
+            {loading && <p style={{ color: 'white', textAlign: 'center' }}>{t('notifications.loading')}</p>}
+            {error && <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>}
 
             {!loading && !error && (
               <div className="notifications-content rules-content">
@@ -115,12 +102,9 @@ const Notifications: React.FC = () => {
                       />
                       <div className="notification-text">
                         <p>
-                          <strong>{n.relatedUser.username}</strong>{' '}
-                          {t('notifications.friendRequest')}
+                          <strong>{n.relatedUser.username}</strong> {t('notifications.friendRequest')}
                         </p>
-                        <small>
-                          {new Date(n.createdAt).toLocaleString()}
-                        </small>
+                        <small>{new Date(n.createdAt).toLocaleString()}</small>
                       </div>
                       <button onClick={() => handleAccept(n)}>
                         {t('notifications.accept')}

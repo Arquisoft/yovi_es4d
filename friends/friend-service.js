@@ -5,7 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const FriendRequest = require('./models/friendRequest');
-const Notification = require('./models/Notification');
+const Notification = require('./models/notification');
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:8001';
@@ -27,20 +27,27 @@ app.use(express.json());
 app.get('/friends', async (req, res) => {
   try {
     const { userId } = req.query;
-    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const relations = await FriendRequest.find({
       $or: [
-        { senderId: userId, status: 'accepted' },
-        { receiverId: userId, status: 'accepted' }
+        { senderId: userObjectId, status: 'accepted' },
+        { receiverId: userObjectId, status: 'accepted' }
       ]
     });
 
     const friendIds = relations.map(r =>
-      r.senderId.toString() === userId ? r.receiverId.toString() : r.senderId.toString()
+      r.senderId.toString() === userId
+        ? r.receiverId.toString()
+        : r.senderId.toString()
     );
 
-    res.json(friendIds);
+    const response = await axios.post(`${USER_SERVICE_URL}/api/users/bulk`, {
+      ids: friendIds
+    });
+
+    res.json(response.data);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });

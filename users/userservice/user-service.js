@@ -329,18 +329,23 @@ app.post('/api/users/bulk', async (req, res) => {
 });
 app.get('/api/users', async (req, res) => {
   try {
-    const { exclude = [], search = '' } = req.query;
+    const { exclude = [], search = '', page = 1, limit = 10 } = req.query;
 
-    // Convierte a Array si viene como string
     const excludeIds = Array.isArray(exclude) ? exclude : [exclude];
-const users = [];
-    if (response.data && response.data.length > 0) {
-     users = await User.find({
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    const users = await User.find({
       _id: { $nin: excludeIds },
       username: { $regex: search, $options: 'i' }
-    }).select('-password');
-  }
+    })
+      .select('-password')
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
+
     res.json(users);
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal error' });
@@ -352,12 +357,23 @@ const users = [];
  * Al cerrar el servidor, se cierra la conexión a MongoDB.
  * @type {Server}
  */
-const server = app.listen(port, () => {
-  console.log(`User service running on ${port}`);
-});
+function startServer() {
+  const server = app.listen(port, () => {
+    console.log(`User service running on ${port}`);
+  });
 
-server.on('close', () => {
-  mongoose.connection.close();
-});
+  server.on('close', () => {
+    mongoose.connection.close();
+  });
 
-module.exports = server;
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
+module.exports.startServer = startServer;
+module.exports.__validateRequiredFields = validateRequiredFields;
+module.exports.__validatePassword = validatePassword;

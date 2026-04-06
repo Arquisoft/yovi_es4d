@@ -783,7 +783,8 @@ if (fs.existsSync(openapiPath)) {
  * Iniciar el servidor HTTP en el puerto especificado.
  * @type {Server}
  */
-const server = app.listen(port, () => {});
+function startServer() {
+  const server = app.listen(port, () => {});
 
 // ================= WEBSOCKETS (Online mode) =================
 
@@ -927,4 +928,13 @@ io.on('connection', (socket) => {
   });
 });
 
-module.exports = server;
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
+module.exports.startServer = startServer;
+

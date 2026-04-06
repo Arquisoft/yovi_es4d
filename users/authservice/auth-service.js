@@ -168,12 +168,23 @@ app.post('/logout', (req, res) => {
  * Al cerrar el servidor, se cierra la conexión a MongoDB.
  * @type {Server}
  */
-const server = app.listen(port, () => {
-  console.log(`User service running on ${port}`);
-});
+function startServer() {
+  const server = app.listen(port, () => {
+    console.log(`User service running on ${port}`);
+  });
 
-server.on('close', () => {
-  mongoose.connection.close();
-});
+  server.on('close', () => {
+    mongoose.connection.close();
+  });
 
-module.exports =  server ;
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
+module.exports.startServer = startServer;
+module.exports.__failedAttempts = failedAttempts;
+module.exports.__validateRequiredFields = validateRequiredFields;
