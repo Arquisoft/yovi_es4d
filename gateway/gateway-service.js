@@ -70,6 +70,10 @@ app.use(cookieParser());
 const metricsMiddleware = promBundle({ includeMethod: true });
 app.use(metricsMiddleware);
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'Gateway Service is running' });
+});
+
 /**
  * Middleware para verificar JWT.
  * Valida el token JWT almacenado en las cookies y extrae la información del usuario.
