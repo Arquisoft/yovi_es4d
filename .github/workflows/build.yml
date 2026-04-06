@@ -142,6 +142,77 @@ jobs:
         if: always()
         run: docker compose down
 
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs:
+      - node-services
+      - rust-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install authservice dependencies
+        run: npm ci
+        working-directory: users/authservice
+
+      - name: Run authservice tests with coverage
+        run: npm test
+        working-directory: users/authservice
+
+      - name: Install userservice dependencies
+        run: npm ci
+        working-directory: users/userservice
+
+      - name: Run userservice tests with coverage
+        run: npm test
+        working-directory: users/userservice
+
+      - name: Install friends dependencies
+        run: npm ci
+        working-directory: friends
+
+      - name: Run friends tests with coverage
+        run: npm test
+        working-directory: friends
+
+      - name: Install game dependencies
+        run: npm ci
+        working-directory: game
+
+      - name: Run game tests with coverage
+        run: npm test
+        working-directory: game
+
+      - name: Install gateway dependencies
+        run: npm ci
+        working-directory: gateway
+
+      - name: Run gateway tests with coverage
+        run: npm test
+        working-directory: gateway
+
+      - name: Install webapp dependencies
+        run: npm ci
+        working-directory: webapp
+
+      - name: Run webapp tests with coverage
+        run: npm run test:coverage
+        working-directory: webapp
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
@@ -149,6 +220,7 @@ jobs:
       - node-services
       - rust-service
       - webapp-e2e
+      - sonarcloud
 
     steps:
       - name: Checkout repository
