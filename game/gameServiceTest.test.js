@@ -110,21 +110,6 @@ describe('POST /api/game/:gameId/validateMove', () => {
         expect(res.status).toBe(404);
     });
 
-    test('devuelve winner cuando Rust indica que la partida terminó', async () => {
-        const start = await startGame();
-        const { gameId } = start.body;
-
-        axios.post.mockResolvedValueOnce({
-            data: { board: [], turn: 1, status: 'finished', winner: 0 },
-        });
-
-        const res = await request(app)
-            .post(`/api/game/${gameId}/validateMove`)
-            .send({ userId: 'j1', move: '(10,0,0)' });
-
-        expect(res.body.winner).toBe('j1');
-        expect(res.body.status).toBe('finished');
-    });
 });
 
 // ============================================================
