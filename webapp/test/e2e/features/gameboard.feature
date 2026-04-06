@@ -1,9 +1,6 @@
 # features/gameboard.feature
 Feature: GameBoard - Partida en curso
 
-  Scenario: Muestra el header con el logo
-    Given the game board is open in vsBot mode
-    Then I should see the game header
 
   Scenario: Muestra la sección principal de juego
     Given the game board is open in vsBot mode

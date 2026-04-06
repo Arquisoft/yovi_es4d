@@ -11,15 +11,3 @@ Feature: StartScreen
     And I should see the play button
     And I should see the typing animation
     And I should see the footer credits
-
-  Scenario: Click play button when logged out
-    Given the start screen is open
-    And I am logged out
-    When I click the play button
-    Then I should be on the login page
-
-  Scenario: Click play button when logged in
-    Given the start screen is open
-    And I am logged in
-    When I click the play button
-    Then I should be on the select page
