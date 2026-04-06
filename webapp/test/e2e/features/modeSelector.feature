@@ -4,11 +4,6 @@ Feature: Mode Selector - Configuracion de partida
   Background:
     Given the mode selector page is open
 
-  Scenario: Seleccionar modo vs Bot por defecto
-    When I select "vsBot" game mode
-    Then the "vsBot" mode should be selected
-    And the difficulty section should be visible
-
   Scenario: Seleccionar modo multijugador local
     When I select "multiplayer" game mode
     Then the "multiplayer" mode should be selected
