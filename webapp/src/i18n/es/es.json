@@ -72,7 +72,10 @@
     "enterEmail": "Introduce tu email",
     "enterPassword": "Introduce tu contraseña",
     "enterRepassword": "Confirma tu contraseña",
-    "errorPasswordMatch": "Las contraseñas no coinciden"
+    "errorPasswordMatch": "Las contraseñas no coinciden",
+    "errorEmail": "Correo electrónico inválido",
+    "errorPasswordContent": "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios",
+    "errorUsername": "El nombre de usuario debe tener al menos 3 caracteres"
   }, "gameOver": {
     "title": "Partida finalizada",
     "winner": "Ganador",

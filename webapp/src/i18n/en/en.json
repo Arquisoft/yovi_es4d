@@ -58,7 +58,10 @@
     "enterEmail": "Enter your email",
     "enterPassword": "Enter your password",
     "enterRepassword": "Confirm your password",
-    "errorPasswordMatch": "Passwords do not match"
+    "errorPasswordMatch": "Passwords do not match",
+    "errorEmail": "Invalid email",
+    "errorPasswordContent": "Password must have at least 8 characters, one uppercase and one number, and no spaces",
+    "errorUsername": "Username must be at least 3 characters"
   }, "gameOver": {
     "title": "Game finished",
     "winner": "Winner",
