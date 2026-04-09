@@ -149,7 +149,7 @@
     "emptyExplore": "No new users 😅",
     "emptyRequests": "No pending requests 👍",
 
-    "page": "Page {{page}}"
+    "page": "Page "
   },
   "back": {
     "loading": "Loading..."

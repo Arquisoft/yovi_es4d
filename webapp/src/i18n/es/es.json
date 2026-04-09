@@ -163,7 +163,7 @@
     "emptyExplore": "No hay usuarios nuevos 😅",
     "emptyRequests": "No tienes solicitudes pendientes 👍",
 
-    "page": "Página {{page}}"
+    "page": "Página "
   },
   "back": {
     "loading": "Cargando..."
