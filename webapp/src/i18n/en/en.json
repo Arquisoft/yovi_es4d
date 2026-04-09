@@ -17,7 +17,7 @@
     "initsession": "Log in",
     "historial": "History",
     "friends": "Friends",
-    "notifications": "🔔"
+    "notification": "🔔"
   },
   "footer": {
     "credits": "© 2026 yovi_es4d. All rights reserved."
@@ -95,7 +95,9 @@
     "changePassword": "Change Password",
     "usernameUpdated": "Username updated successfully",
     "passwordChanged": "Password changed successfully",
-    "passwordMatch": "Passwords do not match"
+    "passwordMatch": "Passwords do not match",
+    "currentPasswordWrong": "Current password is incorrect",
+    "newPasswordRequired": "Please enter a new password"
   }, "historial": {
     "title": "Game History",
     "noGames": "No games played yet.",
@@ -156,6 +158,74 @@
   },
   "back": {
     "loading": "Loading..."
+  }, "modeSelector": {
+    "newGame": "New Game",
+    "configure": "Configure Match",
+    "chooseHow": "Choose how you want to play",
+
+    "online": "Online",
+    "playOnline": "Play Online",
+    "playOnlineDesc": "Play remotely with a friend using a room code.",
+
+    "localTitle": "LOCAL",
+    "gameMode": "Game Mode",
+
+    "player2": "Player 2 Name",
+    "player2Placeholder": "Opponent name...",
+    "player2Default": "Player 2",
+
+    "difficulty": "Difficulty",
+    "boardSize": "Board Size",
+
+    "play": "Play",
+
+    "local": {
+      "vsBot": {
+        "label": "Vs Computer",
+        "description": "Play alone against the AI."
+      },
+      "multiplayer": {
+        "label": "2 Players",
+        "description": "Two players on the same computer."
+      }
+    },
+
+    "bot": {
+      "random": {
+        "label": "Random",
+        "description": "The bot chooses cells randomly.",
+        "tag": "Easy"
+      },
+      "intermediate": {
+        "label": "Intermediate",
+        "description": "The bot evaluates the board for good moves.",
+        "tag": "Medium"
+      },
+      "hard": {
+        "label": "Hard",
+        "description": "The bot plays at maximum strength.",
+        "tag": "Hard"
+      }
+    },
+
+    "board": {
+      "small": {
+        "label": "Small",
+        "description": "36 cells · Fast"
+      },
+      "normal": {
+        "label": "Normal",
+        "description": "66 cells · Agile"
+      },
+      "large": {
+        "label": "Large",
+        "description": "120 cells · Tactical"
+      },
+      "extra": {
+        "label": "Extra",
+        "description": "190 cells · Expert"
+      }
+    }
   }
 }
 

@@ -62,30 +62,47 @@ const loadProfile = async () => {
   };
 
   const changePassword = async () => {
-    setError(null);
-    setSuccess(null);
+  setError(null);
+  setSuccess(null);
 
-    if (newPassword !== confirmPassword) {
-      setError(t("editUser.passwordMatch"));
+  if (!currentPassword.trim()) {
+    setError(t("editUser.currentPasswordWrong"));
+    return;
+  }
+
+  if (!newPassword.trim()) {
+    setError(t("editUser.newPasswordRequired"));
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setError(t("editUser.passwordMatch"));
+    return;
+  }
+
+  try {
+    await axios.post(
+      `${API_URL}/api/user/changePassword`,
+      { currentPassword, newPassword },
+      { withCredentials: true }
+    );
+
+    setSuccess(t("editUser.passwordChanged"));
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+
+  } catch (err: any) {
+
+    if (err.response?.status === 400 || err.response?.status === 401) {
+      setError(t("editUser.currentPasswordWrong"));
       return;
     }
 
-    try {
-      await axios.post(
-        `${API_URL}/api/user/changePassword`,
-        { currentPassword, newPassword },
-        { withCredentials: true }
-      );
-
-      setSuccess(t("editUser.passwordChanged"));
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err: any) {
-      setError(err.response?.data || err.message);
-    }
-  };
+    setError(err.response?.data || err.message);
+  }
+};
 
   const updateAvatar = async () => {
   try {

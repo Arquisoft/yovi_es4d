@@ -109,7 +109,9 @@
     "changePassword": "Cambiar contraseña",
     "usernameUpdated": "Nombre de usuario actualizado correctamente",
     "passwordChanged": "Contraseña cambiada correctamente",
-    "passwordMatch": "Las contraseñas no coinciden"
+    "passwordMatch": "Las contraseñas no coinciden",
+    "currentPasswordWrong": "La contraseña actual no coincide",
+    "newPasswordRequired": "Debes introducir una nueva contraseña"
   }, "historial": {
     "title": "Historial de partidas",
     "noGames": "Aún no se han jugado partidas.",
@@ -170,6 +172,75 @@
   },
   "back": {
     "loading": "Cargando..."
+  },
+  "modeSelector": {
+    "newGame": "Nueva partida",
+    "configure": "Configura la partida",
+    "chooseHow": "Elige cómo quieres jugar",
+
+    "online": "En línea",
+    "playOnline": "Jugar online",
+    "playOnlineDesc": "Juega con un amigo a distancia usando un código de sala.",
+
+    "localTitle": "LOCAL",
+    "gameMode": "Modo de juego",
+
+    "player2": "Nombre del jugador 2",
+    "player2Placeholder": "Nombre del rival...",
+    "player2Default": "Jugador 2",
+
+    "difficulty": "Dificultad",
+    "boardSize": "Tamaño del tablero",
+
+    "play": "Jugar",
+
+    "local": {
+      "vsBot": {
+        "label": "Contra la máquina",
+        "description": "Juega solo contra la IA."
+      },
+      "multiplayer": {
+        "label": "2 Jugadores",
+        "description": "Dos personas en el mismo ordenador."
+      }
+    },
+
+    "bot": {
+      "random": {
+        "label": "Aleatorio",
+        "description": "El bot elige casillas al azar.",
+        "tag": "Fácil"
+      },
+      "intermediate": {
+        "label": "Intermedio",
+        "description": "El bot evalúa el tablero y busca buenas jugadas.",
+        "tag": "Medio"
+      },
+      "hard": {
+        "label": "Difícil",
+        "description": "El bot juega al límite de sus capacidades.",
+        "tag": "Difícil"
+      }
+    },
+
+    "board": {
+      "small": {
+        "label": "Pequeño",
+        "description": "36 celdas · Rápida"
+      },
+      "normal": {
+        "label": "Normal",
+        "description": "66 celdas · Ágil"
+      },
+      "large": {
+        "label": "Grande",
+        "description": "120 celdas · Táctica"
+      },
+      "extra": {
+        "label": "Extra",
+        "description": "190 celdas · Expertos"
+      }
+    }
   }
 }
 
