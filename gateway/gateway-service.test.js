@@ -579,7 +579,12 @@ it('should handle error getting friends', async () => {
 });
 
 it('should explore users', async () => {
-  axios.get.mockResolvedValue({ data: [{ username: 'userX' }] });
+  axios.get.mockResolvedValue({
+    data: {
+      users: [{ username: 'userX' }],
+      pagination: { page: 2, limit: 10, hasPrev: true, hasNext: false }
+    }
+  });
 
   const res = await request(app)
     .get('/api/friends/explore')
@@ -588,7 +593,10 @@ it('should explore users', async () => {
     .send({ userId: 'user1' });
 
   expect(res.statusCode).toBe(200);
-  expect(res.body).toEqual([{ username: 'userX' }]);
+  expect(res.body).toEqual({
+    users: [{ username: 'userX' }],
+    pagination: { page: 2, limit: 10, hasPrev: true, hasNext: false }
+  });
 });
 
 it('should send friend request', async () => {
