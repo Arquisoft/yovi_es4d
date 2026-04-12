@@ -114,7 +114,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'Password1')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorUsername/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /El nombre de usuario debe tener al menos 3 caracteres/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows username validation error if username is empty', async () => {
@@ -127,7 +131,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'Password1')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorUsername/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /El nombre de usuario debe tener al menos 3 caracteres/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows email validation error', async () => {
@@ -139,7 +147,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'Password1')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorEmail/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /Correo electrónico inválido/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows email validation error when the email is empty', async () => {
@@ -151,7 +163,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'Password1')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorEmail/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /Correo electrónico inválido/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows password content validation error when it is too short', async () => {
@@ -164,7 +180,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'aa')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /La contraseña debe tener al menos 8 caracteres/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows password content validation error when it does not have UpperCase && not Numbers', async () => {
@@ -177,7 +197,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows password content validation error when it does not have Numbers', async () => {
@@ -190,7 +214,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculasAAA')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows password content validation error when it does not have UperCase', async () => {
@@ -203,7 +231,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas123')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows password content validation error when it does have white spaces', async () => {
@@ -216,7 +248,11 @@ describe('RegisterForm', () => {
     await user.type(screen.getByTestId('repassword-input'), 'pruebasinmayusculas AAA123')
     await user.click(screen.getByRole('button', { name: /registrarse/i }))
 
-    expect(await screen.findByText(/registerForm\.errorPasswordContent/i)).toBeInTheDocument()
+    expect(
+        await screen.findByText(
+          /La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios/i
+        )
+    ).toBeInTheDocument()
   })
 
   test('shows mismatch error when passwords differ', async () => {
