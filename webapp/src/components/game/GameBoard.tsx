@@ -63,8 +63,9 @@ const GameBoard: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userProfile, setUserProfile]         = useState<{ username: string; avatar: string } | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
-  const socketRef = useRef<Socket | null>(null);
-  const userIdRef = useRef<string | null>(null);
+  const socketRef    = useRef<Socket | null>(null);
+  const userIdRef    = useRef<string | null>(null);
+  const profilesRef  = useRef<{ my: string; opponent: string }>({ my: "", opponent: "" });
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -99,6 +100,7 @@ const GameBoard: React.FC = () => {
     // Recibir perfil del rival
     s.on('opponent_info', ({ name, avatar }: { name: string; avatar: string }) => {
       setOpponentProfile({ username: name, avatar });
+      profilesRef.current.opponent = name;
     });
 
     // j2: recibir gameId cuando j1 inicia la partida
@@ -156,7 +158,12 @@ const GameBoard: React.FC = () => {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: userIdRef.current }),
+            body: JSON.stringify({
+              userId: userIdRef.current,
+              winner,
+              // j2 recibe: su rival (j1) está en índice 0, él mismo en índice 1
+              playerNames: [profilesRef.current.opponent, profilesRef.current.my],
+            }),
           }).catch(() => {/* ignorar errores de guardado */});
         }
         return { ...prev, winner: winner as "j1" | "j2", status: "finished" };
@@ -190,6 +197,7 @@ const GameBoard: React.FC = () => {
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setUserProfile({ username: profileData.username, avatar: profileData.avatar });
+          profilesRef.current.my = profileData.username;
           // Compartir perfil con el rival en modo online
           if (gameMode === "online") {
             socketRef.current?.emit('player_info', {
@@ -294,7 +302,12 @@ const GameBoard: React.FC = () => {
               method: "POST",
               credentials: "include",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId }),
+              body: JSON.stringify({
+                userId,
+                winner: validateData.winner,
+                // j1 siempre es índice 0, j2 es índice 1
+                playerNames: [profilesRef.current.my, profilesRef.current.opponent],
+              }),
             }).catch(() => {/* ignorar errores de guardado */});
           }
         }

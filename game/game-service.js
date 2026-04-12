@@ -447,7 +447,8 @@ app.post('/api/game/endAndSaveGame', async (req, res) => {
  */
 app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
   const { gameId } = req.params;
-  const { userId } = req.body;
+  // winner y playerNames los envía el frontend, que conoce los nombres reales y el resultado final
+  const { userId, winner, playerNames } = req.body;
 
   if (!userId) return res.status(400).json({ error: 'userId requerido' });
 
@@ -458,8 +459,17 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
     return res.status(400).json({ error: 'Las partidas locales no se guardan en el historial' });
   }
 
+  // Actualizar nombres reales si el frontend los proporciona
+  const players = game.players.map((p, idx) => ({
+    ...p,
+    name: (playerNames && playerNames[idx]) ? playerNames[idx] : p.name,
+  }));
+
+  const resolvedWinner = winner || game.winner;
+  const finishedAt = game.finishedAt || new Date();
+
   try {
-    // Usamos gameId + userId como clave compuesta para que cada jugador tenga su registro
+    // Clave compuesta para que cada jugador tenga su propio registro
     await GameModel.findOneAndUpdate(
       { gameId: `${gameId}_${userId}` },
       {
@@ -467,12 +477,12 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
         userId,
         gameMode: game.gameMode,
         boardSize: game.boardSize,
-        players: game.players,
+        players,
         moves: game.moves,
-        status: game.status,
-        winner: game.winner,
+        status: 'finished',
+        winner: resolvedWinner,
         createdAt: game.createdAt,
-        finishedAt: game.finishedAt || new Date()
+        finishedAt
       },
       { upsert: true, new: true }
     );
