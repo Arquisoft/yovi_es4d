@@ -908,8 +908,8 @@ io.on('connection', (socket) => {
   });
  
   // ── Reenviar fin de partida ─────────────────────────────
-  socket.on('game_over', ({ code, winner }) => {
-    socket.to(code).emit('game_over', { winner });
+  socket.on('game_over', ({ code, winner, gameId }) => {
+    socket.to(code).emit('game_over', { winner, gameId });
   });
  
   // ── Desconexión ─────────────────────────────────────────

@@ -64,6 +64,7 @@ const GameBoard: React.FC = () => {
   const [userProfile, setUserProfile]         = useState<{ username: string; avatar: string } | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const userIdRef = useRef<string | null>(null);
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -137,8 +138,20 @@ const GameBoard: React.FC = () => {
       setOpponentDisconnected(true);
     });
 
-    s.on('game_over', ({ winner }: { winner: string }) => {
-      setGameState(prev => ({ ...prev, winner: winner as "j1" | "j2", status: "finished" }));
+    s.on('game_over', ({ winner, gameId }: { winner: string; gameId?: string }) => {
+      setGameState(prev => {
+        const resolvedGameId = gameId ?? prev.gameId;
+        // j2 guarda su propio registro al recibir el fin de partida
+        if (resolvedGameId && userIdRef.current) {
+          fetch(`${API_URL}/api/game/${resolvedGameId}/saveForPlayer`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: userIdRef.current }),
+          }).catch(() => {/* ignorar errores de guardado */});
+        }
+        return { ...prev, winner: winner as "j1" | "j2", status: "finished" };
+      });
     });
 
     return () => { s.disconnect(); };
@@ -158,6 +171,7 @@ const GameBoard: React.FC = () => {
         const meData = await meRes.json();
         const resolvedUserId = meData.userId;
         setUserId(resolvedUserId);
+        userIdRef.current = resolvedUserId;
 
         // Obtener nombre e imagen del usuario logueado
         const profileRes = await fetch(`${API_URL}/api/user/getUserProfile`, {
@@ -262,7 +276,16 @@ const GameBoard: React.FC = () => {
         const nextTurn = currentTurn === "j1" ? "j2" : "j1";
         socketRef.current.emit('move_made', { code: roomCode, position, turn: nextTurn });
         if (validateData.winner) {
-          socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner });
+          socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner, gameId: gameState.gameId });
+          // j1 guarda su propio registro al ganar
+          if (gameState.gameId && userId) {
+            fetch(`${API_URL}/api/game/${gameState.gameId}/saveForPlayer`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId }),
+            }).catch(() => {/* ignorar errores de guardado */});
+          }
         }
         setGameState(prev => ({ ...prev, turn: nextTurn as "j1" | "j2", botPlaying: false }));
         return; // no llamar a /move (bot)

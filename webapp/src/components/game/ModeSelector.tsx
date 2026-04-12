@@ -117,6 +117,16 @@ const ModeSelector: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Aviso de que la partida local no se guarda en el historial */}
+                {gameMode === "multiplayer" && (
+                    <div className="fade-up flex items-center gap-2 rounded-xl px-4 py-3 mb-1" style={{ background: "rgba(255,180,0,0.10)", border: "1px solid rgba(255,180,0,0.35)" }}>
+                        <span style={{ fontSize: "1rem" }}>⚠️</span>
+                        <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+                            <strong style={{ color: "var(--text)" }}>Esta partida no quedará guardada en el historial.</strong>
+                        </p>
+                    </div>
+                )}
+
                 {/* Nombre del jugador 2 (solo en multiplayer) */}
                 {gameMode === "multiplayer" && (
                     <div className="fade-up rounded-2xl p-5 mb-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>

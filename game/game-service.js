@@ -365,20 +365,28 @@ app.get('/api/game/:gameId', (req, res) => {
  * @param {Date} game.finishedAt - Fecha de finalización
  */
 async function finishGameAndSave(game) {
+  // Las partidas locales de 2 jugadores no se guardan en el historial
+  if (game.gameMode === 'multiplayer') return;
+
   game.status = 'finished';
   game.finishedAt = new Date();
 
+  // En modo online usamos clave compuesta gameId_userId para que cada jugador tenga su registro
+  const dbKey = game.gameMode === 'online'
+    ? `${game.gameId}_${game.userId}`
+    : game.gameId;
+
   try {
     await GameModel.findOneAndUpdate(
-      { gameId: game.gameId },
+      { gameId: dbKey },
       {
-        gameId: game.gameId,
+        gameId: dbKey,
         userId: game.userId,
         gameMode: game.gameMode,
         boardSize: game.boardSize,
         players: game.players,
         moves: game.moves,
-        status: game.status,   
+        status: game.status,
         winner: game.winner,
         createdAt: game.createdAt,
         finishedAt: game.finishedAt
@@ -386,7 +394,7 @@ async function finishGameAndSave(game) {
       { upsert: true, new: true }
     );
 
-    console.log(`Juego ${game.gameId} guardado en DB`);
+    console.log(`Juego ${game.gameId} guardado en DB para userId=${game.userId}`);
   } catch (err) {
     console.error('Error guardando juego:', err);
   }
@@ -429,6 +437,53 @@ app.post('/api/game/endAndSaveGame', async (req, res) => {
   }
 });*/
 
+
+/**
+ * Guardar la partida online en el historial de un jugador concreto.
+ * Llamado por j1 (ya lo hace finishGameAndSave) y también por j2 con su propio userId.
+ * @route {POST} /api/game/:gameId/saveForPlayer
+ * @param {string} req.params.gameId - El ID del juego
+ * @param {string} req.body.userId   - El userId del jugador que quiere guardar el registro
+ */
+app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
+  const { gameId } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) return res.status(400).json({ error: 'userId requerido' });
+
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+
+  if (game.gameMode === 'multiplayer') {
+    return res.status(400).json({ error: 'Las partidas locales no se guardan en el historial' });
+  }
+
+  try {
+    // Usamos gameId + userId como clave compuesta para que cada jugador tenga su registro
+    await GameModel.findOneAndUpdate(
+      { gameId: `${gameId}_${userId}` },
+      {
+        gameId: `${gameId}_${userId}`,
+        userId,
+        gameMode: game.gameMode,
+        boardSize: game.boardSize,
+        players: game.players,
+        moves: game.moves,
+        status: game.status,
+        winner: game.winner,
+        createdAt: game.createdAt,
+        finishedAt: game.finishedAt || new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`Juego ${gameId} guardado en DB para userId=${userId}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error guardando juego para jugador:', err);
+    res.status(500).json({ error: 'Error guardando juego' });
+  }
+});
 
 // ================= FUNCIONES AUXILIARES =================
 
