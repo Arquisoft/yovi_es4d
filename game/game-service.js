@@ -133,7 +133,7 @@ app.post('/api/game/start', async (req, res) => {
 
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
+    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize, game_id: gameId }, { timeout: 5000 });
 
     // Crear estado del juego en Node
     const game = {
@@ -199,7 +199,8 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
-    player: playerNum
+    player: playerNum,
+    game_id: gameId
   });
 
   game.moves.push({
@@ -255,7 +256,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     const botRoute = BOT_ROUTES[game.botMode] || BOT_ROUTES['random_bot'];
     const rustResponse = await axios.post(
       `${GAMEY_BOT_URL}${botRoute}`,
-      convertToYEN(game)
+      { ...convertToYEN(game), game_id: gameId }
     );
 
     if (!rustResponse.data?.board) {

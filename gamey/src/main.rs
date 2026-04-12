@@ -6,6 +6,7 @@ use gamey::PlayerId;
 use gamey::core::coord::Coordinates;
 use gamey::core::movement::Movement;
 use gamey::core::game::GameStatus;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 mod bot;
 use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
@@ -13,20 +14,22 @@ use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
 /* STRUCTS (lo que recibimos)*/
 
 /// Estructura para la solicitud de iniciar un juego.
-/// Contiene el tamaño del tablero.
+/// Contiene el tamaño del tablero y el ID del juego.
 #[derive(Debug, Deserialize)]
 struct StartGameRequest {
     board_size: u32,
+    game_id: String,
 }
 
 /// Estructura para la solicitud de movimiento.
-/// Contiene las coordenadas y el jugador que hace el movimiento.
+/// Contiene las coordenadas, el jugador que hace el movimiento y el ID del juego.
 #[derive(Debug, Deserialize)]
 struct MoveRequest {
     x: i32,
     y: i32,
     z: i32,
     player: u32,
+    game_id: String,
 }
 
 /// Estructura para la solicitud de finalizar un juego.
@@ -36,25 +39,34 @@ struct EndGameRequest {
     game_id: String,
 }
 
+/// Estructura para la solicitud de movimiento del bot.
+/// Contiene el ID del juego.
+#[derive(Debug, Deserialize)]
+struct BotMoveRequest {
+    game_id: String,
+}
+
 /* HELPERS */
 
 /// Lógica compartida para ejecutar el movimiento de cualquier bot.
 /// Recibe el nombre del bot para buscarlo en el registro.
-/// 
+///
 /// # Parámetros
 /// - `bot_name`: Nombre del bot a usar.
-/// - `state`: Estado compartido del juego.
+/// - `game_id`: ID del juego sobre el que actuar.
+/// - `state`: Estado compartido con el mapa de juegos.
 /// - `registry`: Registro de bots disponibles.
-/// 
+///
 /// # Retorna
 /// Una respuesta HTTP con el resultado del movimiento del bot.
 async fn execute_bot_move(
     bot_name: &str,
-    state: web::Data<Mutex<Option<GameY>>>,
+    game_id: &str,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
 ) -> HttpResponse {
-    let mut game_lock = state.lock().unwrap();
-    let game = match game_lock.as_mut() {
+    let mut games = state.lock().unwrap();
+    let game = match games.get_mut(game_id) {
         Some(g) => g,
         None => {
             return HttpResponse::BadRequest().json(json!({
@@ -173,21 +185,21 @@ async fn execute_bot_move(
 /* ENDPOINTS */
 
 /// Inicia un nuevo juego con el tamaño de tablero especificado.
-/// 
+///
 /// # Parámetros
-/// - `req`: Solicitud JSON con el tamaño del tablero.
-/// - `state`: Estado compartido del juego.
-/// 
+/// - `req`: Solicitud JSON con el tamaño del tablero y el ID del juego.
+/// - `state`: Estado compartido con el mapa de juegos.
+///
 /// # Retorna
 /// Una respuesta HTTP confirmando el inicio del juego.
 async fn start_game(
     req: web::Json<StartGameRequest>,
-    state: web::Data<Mutex<Option<GameY>>>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
 ) -> HttpResponse {
-    let mut game_lock = state.lock().unwrap();
-    *game_lock = Some(GameY::new(req.board_size));
+    let mut games = state.lock().unwrap();
+    games.insert(req.game_id.clone(), GameY::new(req.board_size));
 
-    println!("[Rust] start_game — tamaño: {}", req.board_size);
+    println!("[Rust] start_game — game_id: {} tamaño: {}", req.game_id, req.board_size);
 
     HttpResponse::Ok().json(json!({
         "status": "started",
@@ -196,26 +208,26 @@ async fn start_game(
 }
 
 /// Procesa el movimiento de un usuario en el juego.
-/// 
+///
 /// # Parámetros
-/// - `req`: Solicitud JSON con las coordenadas y el jugador.
-/// - `state`: Estado compartido del juego.
-/// 
+/// - `req`: Solicitud JSON con las coordenadas, el jugador y el ID del juego.
+/// - `state`: Estado compartido con el mapa de juegos.
+///
 /// # Retorna
 /// Una respuesta HTTP con el resultado del movimiento.
 pub async fn user_move(
     req: web::Json<MoveRequest>,
-    state: web::Data<Mutex<Option<GameY>>>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
 ) -> HttpResponse {
     use std::convert::TryInto;
 
     println!(
-        "[Rust] user_move — player={} x={} y={} z={}",
-        req.player, req.x, req.y, req.z
+        "[Rust] user_move — game_id={} player={} x={} y={} z={}",
+        req.game_id, req.player, req.x, req.y, req.z
     );
 
-    let mut game_lock = state.lock().unwrap();
-    let game = match game_lock.as_mut() {
+    let mut games = state.lock().unwrap();
+    let game = match games.get_mut(&req.game_id) {
         Some(g) => g,
         None => {
             return HttpResponse::BadRequest().json(json!({
@@ -313,85 +325,97 @@ pub async fn user_move(
     }
 }
 
-/// Finaliza un juego dado su ID.
-/// 
+/// Finaliza un juego dado su ID y lo elimina del mapa.
+///
 /// # Parámetros
 /// - `req`: Solicitud JSON con el ID del juego.
-/// 
+/// - `state`: Estado compartido con el mapa de juegos.
+///
 /// # Retorna
 /// Una respuesta JSON confirmando la finalización.
-async fn end_game(req: web::Json<EndGameRequest>) -> web::Json<serde_json::Value> {
+async fn end_game(
+    req: web::Json<EndGameRequest>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
+) -> web::Json<serde_json::Value> {
+    let mut games = state.lock().unwrap();
+    games.remove(&req.game_id);
     println!("Finalizando juego — game_id: {}", req.game_id);
     web::Json(json!({ "status": "finished" }))
 }
 
 /// Ejecuta el movimiento del bot aleatorio.
-/// 
+///
 /// # Parámetros
-/// - `state`: Estado compartido del juego.
+/// - `req`: Solicitud JSON con el ID del juego.
+/// - `state`: Estado compartido con el mapa de juegos.
 /// - `registry`: Registro de bots.
-/// 
+///
 /// # Retorna
 /// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_random(
-    state: web::Data<Mutex<Option<GameY>>>,
+    req: web::Json<BotMoveRequest>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
 ) -> HttpResponse {
-    execute_bot_move("random_bot", state, registry).await
+    execute_bot_move("random_bot", &req.game_id, state, registry).await
 }
 
 /// Ejecuta el movimiento del bot intermedio.
-/// 
+///
 /// # Parámetros
-/// - `state`: Estado compartido del juego.
+/// - `req`: Solicitud JSON con el ID del juego.
+/// - `state`: Estado compartido con el mapa de juegos.
 /// - `registry`: Registro de bots.
-/// 
+///
 /// # Retorna
 /// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_intermediate(
-    state: web::Data<Mutex<Option<GameY>>>,
+    req: web::Json<BotMoveRequest>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
 ) -> HttpResponse {
-    execute_bot_move("intermediate_bot", state, registry).await
+    execute_bot_move("intermediate_bot", &req.game_id, state, registry).await
 }
 
 /// Ejecuta el movimiento del bot difícil.
-/// 
+///
 /// # Parámetros
-/// - `state`: Estado compartido del juego.
+/// - `req`: Solicitud JSON con el ID del juego.
+/// - `state`: Estado compartido con el mapa de juegos.
 /// - `registry`: Registro de bots.
-/// 
+///
 /// # Retorna
 /// Una respuesta HTTP con el movimiento del bot.
 pub async fn bot_move_hard(
-    state: web::Data<Mutex<Option<GameY>>>,
+    req: web::Json<BotMoveRequest>,
+    state: web::Data<Mutex<HashMap<String, GameY>>>,
     registry: web::Data<Arc<YBotRegistry>>,
 ) -> HttpResponse {
-    execute_bot_move("hard_bot", state, registry).await
+    execute_bot_move("hard_bot", &req.game_id, state, registry).await
 }
 
 /* MAIN */
 
 /// Función principal que inicia el servidor web.
-/// Configura el estado compartido del juego y el registro de bots,
+/// Configura el estado compartido del juego (mapa de partidas) y el registro de bots,
 /// luego inicia el servidor HTTP en el puerto 4000.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("Servidor Rust escuchando en el puerto 4000");
 
-    let shared_game = web::Data::new(Mutex::new(None::<GameY>));
+    let shared_games = web::Data::new(Mutex::new(HashMap::<String, GameY>::new()));
 
     let registry = Arc::new(
         YBotRegistry::new()
             .with_bot(Arc::new(RandomBot))
-            .with_bot(Arc::new(IntermediateBot))  // ← nuevo bot registrado
+            .with_bot(Arc::new(IntermediateBot))
             .with_bot(Arc::new(HardBot)),
     );
     let shared_registry = web::Data::new(registry);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(shared_game.clone())
+            .app_data(shared_games.clone())
             .app_data(shared_registry.clone())
             // Juego
             .route("/v1/game/start",  web::post().to(start_game))
