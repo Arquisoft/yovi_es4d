@@ -122,16 +122,25 @@ const GameBoard: React.FC = () => {
 
     // Recibir movimiento del rival
     s.on('opponent_move', ({ position, turn }: { position: string; turn: string }) => {
-      setGameState(prev => ({
-        ...prev,
-        hexData: prev.hexData.map(h =>
-            h.position === position
-                ? { ...h, player: (onlineRole === "j1" ? "j2" : "j1") as "j1" | "j2" }
-                : h
-        ),
-        turn: turn as "j1" | "j2",
-        botPlaying: false,
-      }));
+      setGameState(prev => {
+        // El rival es el slot contrario al nuestro
+        const opponentRole = onlineRole === "j1" ? "j2" : "j1";
+        return {
+          ...prev,
+          hexData: prev.hexData.map(h =>
+              h.position === position
+                  ? { ...h, player: opponentRole as "j1" | "j2" }
+                  : h
+          ),
+          players: prev.players.map(p =>
+              p.id === prev.players[opponentRole === "j1" ? 0 : 1].id
+                  ? { ...p, points: p.points + 5 }
+                  : p
+          ),
+          turn: turn as "j1" | "j2",
+          botPlaying: false,
+        };
+      });
     });
 
     s.on('opponent_disconnected', () => {
@@ -263,17 +272,19 @@ const GameBoard: React.FC = () => {
 
       const currentTurn = gameState.turn; // j1 ó j2 según el turno
 
-      setGameState(prev => ({
-        ...prev,
-        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
-        players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
-        winner:  validateData.winner || prev.winner,
-        status:  validateData.status || prev.status,
-      }));
-
       // En modo online emitir movimiento al rival y no llamar al bot
       if (gameMode === "online" && socketRef.current) {
         const nextTurn = currentTurn === "j1" ? "j2" : "j1";
+        // Un único setGameState para evitar que el segundo pise los puntos del primero
+        setGameState(prev => ({
+          ...prev,
+          hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
+          players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
+          winner:  validateData.winner || prev.winner,
+          status:  validateData.status || prev.status,
+          turn:    nextTurn as "j1" | "j2",
+          botPlaying: false,
+        }));
         socketRef.current.emit('move_made', { code: roomCode, position, turn: nextTurn });
         if (validateData.winner) {
           socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner, gameId: gameState.gameId });
@@ -287,9 +298,16 @@ const GameBoard: React.FC = () => {
             }).catch(() => {/* ignorar errores de guardado */});
           }
         }
-        setGameState(prev => ({ ...prev, turn: nextTurn as "j1" | "j2", botPlaying: false }));
         return; // no llamar a /move (bot)
       }
+
+      setGameState(prev => ({
+        ...prev,
+        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
+        players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
+        winner:  validateData.winner || prev.winner,
+        status:  validateData.status || prev.status,
+      }));
 
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
