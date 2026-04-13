@@ -268,6 +268,33 @@ app.post("/api/user/getUserProfile", async (req, res) => {
 // ================= GAME =================
 
 /**
+ * Endpoint público para competición entre bots.
+ * Recibe un estado de tablero en formato YEN y devuelve la jugada del bot indicado.
+ * No requiere autenticación.
+ *
+ * @route {GET} /play
+ * @param {string} req.query.position - Estado del tablero en JSON YEN (obligatorio)
+ * @param {string} [req.query.bot_id] - Identificador del bot (random_bot, intermediate_bot, hard_bot). Por defecto: hard_bot
+ * @returns {Object} {"coords":{"x":N,"y":N,"z":N}} o {"action":"resign"}
+ * @throws {400} Si falta el parámetro position
+ * @throws {500} Si hay un error procesando la jugada
+ */
+app.get('/play', async (req, res) => {
+  const { position, bot_id } = req.query;
+  if (!position) {
+    return res.status(400).json({ error: 'El parámetro position es obligatorio' });
+  }
+  try {
+    const response = await axios.get(`${gameServiceUrl}/play`, {
+      params: { position, bot_id: bot_id || 'hard_bot' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error procesando jugada del bot' });
+  }
+});
+
+/**
  * Obtener modos de bot disponibles.
  * Devuelve la lista de dificultades de bot disponibles.
  * El cliente React lo usa para construir el selector de dificultad.

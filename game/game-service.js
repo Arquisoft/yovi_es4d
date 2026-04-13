@@ -74,6 +74,29 @@ app.get('/api/game/bot-modes', (req, res) => {
 });
 
 /**
+ * Endpoint público para competición entre bots.
+ * Recibe un estado de tablero en formato YEN y devuelve la jugada del bot indicado.
+ * @route {GET} /play
+ * @param {string} req.query.position - Estado del tablero en JSON YEN (obligatorio)
+ * @param {string} [req.query.bot_id] - Identificador del bot. Por defecto: hard_bot
+ * @returns {Object} {"coords":{"x":N,"y":N,"z":N}} o {"action":"resign"}
+ * @throws {400} Si falta position
+ * @throws {500} Si hay un error en el bot
+ */
+app.get('/play', async (req, res) => {
+  const { position, bot_id } = req.query;
+  if (!position) return res.status(400).json({ error: 'position requerido' });
+  try {
+    const response = await axios.get(`${GAMEY_BOT_URL}/play`, {
+      params: { position, bot_id: bot_id || 'hard_bot' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error en el bot' });
+  }
+});
+
+/**
  * Obtener historial de juegos de un usuario
  * @route {GET} /api/game/history
  * @param {string} req.query.userId - El ID de usuario para obtener el historial

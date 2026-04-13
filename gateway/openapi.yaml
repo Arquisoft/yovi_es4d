@@ -571,7 +571,256 @@ paths:
 
 
 
-# This is the security scheme for JWT authentication. It defines how the authentication should be done in the API. 
+  /play:
+    get:
+      summary: Request a bot move for a given board position (public, no auth required).
+      description: >
+        Accepts a board position in YEN (Y Exchange Notation) format and returns the
+        move chosen by the specified bot. Used for inter-implementation competitions.
+        The position parameter must be a URL-encoded JSON string.
+      operationId: play
+      parameters:
+        - in: query
+          name: position
+          required: true
+          schema:
+            type: string
+          description: >
+            Board position in YEN JSON format. Fields: size (integer), turn (0 or 1),
+            players (array of two single-char strings, e.g. ["B","R"]),
+            layout (string with rows separated by '/' and cells as player symbol or '.').
+          example: '{"size":3,"turn":0,"players":["B","R"],"layout":"./B./..."}'
+        - in: query
+          name: bot_id
+          required: false
+          schema:
+            type: string
+            enum: [random_bot, intermediate_bot, hard_bot]
+            default: hard_bot
+          description: >
+            Bot identifier to use for the move. Defaults to hard_bot if not specified.
+      responses:
+        '200':
+          description: Bot move or action.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: A placement move with coordinates.
+                    properties:
+                      coords:
+                        type: object
+                        properties:
+                          x:
+                            type: integer
+                            example: 1
+                          y:
+                            type: integer
+                            example: 1
+                          z:
+                            type: integer
+                            example: 0
+                    example: {"coords":{"x":1,"y":1,"z":0}}
+                  - type: object
+                    description: A game action (e.g. resign when no moves available).
+                    properties:
+                      action:
+                        type: string
+                        example: resign
+                    example: {"action":"resign"}
+        '400':
+          description: Missing or invalid position parameter.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: El parámetro position es obligatorio
+        '500':
+          description: Internal bot error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Error procesando jugada del bot
+
+  /api/game/bot-modes:
+    get:
+      summary: Get available bot difficulty modes (public, no auth required).
+      operationId: getBotModes
+      responses:
+        '200':
+          description: List of available bot identifiers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  botModes:
+                    type: array
+                    items:
+                      type: string
+                    example: ["random_bot", "intermediate_bot", "hard_bot"]
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Error obteniendo modos de bot
+
+  /api/game/start:
+    post:
+      summary: Start a new game session.
+      operationId: startGame
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - gameMode
+              properties:
+                gameMode:
+                  type: string
+                  enum: [vsBot, multiplayer, online]
+                  example: vsBot
+                botMode:
+                  type: string
+                  enum: [random_bot, intermediate_bot, hard_bot]
+                  example: random_bot
+                boardSize:
+                  type: integer
+                  enum: [8, 11, 15, 19]
+                  default: 11
+                  example: 11
+      responses:
+        '200':
+          description: Game started successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                    example: game_1713000000000_abc123
+                  board:
+                    type: array
+                    items:
+                      type: object
+                  players:
+                    type: array
+                    items:
+                      type: object
+                  turn:
+                    type: string
+                    example: j1
+                  status:
+                    type: string
+                    example: active
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}/validateMove:
+    post:
+      summary: Validate and apply a player move.
+      operationId: validateMove
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - move
+              properties:
+                move:
+                  type: string
+                  description: Cell position in (x,y,z) format.
+                  example: (1,1,0)
+      responses:
+        '200':
+          description: Move result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  winner:
+                    type: string
+                    nullable: true
+                    example: j1
+                  status:
+                    type: string
+                    example: active
+        '400':
+          description: Invalid move.
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+
+  /api/game/history:
+    get:
+      summary: Get the authenticated user's game history.
+      operationId: getHistory
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of finished games for the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    gameId:
+                      type: string
+                    gameMode:
+                      type: string
+                    boardSize:
+                      type: integer
+                    winner:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    finishedAt:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+
+# This is the security scheme for JWT authentication. It defines how the authentication should be done in the API.
 # The bearerAuth scheme is used to indicate that the API uses JWT (JSON Web Token) tokens for authentication.
 components:
   securitySchemes:

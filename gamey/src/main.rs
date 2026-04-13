@@ -3,10 +3,12 @@ use serde::Deserialize;
 use serde_json::json;
 use gamey::GameY;
 use gamey::PlayerId;
+use gamey::YEN;
 use gamey::core::coord::Coordinates;
 use gamey::core::movement::Movement;
 use gamey::core::game::GameStatus;
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 mod bot;
 use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
@@ -44,6 +46,16 @@ struct EndGameRequest {
 #[derive(Debug, Deserialize)]
 struct BotMoveRequest {
     game_id: String,
+}
+
+/// Parámetros de la query del endpoint público /play.
+/// Permite a bots externos obtener el siguiente movimiento dado un estado en formato YEN.
+#[derive(Debug, Deserialize)]
+struct PlayQuery {
+    /// Estado del tablero en formato YEN (JSON serializado como string).
+    position: String,
+    /// Identificador del bot a usar. Por defecto: hard_bot.
+    bot_id: Option<String>,
 }
 
 /* HELPERS */
@@ -394,6 +406,62 @@ pub async fn bot_move_hard(
     execute_bot_move("hard_bot", &req.game_id, state, registry).await
 }
 
+/// Endpoint público para que bots externos obtengan el siguiente movimiento.
+///
+/// Acepta el estado del tablero en formato YEN (parámetro `position`) y devuelve
+/// las coordenadas del movimiento elegido por el bot indicado en `bot_id`.
+/// No usa el estado compartido del HashMap — construye el juego directamente desde YEN.
+///
+/// # Parámetros de query
+/// - `position`: JSON YEN del estado actual (obligatorio).
+/// - `bot_id`: Identificador del bot (`random_bot`, `intermediate_bot`, `hard_bot`). Por defecto `hard_bot`.
+///
+/// # Respuesta
+/// `{"coords":{"x":1,"y":1,"z":0}}` o `{"action":"resign"}` si no hay movimientos.
+pub async fn play(
+    query: web::Query<PlayQuery>,
+    registry: web::Data<Arc<YBotRegistry>>,
+) -> HttpResponse {
+    let yen: YEN = match serde_json::from_str(&query.position) {
+        Ok(y) => y,
+        Err(e) => {
+            return HttpResponse::BadRequest().json(json!({
+                "error": format!("YEN inválido: {}", e)
+            }));
+        }
+    };
+
+    let game = match GameY::try_from(yen) {
+        Ok(g) => g,
+        Err(e) => {
+            return HttpResponse::BadRequest().json(json!({
+                "error": format!("Estado de juego inválido: {:?}", e)
+            }));
+        }
+    };
+
+    let bot_name = query.bot_id.as_deref().unwrap_or("hard_bot");
+    let bot = match registry.find(bot_name).or_else(|| registry.find("hard_bot")) {
+        Some(b) => b,
+        None => {
+            return HttpResponse::InternalServerError().json(json!({
+                "error": "Bot no disponible"
+            }));
+        }
+    };
+
+    match bot.choose_move(&game) {
+        Some(coords) => HttpResponse::Ok().json(json!({
+            "coords": {
+                "x": coords.x(),
+                "y": coords.y(),
+                "z": coords.z()
+            }
+        })),
+        None => HttpResponse::Ok().json(json!({ "action": "resign" })),
+    }
+}
+
 /* MAIN */
 
 /// Función principal que inicia el servidor web.
@@ -425,6 +493,8 @@ async fn main() -> std::io::Result<()> {
             .route("/v1/ybot/choose/random_bot",       web::post().to(bot_move_random))
             .route("/v1/ybot/choose/intermediate_bot", web::post().to(bot_move_intermediate))
             .route("/v1/ybot/choose/hard_bot", web::post().to(bot_move_hard))
+            // API pública para competición entre bots
+            .route("/play", web::get().to(play))
     })
         .bind("0.0.0.0:4000")?
         .run()
