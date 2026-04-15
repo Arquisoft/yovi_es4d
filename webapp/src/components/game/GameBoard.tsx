@@ -37,6 +37,7 @@ interface LocationState {
   onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
   roomCode?:    string;
   player2Name?: string;
+  startingPlayer?: "j1" | "j2";
 }
 
 const GameBoard: React.FC = () => {
@@ -52,6 +53,7 @@ const GameBoard: React.FC = () => {
     onlineRole  = "j1",
     roomCode    = "",
     player2Name,
+    startingPlayer = "j1",
   } = (location.state as LocationState) ?? {};
 
   useEffect(() => {
@@ -64,6 +66,7 @@ const GameBoard: React.FC = () => {
   const [userProfile, setUserProfile]         = useState<{ username: string; avatar: string } | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<{ username: string; avatar: string } | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const startGameRef = useRef(false);
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -147,6 +150,8 @@ const GameBoard: React.FC = () => {
   useEffect(() => {
     const startGame = async () => {
       try {
+        if (startGameRef.current) return;
+        startGameRef.current = true;
         // 1. Obtener userId real del JWT
         const meRes = await fetch(`${API_URL}/api/auth/me`, {
           credentials: "include",
@@ -185,7 +190,7 @@ const GameBoard: React.FC = () => {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: resolvedUserId, gameMode, botMode, boardSize }),
+          body: JSON.stringify({ userId: resolvedUserId, gameMode, botMode, boardSize, startingPlayer }),
         });
         const data = await res.json();
 
@@ -203,6 +208,35 @@ const GameBoard: React.FC = () => {
           winner:     data.winner || null,
           botPlaying: false,
         });
+
+        const shouldBotStart = gameMode === "vsBot" && (data.turn === "j2" || startingPlayer === "j2");
+        if (shouldBotStart) {
+          setGameState(prev => ({ ...prev, botPlaying: true }));
+          try {
+            const moveRes = await fetch(`${API_URL}/api/game/${data.gameId}/move`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: resolvedUserId, mode: "vsBot" }),
+            });
+            const moveData = await moveRes.json();
+
+            setGameState(prev => ({
+              ...prev,
+              hexData: moveData.board,
+              turn:    moveData.turn,
+              winner:  moveData.winner,
+              status:  moveData.status,
+              players: prev.players.map(p =>
+                p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+              ),
+              botPlaying: false,
+            }));
+          } catch (error) {
+            console.error("Error during bot first move:", error);
+            setGameState(prev => ({ ...prev, botPlaying: false }));
+          }
+        }
 
         // En modo online, j1 notifica al servidor con el gameId para que j2 pueda unirse
         if (gameMode === "online") {

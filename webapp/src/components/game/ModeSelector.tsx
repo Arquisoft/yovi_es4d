@@ -35,6 +35,7 @@ const ModeSelector: React.FC = () => {
     const [botMode, setBotMode]         = useState("random_bot");
     const [boardSize, setBoardSize]     = useState(11);
     const [player2Name, setPlayer2Name] = useState("");
+    const [startingPlayer, setStartingPlayer] = useState<"j1" | "j2">("j1");
 
     useEffect(() => {
         fetch(`${API_URL}/api/game/bot-modes`, { credentials: "include" })
@@ -48,8 +49,20 @@ const ModeSelector: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        setStartingPlayer("j1");
+    }, [gameMode]);
+
     const handleStart = () => {
-        navigate("/game", { state: { gameMode, botMode, boardSize, player2Name: player2Name.trim() || "Jugador 2" } });
+        navigate("/game", {
+            state: {
+                gameMode,
+                botMode,
+                boardSize,
+                player2Name: player2Name.trim() || "Jugador 2",
+                startingPlayer,
+            },
+        });
     };
 
     return (
@@ -111,6 +124,39 @@ const ModeSelector: React.FC = () => {
                                 </div>
                                 <div className={`ms-radio${gameMode === id ? " checked" : ""}`}>
                                     {gameMode === id && <span className="ms-radio-dot" />}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Turno inicial */}
+                <div className="fade-up">
+                    <p className="ms-section-label">Turno inicial</p>
+                    <div className="ms-difficulty-list">
+                        {(gameMode === "vsBot"
+                            ? [
+                                { id: "j1", label: "Empiezas tu", description: "Tu haces el primer movimiento." },
+                                { id: "j2", label: "Empieza el bot", description: "La IA juega primero." },
+                            ]
+                            : [
+                                { id: "j1", label: "Empieza jugador 1", description: "El jugador 1 hace el primer movimiento." },
+                                { id: "j2", label: "Empieza jugador 2", description: "El jugador 2 hace el primer movimiento." },
+                            ]
+                        ).map(({ id, label, description }) => (
+                            <button
+                                key={id}
+                                onClick={() => setStartingPlayer(id as "j1" | "j2")}
+                                className={`ms-mode-card${startingPlayer === id ? " selected" : ""}`}
+                            >
+                                <div className="ms-mode-info">
+                                    <div className="ms-mode-name-row">
+                                        <span className="ms-mode-name">{label}</span>
+                                    </div>
+                                    <p className="ms-mode-desc">{description}</p>
+                                </div>
+                                <div className={`ms-radio${startingPlayer === id ? " checked" : ""}`}>
+                                    {startingPlayer === id && <span className="ms-radio-dot" />}
                                 </div>
                             </button>
                         ))}

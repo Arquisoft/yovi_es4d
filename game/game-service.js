@@ -124,6 +124,7 @@ app.post('/api/game/start', async (req, res) => {
       gameMode  = 'vsBot',
       botMode   = 'random_bot',
       boardSize: rawBoardSize = 11,
+      startingPlayer = 'j1',
     } = req.body;
 
     const ALLOWED_BOARD_SIZES = [8, 11, 15, 19];
@@ -135,6 +136,8 @@ app.post('/api/game/start', async (req, res) => {
 
     await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
 
+    const normalizedStartingPlayer = startingPlayer === 'j2' ? 'j2' : 'j1';
+
     // Crear estado del juego en Node
     const game = {
       gameId,
@@ -143,12 +146,13 @@ app.post('/api/game/start', async (req, res) => {
       gameMode,
       botMode,
       boardSize,
+      startingPlayer: normalizedStartingPlayer,
       board: initializeBoard(boardSize),
       players: [
         { id: userId, role, name: 'Player 1', color: 'j1', points: 0 },
         { id: gameMode === 'vsBot' ? 'bot' : 'player2', role: 'j2', name: gameMode === 'vsBot' ? 'Bot' : 'Player 2', color: 'j2', points: 0 }
       ],
-      currentPlayer: 'j1',
+      currentPlayer: normalizedStartingPlayer,
       moves: [],
       status: 'active',
       winner: null,
@@ -195,7 +199,8 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   // Usamos el turno actual del juego para determinar el player
   // (no el userId, que puede variar según el JWT)
-  const playerNum = game.currentPlayer === 'j1' ? 0 : 1;
+  const { toGamey, toLogical } = getPlayerMapping(game);
+  const playerNum = toGamey[game.currentPlayer];
 
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
@@ -210,7 +215,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   game.currentPlayer = game.currentPlayer === 'j1' ? 'j2' : 'j1';
 
   if (rustResponse.data.status === 'finished') {
-    game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+    game.winner = toLogical[rustResponse.data.winner];
     await finishGameAndSave(game);
   }
  rustResponse.data.board.forEach(move => {
@@ -218,10 +223,10 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
     return x === move.x && y === move.y && z === move.z;
   });
-  if (cell) cell.player = move.player === 0 ? 'j1' : 'j2';
+  if (cell) cell.player = toLogical[move.player];
 });
   res.json({ valid: true,
-    winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
+    winner: rustResponse.data.status === 'finished' ? toLogical[rustResponse.data.winner] : null,
     status: rustResponse.data.status
    });
 });
@@ -252,6 +257,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     await sleep(Math.floor(Math.random() * 1000) + 1000);
 
     // Llamar a Rust usando el botMode guardado en el juego
+    const { toLogical } = getPlayerMapping(game);
     const botRoute = BOT_ROUTES[game.botMode] || BOT_ROUTES['random_bot'];
     const rustResponse = await axios.post(
       `${GAMEY_BOT_URL}${botRoute}`,
@@ -270,7 +276,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   });
 
   if (cell && cell.player === null) {
-    cell.player = m.player === 0 ? 'j1' : 'j2';
+    cell.player = toLogical[m.player];
 
     game.moves.push({
       position: `(${m.x},${m.y},${m.z})`,
@@ -280,11 +286,11 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   }
 });
 
-    game.currentPlayer = rustResponse.data.turn === 0 ? 'j1' : 'j2';
+    game.currentPlayer = toLogical[rustResponse.data.turn];
 
     if (rustResponse.data.status === 'finished') {
       game.status = 'finished';
-      game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+      game.winner = toLogical[rustResponse.data.winner];
       await finishGameAndSave(game);
     }
 
@@ -457,7 +463,8 @@ function initializeBoard(boardSize) {
 function convertToYEN(game) {
   const size = game.boardSize;
   const players = ['B', 'R'];
-  const turn = game.currentPlayer === 'j1' ? 0 : 1;
+  const { toGamey } = getPlayerMapping(game);
+  const turn = toGamey[game.currentPlayer];
   const rows = [];
   let idx = 0;
   for (let r = 0; r < size; r++) {
@@ -465,13 +472,26 @@ function convertToYEN(game) {
     for (let c = 0; c <= r; c++) {
       const cell = game.board[idx];
       if (!cell || cell.player === null) row += '.';
-      else if (cell.player === 'j1') row += players[0];
-      else if (cell.player === 'j2') row += players[1];
+      else if (cell.player === 'j1') row += players[toGamey.j1];
+      else if (cell.player === 'j2') row += players[toGamey.j2];
       idx++;
     }
     rows.push(row);
   }
   return { size, turn, players, layout: rows.join('/') };
+}
+
+function getPlayerMapping(game) {
+  if (game.startingPlayer === 'j2') {
+    return {
+      toGamey: { j1: 1, j2: 0 },
+      toLogical: { 0: 'j2', 1: 'j1' },
+    };
+  }
+  return {
+    toGamey: { j1: 0, j2: 1 },
+    toLogical: { 0: 'j1', 1: 'j2' },
+  };
 }
 
 /**
