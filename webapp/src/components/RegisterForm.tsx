@@ -75,7 +75,16 @@ const RegisterForm: React.FC = () => {
       setRepassword('');
       navigate("/login");
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message);
+        if (err.response?.status === 409) {
+          setError(t("registerForm.emailExists"));
+        } else {
+          setError(
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            err.message ||
+            "Registration failed"
+          );
+        }
     } finally {
       setLoading(false);
     }

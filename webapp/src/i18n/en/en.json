@@ -61,7 +61,8 @@
     "errorPasswordMatch": "Passwords do not match",
     "errorEmail": "Invalid email",
     "errorPasswordContent": "Password must have at least 8 characters, one uppercase and one number, and no spaces",
-    "errorUsername": "Username must be at least 3 characters"
+    "errorUsername": "Username must be at least 3 characters",
+    "emailExists": "Email already exists"
   }, "gameOver": {
     "title": "Game finished",
     "winner": "Winner",
