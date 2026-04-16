@@ -118,7 +118,7 @@ const GameOver: React.FC = () => {
                             hexData={gameState.hexData}
                             onHexClick={() => {}}
                             scale={0.72}
-                            connectionPath={gameState.connectionPath}
+                            connectionEdges={gameState.connectionEdges}
                         />
                     ) : (
                         <Triangle

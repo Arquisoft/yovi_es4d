@@ -10,9 +10,9 @@ interface Triangle3DProps {
   hexData: HexData[];
   onHexClick: (position: string) => void;
   scale?: number;
-  connectionPath?: {
-    j1: string[];
-    j2: string[];
+  connectionEdges?: {
+    j1: Array<{ from: string; to: string }>;
+    j2: Array<{ from: string; to: string }>;
   };
 }
 
@@ -105,7 +105,7 @@ const Triangle3D: React.FC<Triangle3DProps> = ({
   hexData,
   onHexClick,
   scale = 1,
-  connectionPath = { j1: [], j2: [] },
+  connectionEdges = { j1: [], j2: [] },
 }) => {
   const [rotation, setRotation] = useState<Rotation>(INITIAL_ROTATION);
   const dragStateRef = useRef<{ x: number; y: number } | null>(null);
@@ -158,23 +158,23 @@ const Triangle3D: React.FC<Triangle3DProps> = ({
       };
     }).sort((left, right) => left.depth - right.depth);
 
-    const buildSegments = (path: string[]) =>
-      path.slice(0, -1).map((position, index) => {
-        const start = projectedMap.get(position);
-        const end = projectedMap.get(path[index + 1]);
+    const buildSegments = (edges: Array<{ from: string; to: string }>) =>
+      edges.map((edge) => {
+        const start = projectedMap.get(edge.from);
+        const end = projectedMap.get(edge.to);
         if (!start || !end) return null;
         return { start, end };
       }).filter((segment): segment is { start: Point2D; end: Point2D } => segment !== null);
 
-    return {
+      return {
       cells,
       faces,
       segments: {
-        j1: buildSegments(connectionPath.j1 || []),
-        j2: buildSegments(connectionPath.j2 || []),
+        j1: buildSegments(connectionEdges.j1 || []),
+        j2: buildSegments(connectionEdges.j2 || []),
       },
     };
-  }, [connectionPath.j1, connectionPath.j2, hexData, rotation, sceneScale, total]);
+  }, [connectionEdges.j1, connectionEdges.j2, hexData, rotation, sceneScale, total]);
 
   const nudgeRotation = (deltaX: number, deltaY: number) => {
     setRotation((current) => ({

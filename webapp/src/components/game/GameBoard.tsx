@@ -33,9 +33,13 @@ interface GameState {
     j1: string[];
     j2: string[];
   };
-  connectionPath: {
-    j1: string[];
-    j2: string[];
+  connectionEdges: {
+    j1: Array<{ from: string; to: string }>;
+    j2: Array<{ from: string; to: string }>;
+  };
+  hasBranch: {
+    j1: boolean;
+    j2: boolean;
   };
 }
 
@@ -90,7 +94,8 @@ const GameBoard: React.FC = () => {
     winner: null,
     botPlaying: false,
     connectedFaces: { j1: [], j2: [] },
-    connectionPath: { j1: [], j2: [] },
+    connectionEdges: { j1: [], j2: [] },
+    hasBranch: { j1: false, j2: false },
   });
 
   useEffect(() => {
@@ -130,7 +135,8 @@ const GameBoard: React.FC = () => {
           winner:     data.winner || null,
           botPlaying: false,
           connectedFaces: data.connectedFaces || { j1: [], j2: [] },
-          connectionPath: data.connectionPath || { j1: [], j2: [] },
+          connectionEdges: data.connectionEdges || { j1: [], j2: [] },
+          hasBranch: data.hasBranch || { j1: false, j2: false },
         });
       } catch (err) {
         console.error("Error cargando partida para j2:", err);
@@ -223,7 +229,8 @@ const GameBoard: React.FC = () => {
           winner:     data.winner || null,
           botPlaying: false,
           connectedFaces: data.connectedFaces || { j1: [], j2: [] },
-          connectionPath: data.connectionPath || { j1: [], j2: [] },
+          connectionEdges: data.connectionEdges || { j1: [], j2: [] },
+          hasBranch: data.hasBranch || { j1: false, j2: false },
         });
 
         const shouldBotStart = gameMode === "vsBot" && (data.turn === "j2" || startingPlayer === "j2");
@@ -245,7 +252,8 @@ const GameBoard: React.FC = () => {
               winner:  moveData.winner,
               status:  moveData.status,
               connectedFaces: moveData.connectedFaces || prev.connectedFaces,
-              connectionPath: moveData.connectionPath || prev.connectionPath,
+              connectionEdges: moveData.connectionEdges || prev.connectionEdges,
+              hasBranch: moveData.hasBranch || prev.hasBranch,
               players: prev.players.map(p =>
                 p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
               ),
@@ -309,7 +317,8 @@ const GameBoard: React.FC = () => {
         winner:  validateData.winner || prev.winner,
         status:  validateData.status || prev.status,
         connectedFaces: validateData.connectedFaces || prev.connectedFaces,
-        connectionPath: validateData.connectionPath || prev.connectionPath,
+        connectionEdges: validateData.connectionEdges || prev.connectionEdges,
+        hasBranch: validateData.hasBranch || prev.hasBranch,
       }));
 
       // En modo online emitir movimiento al rival y no llamar al bot
@@ -338,7 +347,8 @@ const GameBoard: React.FC = () => {
         winner:  moveData.winner,
         status:  moveData.status,
         connectedFaces: moveData.connectedFaces || prev.connectedFaces,
-        connectionPath: moveData.connectionPath || prev.connectionPath,
+        connectionEdges: moveData.connectionEdges || prev.connectionEdges,
+        hasBranch: moveData.hasBranch || prev.hasBranch,
 
         // En vsBot suma puntos al bot, en multiplayer no hace falta ya se suma arriba
         players: gameMode === "vsBot"
@@ -456,6 +466,9 @@ const GameBoard: React.FC = () => {
                       </span>
                     ))}
                   </div>
+                  <span className={`gb-tetra-branch ${gameState.hasBranch.j1 ? "active violet" : ""}`}>
+                    {gameState.hasBranch.j1 ? "Bifurcacion" : "Sin bifurcacion"}
+                  </span>
                 </div>
 
                 <div className="gb-tetra-track">
@@ -470,6 +483,9 @@ const GameBoard: React.FC = () => {
                       </span>
                     ))}
                   </div>
+                  <span className={`gb-tetra-branch ${gameState.hasBranch.j2 ? "active coral" : ""}`}>
+                    {gameState.hasBranch.j2 ? "Bifurcacion" : "Sin bifurcacion"}
+                  </span>
                 </div>
               </div>
             )}
@@ -480,7 +496,7 @@ const GameBoard: React.FC = () => {
                       hexData={gameState.hexData}
                       onHexClick={handleHexClick}
                       scale={0.98}
-                      connectionPath={gameState.connectionPath}
+                      connectionEdges={gameState.connectionEdges}
                     />
                   )
                   : <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />

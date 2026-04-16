@@ -6,7 +6,7 @@ use gamey::PlayerId;
 use gamey::core::coord::Coordinates;
 use gamey::core::movement::Movement;
 use gamey::core::game::GameStatus;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 mod bot;
@@ -157,92 +157,98 @@ impl TetraGame {
         [coord.0 == 0, coord.1 == 0, coord.2 == 0, coord.3 == 0]
     }
 
-    fn evaluate_path(
+    fn component_info(
         &self,
-        current: (u32, u32, u32, u32),
+        start: (u32, u32, u32, u32),
         player: u32,
-        visited: &mut HashSet<(u32, u32, u32, u32)>,
-        path: &mut Vec<(u32, u32, u32, u32)>,
-        faces: [bool; 4],
-        best_path: &mut Vec<(u32, u32, u32, u32)>,
-        best_faces: &mut [bool; 4],
-    ) {
-        let current_count = faces.iter().filter(|value| **value).count();
-        let best_count = best_faces.iter().filter(|value| **value).count();
+        global_visited: &mut HashSet<(u32, u32, u32, u32)>,
+    ) -> TetraComponentInfo {
+        let mut stack = vec![start];
+        let mut component_nodes = Vec::new();
+        let mut faces = [false, false, false, false];
 
-        if current_count > best_count || (current_count == best_count && path.len() > best_path.len()) {
-            *best_faces = faces;
-            *best_path = path.clone();
-        }
+        global_visited.insert(start);
 
-        if current_count == 4 {
-            return;
-        }
+        while let Some(current) = stack.pop() {
+            component_nodes.push(current);
 
-        for neighbor in self.neighbors(current) {
-            if visited.contains(&neighbor) || self.cells.get(&neighbor) != Some(&player) {
-                continue;
+            let current_faces = Self::touched_faces(current);
+            for idx in 0..4 {
+                faces[idx] = faces[idx] || current_faces[idx];
             }
 
-            visited.insert(neighbor);
-            path.push(neighbor);
+            for neighbor in self.neighbors(current) {
+                if global_visited.contains(&neighbor) {
+                    continue;
+                }
 
-            let neighbor_faces = Self::touched_faces(neighbor);
-            let next_faces = [
-                faces[0] || neighbor_faces[0],
-                faces[1] || neighbor_faces[1],
-                faces[2] || neighbor_faces[2],
-                faces[3] || neighbor_faces[3],
-            ];
+                if self.cells.get(&neighbor) == Some(&player) {
+                    global_visited.insert(neighbor);
+                    stack.push(neighbor);
+                }
+            }
+        }
 
-            self.evaluate_path(
-                neighbor,
-                player,
-                visited,
-                path,
-                next_faces,
-                best_path,
-                best_faces,
-            );
+        let node_set = component_nodes.iter().copied().collect::<HashSet<_>>();
+        let mut has_branch = false;
+        let mut path_edges = Vec::new();
+        let mut seen_edges = HashSet::new();
 
-            path.pop();
-            visited.remove(&neighbor);
+        for node in &component_nodes {
+            let player_neighbors = self
+                .neighbors(*node)
+                .into_iter()
+                .filter(|neighbor| node_set.contains(neighbor))
+                .collect::<Vec<_>>();
+
+            if player_neighbors.len() >= 3 {
+                has_branch = true;
+            }
+
+            for neighbor in player_neighbors {
+                let edge = if node <= &neighbor {
+                    (*node, neighbor)
+                } else {
+                    (neighbor, *node)
+                };
+
+                if seen_edges.insert(edge) {
+                    path_edges.push(edge);
+                }
+            }
+        }
+
+        TetraComponentInfo {
+            nodes: component_nodes,
+            faces,
+            has_branch,
+            path_edges,
         }
     }
 
-    fn best_path_for_player(&self, player: u32) -> (Vec<(u32, u32, u32, u32)>, [bool; 4]) {
+    fn best_component_for_player(&self, player: u32) -> TetraComponentInfo {
         let player_cells = self
             .cells
             .iter()
             .filter_map(|(coord, owner)| if *owner == player { Some(*coord) } else { None })
             .collect::<Vec<_>>();
 
-        let mut best_path = Vec::new();
-        let mut best_faces = [false, false, false, false];
+        let mut best_component = TetraComponentInfo::default();
+        let mut visited = HashSet::new();
 
         for start in player_cells {
-            let mut visited = HashSet::new();
-            let mut path = vec![start];
-            let start_faces = Self::touched_faces(start);
+            if visited.contains(&start) {
+                continue;
+            }
 
-            visited.insert(start);
+            let component = self.component_info(start, player, &mut visited);
 
-            self.evaluate_path(
-                start,
-                player,
-                &mut visited,
-                &mut path,
-                start_faces,
-                &mut best_path,
-                &mut best_faces,
-            );
-
-            if best_faces.iter().all(|value| *value) {
-                break;
+            if component.is_better_than(&best_component) {
+                best_component = component;
             }
         }
 
-        (best_path, best_faces)
+        best_component
     }
 
     fn place(&mut self, coord: (u32, u32, u32, u32), player: u32) -> Result<(), String> {
@@ -264,14 +270,40 @@ impl TetraGame {
 
         self.cells.insert(coord, player);
 
-        let (_, best_faces) = self.best_path_for_player(player);
-        if best_faces.iter().all(|value| *value) {
+        let best_component = self.best_component_for_player(player);
+        if best_component.faces.iter().all(|value| *value) && best_component.has_branch {
             self.winner = Some(player);
         } else {
             self.next_player = 1 - self.next_player;
         }
 
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct TetraComponentInfo {
+    nodes: Vec<(u32, u32, u32, u32)>,
+    faces: [bool; 4],
+    has_branch: bool,
+    path_edges: Vec<((u32, u32, u32, u32), (u32, u32, u32, u32))>,
+}
+
+impl TetraComponentInfo {
+    fn face_count(&self) -> usize {
+        self.faces.iter().filter(|value| **value).count()
+    }
+
+    fn is_better_than(&self, other: &Self) -> bool {
+        if self.face_count() != other.face_count() {
+            return self.face_count() > other.face_count();
+        }
+
+        if self.has_branch != other.has_branch {
+            return self.has_branch;
+        }
+
+        self.nodes.len() > other.nodes.len()
     }
 }
 
@@ -284,14 +316,26 @@ fn faces_to_labels(faces: [bool; 4]) -> Vec<&'static str> {
         .collect()
 }
 
-fn path_to_response(path: &[(u32, u32, u32, u32)]) -> Vec<TetraCellResponse> {
-    path.iter()
-        .map(|coord| TetraCellResponse {
-            a: coord.0,
-            b: coord.1,
-            c: coord.2,
-            d: coord.3,
-            player: None,
+fn edges_to_response(
+    edges: &[((u32, u32, u32, u32), (u32, u32, u32, u32))],
+) -> Vec<serde_json::Value> {
+    edges
+        .iter()
+        .map(|(from, to)| {
+            json!({
+                "from": {
+                    "a": from.0,
+                    "b": from.1,
+                    "c": from.2,
+                    "d": from.3,
+                },
+                "to": {
+                    "a": to.0,
+                    "b": to.1,
+                    "c": to.2,
+                    "d": to.3,
+                }
+            })
         })
         .collect()
 }
@@ -301,8 +345,8 @@ fn tetra_status(game: &TetraGame) -> &'static str {
 }
 
 fn tetra_response(game: &TetraGame) -> serde_json::Value {
-    let (path_0, faces_0) = game.best_path_for_player(0);
-    let (path_1, faces_1) = game.best_path_for_player(1);
+    let component_0 = game.best_component_for_player(0);
+    let component_1 = game.best_component_for_player(1);
     json!({
         "valid": true,
         "board": game.board_response(),
@@ -310,13 +354,17 @@ fn tetra_response(game: &TetraGame) -> serde_json::Value {
         "status": tetra_status(game),
         "winner": game.winner,
         "connectedFaces": {
-            "0": faces_to_labels(faces_0),
-            "1": faces_to_labels(faces_1),
+            "0": faces_to_labels(component_0.faces),
+            "1": faces_to_labels(component_1.faces),
         },
-        "connectionPath": {
-            "0": path_to_response(&path_0),
-            "1": path_to_response(&path_1),
+        "connectionEdges": {
+            "0": edges_to_response(&component_0.path_edges),
+            "1": edges_to_response(&component_1.path_edges),
         },
+        "hasBranch": {
+            "0": component_0.has_branch,
+            "1": component_1.has_branch,
+        }
     })
 }
 
@@ -781,8 +829,8 @@ async fn tetra_bot_move(
 
     match game.place(coord, game.next_player) {
         Ok(_) => {
-            let (path_0, faces_0) = game.best_path_for_player(0);
-            let (path_1, faces_1) = game.best_path_for_player(1);
+            let component_0 = game.best_component_for_player(0);
+            let component_1 = game.best_component_for_player(1);
             HttpResponse::Ok().json(json!({
             "valid": true,
             "board": game.board_response(),
@@ -790,12 +838,16 @@ async fn tetra_bot_move(
             "status": tetra_status(game),
             "winner": game.winner,
             "connectedFaces": {
-                "0": faces_to_labels(faces_0),
-                "1": faces_to_labels(faces_1),
+                "0": faces_to_labels(component_0.faces),
+                "1": faces_to_labels(component_1.faces),
             },
-            "connectionPath": {
-                "0": path_to_response(&path_0),
-                "1": path_to_response(&path_1),
+            "connectionEdges": {
+                "0": edges_to_response(&component_0.path_edges),
+                "1": edges_to_response(&component_1.path_edges),
+            },
+            "hasBranch": {
+                "0": component_0.has_branch,
+                "1": component_1.has_branch,
             },
             "lastMove": {
                 "a": coord.0,

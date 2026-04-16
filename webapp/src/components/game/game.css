@@ -495,6 +495,30 @@
     border-color: rgba(249,112,88,0.24);
 }
 
+.gb-tetra-branch {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(241, 235, 226, 0.95);
+    border: 1px solid rgba(168, 149, 121, 0.2);
+    border-radius: 999px;
+    padding: 6px 10px;
+}
+
+.gb-tetra-branch.active.violet {
+    background: rgba(124,111,247,0.16);
+    color: var(--violet);
+    border-color: rgba(124,111,247,0.28);
+}
+
+.gb-tetra-branch.active.coral {
+    background: rgba(249,112,88,0.15);
+    color: var(--coral);
+    border-color: rgba(249,112,88,0.24);
+}
+
 .gb-view-switch {
     position: absolute;
     top: 16px;

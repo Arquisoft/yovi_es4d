@@ -34,7 +34,8 @@ const gameSchema = new mongoose.Schema({
   gameMode: String,
   boardVariant: String,
   connectedFaces: mongoose.Schema.Types.Mixed,
-  connectionPath: mongoose.Schema.Types.Mixed,
+  connectionEdges: mongoose.Schema.Types.Mixed,
+  hasBranch: mongoose.Schema.Types.Mixed,
   boardSize: Number,
   board: [{ position: String, player: String }],
   players: [{
@@ -160,7 +161,8 @@ app.post('/api/game/start', async (req, res) => {
       startingPlayer: normalizedStartingPlayer,
       board: boardVariant === 'tetra3d' ? initializeTetraBoard(boardSize) : initializeBoard(boardSize),
       connectedFaces: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
-      connectionPath: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
+      connectionEdges: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
+      hasBranch: boardVariant === 'tetra3d' ? { j1: false, j2: false } : undefined,
       players: [
         { id: userId, role, name: 'Player 1', color: 'j1', points: 0 },
         { id: gameMode === 'vsBot' ? 'bot' : 'player2', role: 'j2', name: gameMode === 'vsBot' ? 'Bot' : 'Player 2', color: 'j2', points: 0 }
@@ -183,7 +185,8 @@ app.post('/api/game/start', async (req, res) => {
       winner: null,
       boardVariant: game.boardVariant,
       connectedFaces: game.connectedFaces || { j1: [], j2: [] },
-      connectionPath: game.connectionPath || { j1: [], j2: [] },
+      connectionEdges: game.connectionEdges || { j1: [], j2: [] },
+      hasBranch: game.hasBranch || { j1: false, j2: false },
     });
 
   } catch (error) {
@@ -223,7 +226,8 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
       game.moves.push({ position: move, userId });
       game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
       game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
-      game.connectionPath = mapConnectionPath(rustResponse.data.connectionPath, toLogical);
+      game.connectionEdges = mapConnectionEdges(rustResponse.data.connectionEdges, toLogical);
+      game.hasBranch = mapHasBranch(rustResponse.data.hasBranch, toLogical);
       game.currentPlayer = rustResponse.data.turn === null || rustResponse.data.turn === undefined
         ? game.currentPlayer
         : toLogical[rustResponse.data.turn];
@@ -238,7 +242,8 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
         winner: rustResponse.data.status === 'finished' ? toLogical[rustResponse.data.winner] : null,
         status: rustResponse.data.status,
         connectedFaces: game.connectedFaces,
-        connectionPath: game.connectionPath,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
       });
     } catch (error) {
       return res.status(error.response?.status || 400).json({
@@ -314,7 +319,8 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 
       game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
       game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
-      game.connectionPath = mapConnectionPath(rustResponse.data.connectionPath, toLogical);
+      game.connectionEdges = mapConnectionEdges(rustResponse.data.connectionEdges, toLogical);
+      game.hasBranch = mapHasBranch(rustResponse.data.hasBranch, toLogical);
 
       if (rustResponse.data.turn !== null && rustResponse.data.turn !== undefined) {
         game.currentPlayer = toLogical[rustResponse.data.turn];
@@ -343,7 +349,8 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
         winner: game.winner || null,
         status: game.status,
         connectedFaces: game.connectedFaces,
-        connectionPath: game.connectionPath,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
       });
     }
 
@@ -447,7 +454,8 @@ app.get('/api/game/:gameId', (req, res) => {
     winner: game.winner || null,
     boardVariant: game.boardVariant || 'classic',
     connectedFaces: game.connectedFaces || { j1: [], j2: [] },
-    connectionPath: game.connectionPath || { j1: [], j2: [] },
+    connectionEdges: game.connectionEdges || { j1: [], j2: [] },
+    hasBranch: game.hasBranch || { j1: false, j2: false },
   });
 });
 
@@ -478,7 +486,8 @@ async function finishGameAndSave(game) {
         gameMode: game.gameMode,
         boardVariant: game.boardVariant,
         connectedFaces: game.connectedFaces,
-        connectionPath: game.connectionPath,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
         boardSize: game.boardSize,
         players: game.players,
         moves: game.moves,
@@ -598,21 +607,40 @@ function mapConnectedFaces(rawConnectedFaces, toLogical) {
   return connectedFaces;
 }
 
-function mapConnectionPath(rawConnectionPath, toLogical) {
-  const connectionPath = { j1: [], j2: [] };
+function mapConnectionEdges(rawConnectionEdges, toLogical) {
+  const connectionEdges = { j1: [], j2: [] };
 
-  if (!rawConnectionPath || typeof rawConnectionPath !== 'object') {
-    return connectionPath;
+  if (!rawConnectionEdges || typeof rawConnectionEdges !== 'object') {
+    return connectionEdges;
   }
 
-  Object.entries(rawConnectionPath).forEach(([gameyPlayer, path]) => {
+  Object.entries(rawConnectionEdges).forEach(([gameyPlayer, edges]) => {
     const logicalPlayer = toLogical[Number(gameyPlayer)];
-    if (!logicalPlayer || !Array.isArray(path)) return;
+    if (!logicalPlayer || !Array.isArray(edges)) return;
 
-    connectionPath[logicalPlayer] = path.map((cell) => `(${cell.a},${cell.b},${cell.c},${cell.d})`);
+    connectionEdges[logicalPlayer] = edges.map((edge) => ({
+      from: `(${edge.from.a},${edge.from.b},${edge.from.c},${edge.from.d})`,
+      to: `(${edge.to.a},${edge.to.b},${edge.to.c},${edge.to.d})`,
+    }));
   });
 
-  return connectionPath;
+  return connectionEdges;
+}
+
+function mapHasBranch(rawHasBranch, toLogical) {
+  const hasBranch = { j1: false, j2: false };
+
+  if (!rawHasBranch || typeof rawHasBranch !== 'object') {
+    return hasBranch;
+  }
+
+  Object.entries(rawHasBranch).forEach(([gameyPlayer, value]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer) return;
+    hasBranch[logicalPlayer] = Boolean(value);
+  });
+
+  return hasBranch;
 }
 
 /**
