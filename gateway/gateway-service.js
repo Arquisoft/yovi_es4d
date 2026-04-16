@@ -432,6 +432,7 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
       botMode:  req.body.botMode  || 'random_bot', // ← propagamos al game-service
       boardSize: req.body.boardSize || 11, // <- tamaño del tablero
       startingPlayer: req.body.startingPlayer || 'j1',
+      boardVariant: req.body.boardVariant || 'classic',
     });
     res.json(startResponse.data);
   } catch (error) {

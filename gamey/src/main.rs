@@ -1,12 +1,14 @@
 use actix_web::{web, App, HttpServer, HttpResponse};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use gamey::GameY;
 use gamey::PlayerId;
 use gamey::core::coord::Coordinates;
 use gamey::core::movement::Movement;
 use gamey::core::game::GameStatus;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 mod bot;
 use crate::bot::{RandomBot, IntermediateBot, HardBot, YBotRegistry, YBot};
 
@@ -34,6 +36,328 @@ struct MoveRequest {
 #[derive(Debug, Deserialize)]
 struct EndGameRequest {
     game_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TetraStartRequest {
+    size: u32,
+}
+
+#[derive(Debug, Deserialize)]
+struct TetraMoveRequest {
+    a: i32,
+    b: i32,
+    c: i32,
+    d: i32,
+    player: u32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct TetraCellResponse {
+    a: u32,
+    b: u32,
+    c: u32,
+    d: u32,
+    player: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+struct TetraGame {
+    size: u32,
+    cells: HashMap<(u32, u32, u32, u32), u32>,
+    next_player: u32,
+    winner: Option<u32>,
+}
+
+impl TetraGame {
+    fn new(size: u32) -> Self {
+        Self {
+            size: size.max(2),
+            cells: HashMap::new(),
+            next_player: 0,
+            winner: None,
+        }
+    }
+
+    fn is_valid_coord(&self, coord: (u32, u32, u32, u32)) -> bool {
+        coord.0 + coord.1 + coord.2 + coord.3 == self.size.saturating_sub(1)
+    }
+
+    fn available_moves(&self) -> Vec<(u32, u32, u32, u32)> {
+        let mut moves = Vec::new();
+        let total = self.size.saturating_sub(1);
+        for a in 0..=total {
+            for b in 0..=total - a {
+                for c in 0..=total - a - b {
+                    let d = total - a - b - c;
+                    let coord = (a, b, c, d);
+                    if !self.cells.contains_key(&coord) {
+                        moves.push(coord);
+                    }
+                }
+            }
+        }
+        moves
+    }
+
+    fn board_response(&self) -> Vec<TetraCellResponse> {
+        let mut cells = self
+            .available_moves()
+            .into_iter()
+            .map(|(a, b, c, d)| TetraCellResponse {
+                a,
+                b,
+                c,
+                d,
+                player: self.cells.get(&(a, b, c, d)).copied(),
+            })
+            .collect::<Vec<_>>();
+
+        for (coord, player) in &self.cells {
+            if !cells.iter().any(|cell| (cell.a, cell.b, cell.c, cell.d) == *coord) {
+                cells.push(TetraCellResponse {
+                    a: coord.0,
+                    b: coord.1,
+                    c: coord.2,
+                    d: coord.3,
+                    player: Some(*player),
+                });
+            }
+        }
+
+        cells.sort_by_key(|cell| (cell.a, cell.b, cell.c, cell.d));
+        cells
+    }
+
+    fn neighbors(&self, coord: (u32, u32, u32, u32)) -> Vec<(u32, u32, u32, u32)> {
+        let mut set = HashSet::new();
+        let values = [coord.0, coord.1, coord.2, coord.3];
+
+        for from in 0..4 {
+            for to in 0..4 {
+                if from == to || values[from] == 0 {
+                    continue;
+                }
+
+                let mut next = values;
+                next[from] -= 1;
+                next[to] += 1;
+                let next_coord = (next[0], next[1], next[2], next[3]);
+
+                if self.is_valid_coord(next_coord) {
+                    set.insert(next_coord);
+                }
+            }
+        }
+
+        set.into_iter().collect()
+    }
+
+    fn touched_faces(coord: (u32, u32, u32, u32)) -> [bool; 4] {
+        [coord.0 == 0, coord.1 == 0, coord.2 == 0, coord.3 == 0]
+    }
+
+    fn evaluate_path(
+        &self,
+        current: (u32, u32, u32, u32),
+        player: u32,
+        visited: &mut HashSet<(u32, u32, u32, u32)>,
+        path: &mut Vec<(u32, u32, u32, u32)>,
+        faces: [bool; 4],
+        best_path: &mut Vec<(u32, u32, u32, u32)>,
+        best_faces: &mut [bool; 4],
+    ) {
+        let current_count = faces.iter().filter(|value| **value).count();
+        let best_count = best_faces.iter().filter(|value| **value).count();
+
+        if current_count > best_count || (current_count == best_count && path.len() > best_path.len()) {
+            *best_faces = faces;
+            *best_path = path.clone();
+        }
+
+        if current_count == 4 {
+            return;
+        }
+
+        for neighbor in self.neighbors(current) {
+            if visited.contains(&neighbor) || self.cells.get(&neighbor) != Some(&player) {
+                continue;
+            }
+
+            visited.insert(neighbor);
+            path.push(neighbor);
+
+            let neighbor_faces = Self::touched_faces(neighbor);
+            let next_faces = [
+                faces[0] || neighbor_faces[0],
+                faces[1] || neighbor_faces[1],
+                faces[2] || neighbor_faces[2],
+                faces[3] || neighbor_faces[3],
+            ];
+
+            self.evaluate_path(
+                neighbor,
+                player,
+                visited,
+                path,
+                next_faces,
+                best_path,
+                best_faces,
+            );
+
+            path.pop();
+            visited.remove(&neighbor);
+        }
+    }
+
+    fn best_path_for_player(&self, player: u32) -> (Vec<(u32, u32, u32, u32)>, [bool; 4]) {
+        let player_cells = self
+            .cells
+            .iter()
+            .filter_map(|(coord, owner)| if *owner == player { Some(*coord) } else { None })
+            .collect::<Vec<_>>();
+
+        let mut best_path = Vec::new();
+        let mut best_faces = [false, false, false, false];
+
+        for start in player_cells {
+            let mut visited = HashSet::new();
+            let mut path = vec![start];
+            let start_faces = Self::touched_faces(start);
+
+            visited.insert(start);
+
+            self.evaluate_path(
+                start,
+                player,
+                &mut visited,
+                &mut path,
+                start_faces,
+                &mut best_path,
+                &mut best_faces,
+            );
+
+            if best_faces.iter().all(|value| *value) {
+                break;
+            }
+        }
+
+        (best_path, best_faces)
+    }
+
+    fn place(&mut self, coord: (u32, u32, u32, u32), player: u32) -> Result<(), String> {
+        if self.winner.is_some() {
+            return Err("El juego ya termino".to_string());
+        }
+
+        if player != self.next_player {
+            return Err("No es tu turno".to_string());
+        }
+
+        if !self.is_valid_coord(coord) {
+            return Err("Coordenadas invalidas".to_string());
+        }
+
+        if self.cells.contains_key(&coord) {
+            return Err("Casilla ocupada".to_string());
+        }
+
+        self.cells.insert(coord, player);
+
+        let (_, best_faces) = self.best_path_for_player(player);
+        if best_faces.iter().all(|value| *value) {
+            self.winner = Some(player);
+        } else {
+            self.next_player = 1 - self.next_player;
+        }
+
+        Ok(())
+    }
+}
+
+fn faces_to_labels(faces: [bool; 4]) -> Vec<&'static str> {
+    let labels = ["A", "B", "C", "D"];
+    labels
+        .into_iter()
+        .enumerate()
+        .filter_map(|(idx, label)| if faces[idx] { Some(label) } else { None })
+        .collect()
+}
+
+fn path_to_response(path: &[(u32, u32, u32, u32)]) -> Vec<TetraCellResponse> {
+    path.iter()
+        .map(|coord| TetraCellResponse {
+            a: coord.0,
+            b: coord.1,
+            c: coord.2,
+            d: coord.3,
+            player: None,
+        })
+        .collect()
+}
+
+fn tetra_status(game: &TetraGame) -> &'static str {
+    if game.winner.is_some() { "finished" } else { "active" }
+}
+
+fn tetra_response(game: &TetraGame) -> serde_json::Value {
+    let (path_0, faces_0) = game.best_path_for_player(0);
+    let (path_1, faces_1) = game.best_path_for_player(1);
+    json!({
+        "valid": true,
+        "board": game.board_response(),
+        "turn": if game.winner.is_some() { serde_json::Value::Null } else { json!(game.next_player) },
+        "status": tetra_status(game),
+        "winner": game.winner,
+        "connectedFaces": {
+            "0": faces_to_labels(faces_0),
+            "1": faces_to_labels(faces_1),
+        },
+        "connectionPath": {
+            "0": path_to_response(&path_0),
+            "1": path_to_response(&path_1),
+        },
+    })
+}
+
+fn tetra_pick_move(game: &TetraGame, bot_name: &str) -> Option<(u32, u32, u32, u32)> {
+    let available = game.available_moves();
+    if available.is_empty() {
+        return None;
+    }
+
+    if bot_name == "random_bot" {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.subsec_nanos() as usize)
+            .unwrap_or(0);
+        return available.get(nanos % available.len()).copied();
+    }
+
+    let player = game.next_player;
+    let mut scored = available
+        .into_iter()
+        .map(|coord| {
+            let mut score = 0i32;
+            let faces = TetraGame::touched_faces(coord);
+            score += faces.iter().filter(|face| **face).count() as i32 * 8;
+
+            for neighbor in game.neighbors(coord) {
+                if game.cells.get(&neighbor) == Some(&player) {
+                    score += if bot_name == "hard_bot" { 7 } else { 4 };
+                }
+            }
+
+            let values = [coord.0, coord.1, coord.2, coord.3];
+            let spread = values.iter().filter(|value| **value > 0).count() as i32;
+            score += if bot_name == "hard_bot" { spread * 2 } else { spread };
+
+            (coord, score)
+        })
+        .collect::<Vec<_>>();
+
+    scored.sort_by(|a, b| b.1.cmp(&a.1));
+    scored.first().map(|entry| entry.0)
 }
 
 /* HELPERS */
@@ -370,6 +694,144 @@ pub async fn bot_move_hard(
     execute_bot_move("hard_bot", state, registry).await
 }
 
+async fn start_tetra_game(
+    req: web::Json<TetraStartRequest>,
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    let mut game_lock = state.lock().unwrap();
+    *game_lock = Some(TetraGame::new(req.size));
+
+    HttpResponse::Ok().json(json!({
+        "status": "started",
+        "size": req.size.max(2),
+    }))
+}
+
+async fn tetra_move(
+    req: web::Json<TetraMoveRequest>,
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    let mut game_lock = state.lock().unwrap();
+    let game = match game_lock.as_mut() {
+        Some(game) => game,
+        None => {
+            return HttpResponse::BadRequest().json(json!({
+                "valid": false,
+                "message": "El juego tetraedrico no ha sido iniciado"
+            }));
+        }
+    };
+
+    let coord = match (
+        u32::try_from(req.a),
+        u32::try_from(req.b),
+        u32::try_from(req.c),
+        u32::try_from(req.d),
+    ) {
+        (Ok(a), Ok(b), Ok(c), Ok(d)) => (a, b, c, d),
+        _ => {
+            return HttpResponse::BadRequest().json(json!({
+                "valid": false,
+                "message": "Coordenadas invalidas"
+            }));
+        }
+    };
+
+    match game.place(coord, req.player) {
+        Ok(_) => HttpResponse::Ok().json(tetra_response(game)),
+        Err(message) => HttpResponse::BadRequest().json(json!({
+            "valid": false,
+            "message": message,
+            "status": tetra_status(game),
+            "winner": game.winner,
+        })),
+    }
+}
+
+async fn tetra_bot_move(
+    bot_name: &str,
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    let mut game_lock = state.lock().unwrap();
+    let game = match game_lock.as_mut() {
+        Some(game) => game,
+        None => {
+            return HttpResponse::BadRequest().json(json!({
+                "valid": false,
+                "message": "El juego tetraedrico no ha sido iniciado"
+            }));
+        }
+    };
+
+    if game.winner.is_some() {
+        return HttpResponse::Ok().json(tetra_response(game));
+    }
+
+    let coord = match tetra_pick_move(game, bot_name) {
+        Some(coord) => coord,
+        None => {
+            return HttpResponse::Ok().json(json!({
+                "valid": false,
+                "message": "No hay movimientos disponibles",
+                "status": tetra_status(game),
+                "winner": game.winner,
+            }));
+        }
+    };
+
+    match game.place(coord, game.next_player) {
+        Ok(_) => {
+            let (path_0, faces_0) = game.best_path_for_player(0);
+            let (path_1, faces_1) = game.best_path_for_player(1);
+            HttpResponse::Ok().json(json!({
+            "valid": true,
+            "board": game.board_response(),
+            "turn": if game.winner.is_some() { serde_json::Value::Null } else { json!(game.next_player) },
+            "status": tetra_status(game),
+            "winner": game.winner,
+            "connectedFaces": {
+                "0": faces_to_labels(faces_0),
+                "1": faces_to_labels(faces_1),
+            },
+            "connectionPath": {
+                "0": path_to_response(&path_0),
+                "1": path_to_response(&path_1),
+            },
+            "lastMove": {
+                "a": coord.0,
+                "b": coord.1,
+                "c": coord.2,
+                "d": coord.3,
+            }
+        }))
+        },
+        Err(message) => HttpResponse::BadRequest().json(json!({
+            "valid": false,
+            "message": message,
+            "status": tetra_status(game),
+            "winner": game.winner,
+        })),
+    }
+}
+
+async fn tetra_bot_move_random(
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    tetra_bot_move("random_bot", state).await
+}
+
+async fn tetra_bot_move_intermediate(
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    tetra_bot_move("intermediate_bot", state).await
+}
+
+async fn tetra_bot_move_hard(
+    state: web::Data<Mutex<Option<TetraGame>>>,
+) -> HttpResponse {
+    tetra_bot_move("hard_bot", state).await
+}
+
 /* MAIN */
 
 /// Función principal que inicia el servidor web.
@@ -380,6 +842,7 @@ async fn main() -> std::io::Result<()> {
     println!("Servidor Rust escuchando en el puerto 4000");
 
     let shared_game = web::Data::new(Mutex::new(None::<GameY>));
+    let shared_tetra_game = web::Data::new(Mutex::new(None::<TetraGame>));
 
     let registry = Arc::new(
         YBotRegistry::new()
@@ -392,11 +855,18 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(shared_game.clone())
+            .app_data(shared_tetra_game.clone())
             .app_data(shared_registry.clone())
             // Juego
             .route("/v1/game/start",  web::post().to(start_game))
             .route("/v1/game/move",   web::post().to(user_move))
             .route("/v1/game/end",    web::post().to(end_game))
+            // Juego tetraedrico
+            .route("/v1/tetra/start", web::post().to(start_tetra_game))
+            .route("/v1/tetra/move", web::post().to(tetra_move))
+            .route("/v1/tetra/bot/random_bot", web::post().to(tetra_bot_move_random))
+            .route("/v1/tetra/bot/intermediate_bot", web::post().to(tetra_bot_move_intermediate))
+            .route("/v1/tetra/bot/hard_bot", web::post().to(tetra_bot_move_hard))
             // Bots
             .route("/v1/ybot/choose/random_bot",       web::post().to(bot_move_random))
             .route("/v1/ybot/choose/intermediate_bot", web::post().to(bot_move_intermediate))

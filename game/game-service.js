@@ -32,6 +32,9 @@ const gameSchema = new mongoose.Schema({
   gameId: { type: String, required: true, unique: true },
   userId: String,
   gameMode: String,
+  boardVariant: String,
+  connectedFaces: mongoose.Schema.Types.Mixed,
+  connectionPath: mongoose.Schema.Types.Mixed,
   boardSize: Number,
   board: [{ position: String, player: String }],
   players: [{
@@ -123,18 +126,25 @@ app.post('/api/game/start', async (req, res) => {
       role      = 'j1',
       gameMode  = 'vsBot',
       botMode   = 'random_bot',
+      boardVariant = 'classic',
       boardSize: rawBoardSize = 11,
       startingPlayer = 'j1',
     } = req.body;
 
-    const ALLOWED_BOARD_SIZES = [8, 11, 15, 19];
+    const ALLOWED_BOARD_SIZES = boardVariant === 'tetra3d'
+      ? [3, 4, 5, 6]
+      : [8, 11, 15, 19];
     const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
       ? Number(rawBoardSize)
-      : 11;
+      : (boardVariant === 'tetra3d' ? 4 : 11);
 
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
+    if (boardVariant === 'tetra3d') {
+      await axios.post(`${GAMEY_BOT_URL}/v1/tetra/start`, { size: boardSize }, { timeout: 5000 });
+    } else {
+      await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
+    }
 
     const normalizedStartingPlayer = startingPlayer === 'j2' ? 'j2' : 'j1';
 
@@ -145,9 +155,12 @@ app.post('/api/game/start', async (req, res) => {
       role,
       gameMode,
       botMode,
+      boardVariant,
       boardSize,
       startingPlayer: normalizedStartingPlayer,
-      board: initializeBoard(boardSize),
+      board: boardVariant === 'tetra3d' ? initializeTetraBoard(boardSize) : initializeBoard(boardSize),
+      connectedFaces: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
+      connectionPath: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
       players: [
         { id: userId, role, name: 'Player 1', color: 'j1', points: 0 },
         { id: gameMode === 'vsBot' ? 'bot' : 'player2', role: 'j2', name: gameMode === 'vsBot' ? 'Bot' : 'Player 2', color: 'j2', points: 0 }
@@ -167,7 +180,10 @@ app.post('/api/game/start', async (req, res) => {
       players: game.players,
       turn: game.currentPlayer,
       status: game.status,
-      winner: null
+      winner: null,
+      boardVariant: game.boardVariant,
+      connectedFaces: game.connectedFaces || { j1: [], j2: [] },
+      connectionPath: game.connectionPath || { j1: [], j2: [] },
     });
 
   } catch (error) {
@@ -194,6 +210,42 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   const game = games.get(gameId);
   if (!game) return res.status(404).json({ error: 'Game not found' });
+
+  if (game.boardVariant === 'tetra3d') {
+    try {
+      const { toGamey, toLogical } = getPlayerMapping(game);
+      const tetraMove = parseTetraPosition(move);
+      const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/tetra/move`, {
+        ...tetraMove,
+        player: toGamey[game.currentPlayer],
+      });
+
+      game.moves.push({ position: move, userId });
+      game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
+      game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
+      game.connectionPath = mapConnectionPath(rustResponse.data.connectionPath, toLogical);
+      game.currentPlayer = rustResponse.data.turn === null || rustResponse.data.turn === undefined
+        ? game.currentPlayer
+        : toLogical[rustResponse.data.turn];
+
+      if (rustResponse.data.status === 'finished') {
+        game.winner = toLogical[rustResponse.data.winner];
+        await finishGameAndSave(game);
+      }
+
+      return res.json({
+        valid: true,
+        winner: rustResponse.data.status === 'finished' ? toLogical[rustResponse.data.winner] : null,
+        status: rustResponse.data.status,
+        connectedFaces: game.connectedFaces,
+        connectionPath: game.connectionPath,
+      });
+    } catch (error) {
+      return res.status(error.response?.status || 400).json({
+        error: error.response?.data?.message || 'Invalid tetra move',
+      });
+    }
+  }
 
   const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
 
@@ -252,6 +304,47 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 
     if (game.currentPlayer !== 'j2') {
       return res.status(400).json({ message: 'No es turno del bot', valid: false });
+    }
+
+    if (game.boardVariant === 'tetra3d') {
+      const { toLogical } = getPlayerMapping(game);
+      const rustResponse = await axios.post(
+        `${GAMEY_BOT_URL}/v1/tetra/bot/${game.botMode}`
+      );
+
+      game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
+      game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
+      game.connectionPath = mapConnectionPath(rustResponse.data.connectionPath, toLogical);
+
+      if (rustResponse.data.turn !== null && rustResponse.data.turn !== undefined) {
+        game.currentPlayer = toLogical[rustResponse.data.turn];
+      }
+
+      if (rustResponse.data.status === 'finished') {
+        game.status = 'finished';
+        game.winner = toLogical[rustResponse.data.winner];
+        await finishGameAndSave(game);
+      }
+
+      const move = rustResponse.data.lastMove;
+      if (move) {
+        game.moves.push({
+          position: `(${move.a},${move.b},${move.c},${move.d})`,
+          player: 'j2',
+          userId: 'bot'
+        });
+      }
+
+      return res.json({
+        gameId,
+        board: game.board,
+        moves: game.moves,
+        turn: game.currentPlayer,
+        winner: game.winner || null,
+        status: game.status,
+        connectedFaces: game.connectedFaces,
+        connectionPath: game.connectionPath,
+      });
     }
 
     await sleep(Math.floor(Math.random() * 1000) + 1000);
@@ -351,7 +444,10 @@ app.get('/api/game/:gameId', (req, res) => {
     moves: game.moves,
     turn: game.currentPlayer,
     status: game.status,
-    winner: game.winner || null
+    winner: game.winner || null,
+    boardVariant: game.boardVariant || 'classic',
+    connectedFaces: game.connectedFaces || { j1: [], j2: [] },
+    connectionPath: game.connectionPath || { j1: [], j2: [] },
   });
 });
 
@@ -380,6 +476,9 @@ async function finishGameAndSave(game) {
         gameId: game.gameId,
         userId: game.userId,
         gameMode: game.gameMode,
+        boardVariant: game.boardVariant,
+        connectedFaces: game.connectedFaces,
+        connectionPath: game.connectionPath,
         boardSize: game.boardSize,
         players: game.players,
         moves: game.moves,
@@ -450,6 +549,70 @@ function initializeBoard(boardSize) {
     board.push({ position: `(${x},${y},${z})`, player: null });
   }
   return board;
+}
+
+function initializeTetraBoard(boardSize) {
+  const board = [];
+  const total = boardSize - 1;
+
+  for (let a = 0; a <= total; a++) {
+    for (let b = 0; b <= total - a; b++) {
+      for (let c = 0; c <= total - a - b; c++) {
+        const d = total - a - b - c;
+        board.push({ position: `(${a},${b},${c},${d})`, player: null });
+      }
+    }
+  }
+
+  return board;
+}
+
+function parseTetraPosition(move) {
+  const parts = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  if (parts.length !== 4 || parts.some(Number.isNaN)) {
+    throw new Error('Invalid tetra position');
+  }
+  return { a: parts[0], b: parts[1], c: parts[2], d: parts[3] };
+}
+
+function updateTetraBoardFromRust(rustBoard, toLogical) {
+  return rustBoard.map(cell => ({
+    position: `(${cell.a},${cell.b},${cell.c},${cell.d})`,
+    player: cell.player === null || cell.player === undefined ? null : toLogical[cell.player],
+  }));
+}
+
+function mapConnectedFaces(rawConnectedFaces, toLogical) {
+  const connectedFaces = { j1: [], j2: [] };
+
+  if (!rawConnectedFaces || typeof rawConnectedFaces !== 'object') {
+    return connectedFaces;
+  }
+
+  Object.entries(rawConnectedFaces).forEach(([gameyPlayer, faces]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer) return;
+    connectedFaces[logicalPlayer] = Array.isArray(faces) ? faces : [];
+  });
+
+  return connectedFaces;
+}
+
+function mapConnectionPath(rawConnectionPath, toLogical) {
+  const connectionPath = { j1: [], j2: [] };
+
+  if (!rawConnectionPath || typeof rawConnectionPath !== 'object') {
+    return connectionPath;
+  }
+
+  Object.entries(rawConnectionPath).forEach(([gameyPlayer, path]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer || !Array.isArray(path)) return;
+
+    connectionPath[logicalPlayer] = path.map((cell) => `(${cell.a},${cell.b},${cell.c},${cell.d})`);
+  });
+
+  return connectionPath;
 }
 
 /**
