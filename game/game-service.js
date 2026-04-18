@@ -462,11 +462,23 @@ app.post('/api/game/endAndSaveGame', async (req, res) => {
 
 
 /**
+ * Registrar el nombre real de un jugador en la partida en memoria.
+ * El frontend lo llama nada más obtener su perfil y el del rival.
+ * @route {POST} /api/game/:gameId/setPlayerName
+ */
+app.post('/api/game/:gameId/setPlayerName', (req, res) => {
+  const { gameId } = req.params;
+  const { role, name } = req.body; // role: 'j1' | 'j2', name: string
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+  const player = game.players.find(p => p.color === role);
+  if (player && name) player.name = name;
+  res.json({ ok: true });
+});
+
+/**
  * Guardar la partida online en el historial de un jugador concreto.
- * Llamado por j1 (ya lo hace finishGameAndSave) y también por j2 con su propio userId.
  * @route {POST} /api/game/:gameId/saveForPlayer
- * @param {string} req.params.gameId - El ID del juego
- * @param {string} req.body.userId   - El userId del jugador que quiere guardar el registro
  */
 app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
   const { gameId } = req.params;

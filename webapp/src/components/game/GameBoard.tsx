@@ -66,6 +66,7 @@ const GameBoard: React.FC = () => {
   const socketRef    = useRef<Socket | null>(null);
   const userIdRef    = useRef<string | null>(null);
   const profilesRef  = useRef<{ my: string; opponent: string }>({ my: "", opponent: "" });
+  const gameStateRef = useRef<GameState | null>(null);
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -77,6 +78,10 @@ const GameBoard: React.FC = () => {
     status: null,
     winner: null,
     botPlaying: false,
+  });
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
   });
 
   useEffect(() => {
@@ -101,6 +106,16 @@ const GameBoard: React.FC = () => {
     s.on('opponent_info', ({ name, avatar }: { name: string; avatar: string }) => {
       setOpponentProfile({ username: name, avatar });
       profilesRef.current.opponent = name;
+      // Registrar nombre del rival en el servidor en cuanto lo conocemos
+      const gId = gameStateRef.current?.gameId;
+      if (gId) {
+        const rivalRole = onlineRole === "j1" ? "j2" : "j1";
+        fetch(`${API_URL}/api/game/${gId}/setPlayerName`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: rivalRole, name }),
+        }).catch(() => {});
+      }
     });
 
     // j2: recibir gameId cuando j1 inicia la partida
@@ -117,6 +132,14 @@ const GameBoard: React.FC = () => {
           winner:     data.winner || null,
           botPlaying: false,
         });
+        // Registrar nombre propio (j2) en el servidor
+        if (profilesRef.current.my) {
+          fetch(`${API_URL}/api/game/${gameId}/setPlayerName`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: "j2", name: profilesRef.current.my }),
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error("Error cargando partida para j2:", err);
       }
@@ -158,12 +181,7 @@ const GameBoard: React.FC = () => {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: userIdRef.current,
-              winner,
-              // j2 recibe: su rival (j1) está en índice 0, él mismo en índice 1
-              playerNames: [profilesRef.current.opponent, profilesRef.current.my],
-            }),
+            body: JSON.stringify({ userId: userIdRef.current, winner }),
           }).catch(() => {/* ignorar errores de guardado */});
         }
         return { ...prev, winner: winner as "j1" | "j2", status: "finished" };
@@ -238,6 +256,12 @@ const GameBoard: React.FC = () => {
         // En modo online, j1 notifica al servidor con el gameId para que j2 pueda unirse
         if (gameMode === "online") {
           socketRef.current?.emit('game_started', { code: roomCode, gameId: data.gameId });
+          // Registrar nombre propio (j1) en el servidor
+          fetch(`${API_URL}/api/game/${data.gameId}/setPlayerName`, {
+            method: "POST", credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: "j1", name: profilesRef.current.my }),
+          }).catch(() => {});
         }
       } catch (error) {
         console.error("Error starting game:", error);
@@ -302,12 +326,7 @@ const GameBoard: React.FC = () => {
               method: "POST",
               credentials: "include",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId,
-                winner: validateData.winner,
-                // j1 siempre es índice 0, j2 es índice 1
-                playerNames: [profilesRef.current.my, profilesRef.current.opponent],
-              }),
+              body: JSON.stringify({ userId, winner: validateData.winner }),
             }).catch(() => {/* ignorar errores de guardado */});
           }
         }

@@ -569,6 +569,28 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
   }
 });
 
+// Registrar nombre real de un jugador en la partida (modo online)
+app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/setPlayerName`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
+  }
+});
+
+// Guardar partida online en el historial de un jugador concreto
+app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/saveForPlayer`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });
+  }
+});
+
 /**
  * Finalizar y guardar un juego.
  * Marcar un juego como finalizado y guardar sus datos en la base de datos.
