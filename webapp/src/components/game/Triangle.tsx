@@ -17,7 +17,7 @@ interface HexData {
 interface TriangleProps {
   hexData: HexData[];
   onHexClick: (position: string) => void;
-  scale?: number; // nuevo prop opcional para reducir tamaño
+  scale?: number;
 }
 
 // Función equivalente a Rust `from_index`
@@ -33,27 +33,25 @@ function fromIndex(index: number, boardSize: number) {
   return { x, y, z };
 }
 
+const ASIDE_WIDTH = 144;   // gb-player-aside width (desktop)
+const ASIDE_GAP   = 24;    // gap entre aside y board-section
+const HEADER_H    = 56;    // altura aproximada header + footer
+
 const Triangle: React.FC<TriangleProps> = ({ hexData, onHexClick, scale = 1 }) => {
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [win, setWin] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const onResize = () => setWin({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const boardSize = computeBoardSize(hexData.length);
-  
-  // Aplicamos scale al tamaño máximo
-  const side = Math.min(windowSize.width, windowSize.height) * scale;
+
+  const isMobile = win.w <= 640;
+  const availW = isMobile ? win.w - 32 : win.w - 2 * ASIDE_WIDTH - 4 * ASIDE_GAP;
+  const availH = win.h - HEADER_H;
+  const side = Math.min(availW, availH) * scale;
 
   const hexHeight = Math.min(
     side / (1 + (boardSize - 1) * 0.75),
