@@ -34,6 +34,7 @@ interface LocationState {
   gameMode?:    string;
   botMode?:     string;
   boardSize?:   number;
+  timeLimit?:   number;
   onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
   roomCode?:    string;
   player2Name?: string;
@@ -49,6 +50,7 @@ const GameBoard: React.FC = () => {
     gameMode    = "vsBot",
     botMode     = "random_bot",
     boardSize   = 11,
+    timeLimit   = 0,
     onlineRole  = "j1",
     roomCode    = "",
     player2Name,
@@ -67,6 +69,9 @@ const GameBoard: React.FC = () => {
   const userIdRef    = useRef<string | null>(null);
   const profilesRef  = useRef<{ my: string; opponent: string }>({ my: "", opponent: "" });
   const gameStateRef = useRef<GameState | null>(null);
+  const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -253,6 +258,9 @@ const GameBoard: React.FC = () => {
           botPlaying: false,
         });
 
+        // Arrancar el temporizador al inicio de la partida (vsBot, turno j1)
+        if (gameMode === "vsBot") startTimer();
+
         // En modo online, j1 notifica al servidor con el gameId para que j2 pueda unirse
         if (gameMode === "online") {
           socketRef.current?.emit('game_started', { code: roomCode, gameId: data.gameId });
@@ -270,6 +278,40 @@ const GameBoard: React.FC = () => {
     startGame();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Limpieza del timer al desmontar
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  const startTimer = React.useCallback(() => {
+    if (!timeLimit || gameMode !== "vsBot") return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimeLeft(timeLimit);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          // Dispara movimiento aleatorio usando el ref para leer el estado actual
+          const gs = gameStateRef.current;
+          if (gs && gs.status === "active" && gs.turn === "j1") {
+            const free = gs.hexData.filter(h => h.player === null);
+            if (free.length) {
+              const pick = free[Math.floor(Math.random() * free.length)];
+              handleHexClickRef.current(pick.position);
+            }
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [timeLimit, gameMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // handleHexClick necesita ser accesible desde el closure del timer
+  const handleHexClickRef = useRef<(pos: string) => void>(() => {});
+
+  // Mantener el ref siempre apuntando a la versión más reciente de handleHexClick
+  // (se asigna justo después de definir la función)
+
   const handleHexClick = async (position: string) => {
 
     const isMultiplayer = gameMode === "multiplayer";
@@ -279,6 +321,9 @@ const GameBoard: React.FC = () => {
     if (isOnline && (gameState.botPlaying || gameState.turn !== onlineRole)) return;
     if (!isMultiplayer && !isOnline && (gameState.botPlaying || gameState.turn !== "j1")) return;
     if (isMultiplayer && gameState.botPlaying) return;
+
+    // Detener el timer en cuanto el jugador decide su movimiento
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
 
     setGameState(prev => ({ ...prev, botPlaying: true }));
 
@@ -364,11 +409,18 @@ const GameBoard: React.FC = () => {
             : prev.players,
         botPlaying: false,
       }));
+
+      // Reiniciar timer cuando vuelve el turno al jugador (j1) en vsBot
+      if (moveData.turn === "j1" && moveData.status !== "finished") startTimer();
+
     } catch (error) {
       console.error("Error during move:", error);
       setGameState(prev => ({ ...prev, botPlaying: false }));
     }
   };
+
+  // Mantener el ref actualizado en cada render para que el timer siempre llame a la versión actual
+  handleHexClickRef.current = handleHexClick;
 
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
   const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' || gameMode === 'online' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' || gameMode === 'online' ? t('gameBoard.player2') : 'Bot', points: 0 };
@@ -438,9 +490,17 @@ const GameBoard: React.FC = () => {
             )}
           </div>
 
-          <span className="gb-header-meta">
-          {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
-        </span>
+          <div className="gb-header-right">
+            {timeLimit > 0 && gameState.status === "active" && (
+              <div className="gb-timer" data-urgent={timeLeft <= 5 && gameState.turn === "j1" && !gameState.botPlaying}>
+                <span className="gb-timer-value">{timeLeft}</span>
+                <span className="gb-timer-label">s</span>
+              </div>
+            )}
+            <span className="gb-header-meta">
+              {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
+            </span>
+          </div>
         </header>
 
         {/* ── Área principal ─────────────────────────────── */}

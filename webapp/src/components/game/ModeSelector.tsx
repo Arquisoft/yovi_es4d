@@ -12,6 +12,13 @@ const BOT_MODES: Record<string, { label: string; description: string; tagLabel: 
     hard_bot:         { label: "Difícil",    description: "El bot juega al límite de sus capacidades.",       tagLabel: "Difícil", tagClass: "text-red-700 bg-red-100 border border-red-300"         },
 };
 
+const TIME_LIMITS = [
+    { value: 0,  label: "∞",     description: "Sin límite" },
+    { value: 15, label: "15s",   description: "Rápido"     },
+    { value: 30, label: "30s",   description: "Normal"     },
+    { value: 60, label: "60s",   description: "Relajado"   },
+];
+
 const BOARD_SIZES = [
     { value: 8,  label: "Pequeño", description: "36 celdas · Rápida",    tag: "8×"  },
     { value: 11, label: "Normal",  description: "66 celdas · Ágil",      tag: "11×" },
@@ -35,6 +42,7 @@ const ModeSelector: React.FC = () => {
     const [botMode, setBotMode]         = useState("random_bot");
     const [boardSize, setBoardSize]     = useState(11);
     const [player2Name, setPlayer2Name] = useState("");
+    const [timeLimit, setTimeLimit]     = useState(0);
 
     useEffect(() => {
         fetch(`${API_URL}/api/game/bot-modes`, { credentials: "include" })
@@ -49,7 +57,7 @@ const ModeSelector: React.FC = () => {
     }, []);
 
     const handleStart = () => {
-        navigate("/game", { state: { gameMode, botMode, boardSize, player2Name: player2Name.trim() || "Jugador 2" } });
+        navigate("/game", { state: { gameMode, botMode, boardSize, timeLimit, player2Name: player2Name.trim() || "Jugador 2" } });
     };
 
     return (
@@ -194,6 +202,25 @@ const ModeSelector: React.FC = () => {
                                 })}
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Tiempo por turno (solo vsBot) */}
+                {gameMode === "vsBot" && (
+                    <div className="fade-up">
+                        <p className="ms-section-label">Tiempo por turno</p>
+                        <div className="ms-size-grid">
+                            {TIME_LIMITS.map(t => (
+                                <button
+                                    key={t.value}
+                                    onClick={() => setTimeLimit(t.value)}
+                                    className={`ms-size-card${timeLimit === t.value ? " selected" : ""}`}
+                                >
+                                    <div className="ms-size-badge">{t.label}</div>
+                                    <div className="ms-size-desc">{t.description}</div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
