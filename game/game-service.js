@@ -718,3 +718,20 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports._test = {
+  GameModel,
+  BOT_ROUTES,
+  games,
+  initializeBoard,
+  initializeTetraBoard,
+  parseTetraPosition,
+  updateTetraBoardFromRust,
+  mapConnectedFaces,
+  mapConnectionEdges,
+  mapHasBranch,
+  convertToYEN,
+  getPlayerMapping,
+  indexToCoords,
+  sleep,
+  finishGameAndSave,
+};
