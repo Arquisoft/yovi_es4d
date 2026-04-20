@@ -21,6 +21,7 @@
     "loadtest:gameboard:auto-token": "node ./load-tests/run-gameboard-with-auto-token.mjs"
   },
   "dependencies": {
+    "gatling": "^2.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.13.0",
