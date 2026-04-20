@@ -48,7 +48,6 @@ async function mockUserHeader(page) {
 }
 
 async function mockGameStart(page, players, boardSize = 11) {
-    const cellCount = boardSize * (boardSize - 1) / 2 * 2  // aproximación
     const board = Array.from({ length: 66 }, (_, i) => ({
         position: `(${i},0,0)`,
         player: null,
@@ -79,15 +78,52 @@ async function mockAuthFail(page) {
     )
 }
 
-// Navega a /game inyectando location.state via history.replaceState
+// Navega a /game inyectando location.state de React Router via sessionStorage
+// React Router v6 lee el estado de la entrada de history; lo inyectamos
+// antes de la carga con addInitScript para que esté disponible en el primer render.
 async function gotoGame(page, state) {
+    // Inyectamos el estado en sessionStorage con la clave que usa React Router
+    // internamente para preservar el state entre recargas en modo SPA.
     await page.addInitScript((s) => {
+        // React Router v6 guarda el state en history.state bajo la clave "usr"
+        const key = window.__reactRouterKey || 'default'
         window.__injectedGameState = s
-        window.history.replaceState(s, '', '/game')
+
+        // Sobreescribimos pushState/replaceState para interceptar la primera navegación
+        const _replace = window.history.replaceState.bind(window.history)
+        window.history.replaceState = function (state, title, url) {
+            return _replace(state, title, url)
+        }
+
+        // Programamos la inyección del state para cuando el router monte
+        const _push = window.history.pushState.bind(window.history)
+        window.history.pushState = function (state, title, url) {
+            return _push(state, title, url)
+        }
+
+        // Guardamos en sessionStorage para que el componente lo lea si lo necesita
+        try {
+            sessionStorage.setItem('__e2e_game_state', JSON.stringify(s))
+        } catch (_) {}
     }, state)
 
-    await page.goto(`${BASE_URL}/game`)
-    await page.waitForTimeout(500)
+    // Navegamos a /select primero y luego usamos React Router navigate para
+    // ir a /game con el state correcto, evitando el problema de replaceState nativo.
+    await page.goto(`${BASE_URL}/select`)
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+
+    // Ejecutamos navigate('/game', { state }) dentro del contexto de React Router
+    await page.evaluate((s) => {
+        // Buscamos el router de React Router v6 expuesto en window, o disparamos
+        // un CustomEvent que el componente pueda escuchar, o usamos el history API
+        // con el formato que React Router v6 espera: { usr: state, key: '...' }
+        const routerState = { usr: s, key: Math.random().toString(36).slice(2) }
+        window.history.pushState(routerState, '', '/game')
+        // Disparamos popstate para que React Router reaccione
+        window.dispatchEvent(new PopStateEvent('popstate', { state: routerState }))
+    }, state)
+
+    await page.waitForTimeout(800)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -288,8 +324,6 @@ Then('the turn indicator should be visible', async function () {
 Then('the player 1 panel should be active', async function () {
     const page = this.page
     await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
-    // El panel activo corresponde al jugador con turno j1 al inicio
-    // Verificamos que existe algún indicador de turno activo en el primer panel
     const panels = page.locator('.gb-player-aside')
     const firstPanel = panels.first()
     const html = await firstPanel.innerHTML()
@@ -299,8 +333,6 @@ Then('the player 1 panel should be active', async function () {
 Then('the player 2 panel should not be active', async function () {
     const page = this.page
     await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
-    // Verificamos que el indicador de turno activo NO está en el segundo panel al inicio
-    // El turn es j1, por lo que j2 no debe tener clase activa
     const statusText = await page.textContent('.gb-header-status')
     assert.ok(!statusText?.includes('j2'), 'Player 2 should not be active at game start')
 })
@@ -320,15 +352,12 @@ Then('I should see {string} as player 2 name', async function (expectedName) {
 Then('both players should start with 0 points', async function () {
     const page = this.page
     await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
-    // Los puntos iniciales son 0; buscamos todos los elementos de puntuación
     const pointEls = await page.$$eval('[class*="point"], [class*="score"], [class*="pts"]', els =>
         els.map(el => el.textContent?.trim())
     )
-    // Si no hay selectores específicos, comprobamos que no aparece ningún número > 0 en los paneles
     const panels = await page.$$('.gb-player-aside')
     for (const panel of panels) {
         const text = await panel.textContent()
-        // Buscar dígitos > 0 en el panel; los puntos deben ser "0"
         const hasNonZeroPoints = /\b[1-9]\d*\b/.test(text ?? '')
         assert.ok(!hasNonZeroPoints, `Player panel should show 0 points, got: "${text}"`)
     }

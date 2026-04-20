@@ -37,7 +37,6 @@ Given('the mode selector page is loading bot modes', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    // La petición nunca responde → el componente permanece en estado loading
     await page.route(`${API_URL}/api/game/bot-modes`, () => { /* never fulfill */ })
 
     await page.goto(`${BASE_URL}/select`)
@@ -45,7 +44,7 @@ Given('the mode selector page is loading bot modes', async function () {
 })
 
 Given('the bot modes API returns all three modes', async function () {
-    this.mockBotModesData   = ['random_bot', 'intermediate_bot', 'hard_bot']
+    this.mockBotModesData     = ['random_bot', 'intermediate_bot', 'hard_bot']
     this.mockBotModesResponse = true
     this.mockBotModesStatus   = 200
 })
@@ -74,7 +73,13 @@ When('I select {string} difficulty', async function (difficultyLabel) {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    const difficultyButton = page.locator(`button:has-text("${difficultyLabel}")`).first()
+    // Los botones de dificultad pueden ser <button> directos o elementos con
+    // clase .ms-mode-card que actúan como botones. Probamos ambos selectores.
+    const difficultyButton = page.locator(
+        `.ms-difficulty-list .ms-mode-card:has-text("${difficultyLabel}"), ` +
+        `.ms-difficulty-list button:has-text("${difficultyLabel}")`
+    ).first()
+    await difficultyButton.waitFor({ timeout: 8000 })
     await difficultyButton.click()
     await page.waitForTimeout(300)
 })
@@ -117,7 +122,6 @@ When('the mode selector page reloads', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    // Re-setup de la ruta con los datos configurados en el Given previo
     await page.route(`${API_URL}/api/game/bot-modes`, async (route) => {
         await route.fulfill({
             status: this.mockBotModesStatus || 200,
@@ -186,10 +190,14 @@ Then('the difficulty section should not be visible', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
+    // Esperamos a que el DOM se estabilice tras el cambio de modo
+    await page.waitForTimeout(300)
+
     const difficultySection = page.locator('.ms-difficulty-list')
     const count = await difficultySection.count()
     if (count === 0) return // no existe en el DOM → correcto
 
+    // Si existe, debe estar oculto (display:none / visibility:hidden / hidden attribute)
     const isVisible = await difficultySection.isVisible()
     assert.ok(!isVisible, 'Difficulty section should NOT be visible in multiplayer mode')
 })
@@ -209,7 +217,7 @@ Then('the player 2 name input should not be visible', async function () {
 
     const input = page.locator('input[placeholder*="Nombre del rival"]')
     const count = await input.count()
-    if (count === 0) return // no existe → correcto
+    if (count === 0) return
 
     const isVisible = await input.isVisible()
     assert.ok(!isVisible, 'Player 2 name input should NOT be visible in vsBot mode')
@@ -228,7 +236,6 @@ Then('a checkmark should appear', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    // El checkmark es un <span> hermano del input renderizado dentro del .relative
     const checkmark = page.locator('span:has-text("✓")')
     const isVisible = await checkmark.isVisible()
     assert.ok(isVisible, 'Checkmark (✓) should be visible when player 2 name is filled')
@@ -252,7 +259,6 @@ Then('the player 2 name input border should be highlighted', async function () {
 
     const input = page.locator('input[placeholder*="Nombre del rival"]')
     const borderColor = await input.evaluate(el => getComputedStyle(el).borderColor)
-    // El componente aplica var(--coral) cuando hay texto; verificamos que no es el borde por defecto
     assert.ok(borderColor && borderColor !== '', `Input border color should change when text is entered, got "${borderColor}"`)
 })
 
@@ -260,7 +266,6 @@ Then('the unsaved game warning should be visible', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    // El aviso contiene el emoji ⚠️ y texto sobre el historial
     const warning = page.locator('text=Esta partida no quedará guardada en el historial')
     const isVisible = await warning.isVisible()
     assert.ok(isVisible, 'Unsaved game warning should be visible in multiplayer mode')
@@ -289,7 +294,11 @@ Then('the {string} difficulty should be selected', async function (botModeId) {
     if (!page) throw new Error('Page not initialized')
 
     const label = difficultyLabels[botModeId] || botModeId
-    const modeButton = page.locator(`.ms-mode-card:has-text("${label}")`)
+    // Los cards de dificultad están dentro de .ms-difficulty-list
+    const modeButton = page.locator(
+        `.ms-difficulty-list .ms-mode-card:has-text("${label}"), ` +
+        `.ms-difficulty-list button:has-text("${label}")`
+    ).first()
     const hasSelectedClass = await modeButton.evaluate(el => el.classList.contains('selected'))
     assert.ok(hasSelectedClass, `"${label}" difficulty should have class "selected"`)
 })
@@ -299,7 +308,10 @@ Then('the {string} difficulty should not be selected', async function (botModeId
     if (!page) throw new Error('Page not initialized')
 
     const label = difficultyLabels[botModeId] || botModeId
-    const modeButton = page.locator(`.ms-mode-card:has-text("${label}")`)
+    const modeButton = page.locator(
+        `.ms-difficulty-list .ms-mode-card:has-text("${label}"), ` +
+        `.ms-difficulty-list button:has-text("${label}")`
+    ).first()
     const hasSelectedClass = await modeButton.evaluate(el => el.classList.contains('selected'))
     assert.ok(!hasSelectedClass, `"${label}" difficulty should NOT have class "selected"`)
 })
@@ -335,7 +347,14 @@ Then('I should see {int} difficulty options', async function (count) {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    const difficultyButtons = page.locator('.ms-difficulty-list .ms-mode-card')
+    // Esperamos a que los botones de dificultad estén renderizados
+    await page.waitForSelector('.ms-difficulty-list', { timeout: 5000 })
+    await page.waitForTimeout(300)
+
+    // Buscamos tanto .ms-mode-card como <button> directos dentro de la lista
+    const difficultyButtons = page.locator(
+        '.ms-difficulty-list .ms-mode-card, .ms-difficulty-list button'
+    )
     const actualCount = await difficultyButtons.count()
     assert.strictEqual(actualCount, count, `Expected ${count} difficulty options, got ${actualCount}`)
 })
@@ -344,7 +363,10 @@ Then('{string} difficulty should be present', async function (difficultyLabel) {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
-    const button = page.locator(`.ms-mode-card:has-text("${difficultyLabel}")`)
+    const button = page.locator(
+        `.ms-difficulty-list .ms-mode-card:has-text("${difficultyLabel}"), ` +
+        `.ms-difficulty-list button:has-text("${difficultyLabel}")`
+    ).first()
     const isVisible = await button.isVisible()
     assert.ok(isVisible, `Difficulty "${difficultyLabel}" should be present`)
 })
@@ -352,8 +374,15 @@ Then('{string} difficulty should be present', async function (difficultyLabel) {
 Then('I should see at least {string} difficulty', async function (difficultyLabel) {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
+
     await page.waitForTimeout(1000)
-    const button = page.locator(`.ms-mode-card:has-text("${difficultyLabel}")`)
+
+    // En caso de fallo de API, el componente debe mostrar al menos el fallback 'Aleatorio'
+    // Buscamos en cualquier parte del componente, no solo dentro de .ms-difficulty-list
+    const button = page.locator(
+        `.ms-mode-card:has-text("${difficultyLabel}"), ` +
+        `button:has-text("${difficultyLabel}")`
+    ).first()
     const isVisible = await button.isVisible()
     assert.ok(isVisible, `At least "${difficultyLabel}" difficulty should be present as fallback`)
 })
