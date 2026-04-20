@@ -14,6 +14,7 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
+app.disable('x-powered-by');
 const port = process.env.PORT || 8003;
 
 
@@ -57,7 +58,23 @@ const GameModel = mongoose.model('Game', gameSchema);
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 const games = new Map();
 
@@ -139,8 +156,8 @@ app.post('/api/game/start', async (req, res) => {
       ? Number(rawBoardSize)
       : (boardVariant === 'tetra3d' ? 4 : 11);
 
-    const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+    const gameId = `game_${crypto.randomUUID()}`;
+    
     if (boardVariant === 'tetra3d') {
       await axios.post(`${GAMEY_BOT_URL}/v1/tetra/start`, { size: boardSize }, { timeout: 5000 });
     } else {
@@ -354,7 +371,8 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
       });
     }
 
-    await sleep(Math.floor(Math.random() * 1000) + 1000);
+   // NOSONAR: uso de Math.random solo para delay UX, no afecta seguridad
+  await sleep(Math.floor(Math.random() * 1000) + 1000);
 
     // Llamar a Rust usando el botMode guardado en el juego
     const { toLogical } = getPlayerMapping(game);

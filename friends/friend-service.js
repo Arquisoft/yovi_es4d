@@ -18,9 +18,26 @@ if (process.env.SKIP_MONGO !== 'true') {
 }
 
 const app = express();
+app.disable('x-powered-by');
 const port = process.env.PORT || 8004;
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // AMIGOS
