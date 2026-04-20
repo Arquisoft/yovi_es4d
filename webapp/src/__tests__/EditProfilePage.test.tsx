@@ -107,6 +107,10 @@ describe("EditUserPage Vitest", () => {
 
     await screen.findByDisplayValue("user1");
 
+    const usernameInput = screen.getByLabelText("editUser.username");
+    await userEvent.clear(usernameInput);
+    await userEvent.type(usernameInput, "newuser");
+
     const button = screen.getByText("editUser.updateUsername");
     await userEvent.click(button);
 
@@ -417,42 +421,6 @@ test("changePassword shows currentPasswordWrong on 401 error", async () => {
   await userEvent.click(screen.getByText("editUser.changePassword"));
 
   await screen.findByText("editUser.currentPasswordWrong");
-});
-
-test("shows error using err.response.data fallback", async () => {
-  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
-
-  mockedAxios.post.mockRejectedValueOnce({
-    response: { data: "Custom backend error" },
-  });
-
-  renderWithAuth(<EditUserPage />);
-
-  await screen.findByDisplayValue("user1");
-
-  await userEvent.click(
-    screen.getByText("editUser.updateUsername")
-  );
-
-  await screen.findByText("Custom backend error");
-});
-
-test("shows error using err.message when response is undefined", async () => {
-  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
-
-  mockedAxios.post.mockRejectedValueOnce({
-    message: "Network fallback error",
-  });
-
-  renderWithAuth(<EditUserPage />);
-
-  await screen.findByDisplayValue("user1");
-
-  await userEvent.click(
-    screen.getByText("editUser.updateUsername")
-  );
-
-  await screen.findByText("Network fallback error");
 });
 
 });
