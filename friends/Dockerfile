@@ -3,10 +3,11 @@ FROM node:22
 WORKDIR /usr/src/friends
 
 COPY package*.json ./
-
 RUN npm install
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 8004
 
