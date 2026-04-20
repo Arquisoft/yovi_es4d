@@ -17,6 +17,7 @@ const bcrypt = require('bcrypt');
 const User = require('./user-model');
 
 const app = express();
+app.disable('x-powered-by');
 const port = 8001;
 
 app.use(express.json());
@@ -85,6 +86,7 @@ app.post('/updateAvatar', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // NOSONAR: delay no requiere seguridad criptográfica
     const seed = Math.random().toString(36).substring(7);
 
     const newAvatar =

@@ -15,9 +15,11 @@ const LoginForm: React.FC = () => {
   const { checkAuth } = useContext(AuthContext);
 
   const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  if (email.length > 254) return false;
+
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

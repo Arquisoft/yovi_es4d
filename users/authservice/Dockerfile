@@ -1,20 +1,24 @@
-# Use an official Node.js runtime as a parent image
 FROM node:22
 
-# Set the working directory in the container
-WORKDIR /usr/src/authservice
+WORKDIR /usr/src/userservice
 
-# Copy package.json and package-lock.json to the working directory
+# Copiar solo dependencias primero (mejor caching)
 COPY package*.json ./
 
-# Install app dependencies
-RUN npm install
+# Instalar dependencias de forma reproducible
+RUN npm ci --omit=dev
 
-# Copy the app source code to the working directory
+# Copiar código fuente
 COPY . .
 
-# Expose the port the app runs on
-EXPOSE 8002
+# Cambiar ownership al usuario node
+RUN chown -R node:node /usr/src/userservice
 
-# Define the command to run your app
-CMD ["node", "auth-service.js"]
+# Ejecutar como usuario no root (clave para SonarQube)
+USER node
+
+# Exponer puerto
+EXPOSE 8001
+
+# Comando de arranque
+CMD ["node", "user-service.js"]
