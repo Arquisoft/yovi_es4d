@@ -117,7 +117,11 @@ describe('LoginForm', () => {
     const passwordInput = screen.getByLabelText(/Contraseña:/i)
     await user.type(passwordInput, 'Password1')
     await user.click(screen.getByRole('button'))
-    expect(await screen.findByText(/correo electrónico no válido|correo electrónico es obligatorio|invalid email|email is required/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /Correo electrónico inválido/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows error if email is invalid', async () => {
@@ -128,7 +132,11 @@ describe('LoginForm', () => {
     await user.type(emailInput, 'invalid-email')
     await user.type(passwordInput, 'Password1')
     await user.click(screen.getByRole('button'))
-    expect(await screen.findByText(/correo electrónico no válido|invalid email/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /Correo electrónico inválido/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('shows error if password is empty', async () => {
@@ -137,7 +145,11 @@ describe('LoginForm', () => {
     const emailInput = screen.getByLabelText(/Correo electrónico:/i)
     await user.type(emailInput, 'test@example.com')
     await user.click(screen.getByRole('button'))
-    expect(await screen.findByText(/contraseña es obligatoria|password is required/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        /La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios/i
+      )
+    ).toBeInTheDocument()
   })
 
   test('continues when email is valid', async () => {
@@ -221,5 +233,81 @@ test('shows generic error when no message exists', async () => {
 
   expect(await screen.findByText(/login failed/i))
     .toBeInTheDocument()
+})
+
+test('uses fallback email error when translation key is missing', async () => {
+  const resourcesWithoutEmailError = {
+    es: {
+      registerForm: {
+        email: "Correo electrónico",
+        password: "Contraseña",
+        enterEmail: "Email",
+        enterPassword: "Password",
+        loading: "Cargando",
+        enter: "Entrar",
+        // ❌ NO errorEmail
+      },
+      menu: {
+        initsession: "Login",
+      },
+    },
+  }
+
+  render(
+    <I18nProvider defaultLang="es" resources={resourcesWithoutEmailError}>
+      <AuthContext.Provider value={{ checkAuth: mockCheckAuth } as any}>
+        <LoginForm />
+      </AuthContext.Provider>
+    </I18nProvider>
+  )
+
+  const user = userEvent.setup()
+
+  await user.click(screen.getByRole('button'))
+
+  expect(
+    await screen.findByText(/correo electrónico no válido/i)
+  ).toBeInTheDocument()
+})
+
+test('uses fallback password error when translation key is missing', async () => {
+  const resourcesWithoutPasswordError = {
+    es: {
+      registerForm: {
+        email: "Correo electrónico",
+        password: "Contraseña",
+        errorEmail: "Correo electrónico inválido",
+        enterEmail: "Email",
+        enterPassword: "Password",
+        loading: "Cargando",
+        enter: "Entrar",
+        // ❌ NO errorPasswordContent
+      },
+      menu: {
+        initsession: "Login",
+      },
+    },
+  }
+
+  render(
+    <I18nProvider defaultLang="es" resources={resourcesWithoutPasswordError}>
+      <AuthContext.Provider value={{ checkAuth: mockCheckAuth } as any}>
+        <LoginForm />
+      </AuthContext.Provider>
+    </I18nProvider>
+  )
+
+  const user = userEvent.setup()
+
+  await user.type(
+    screen.getByLabelText(/correo electrónico/i),
+    'test@test.com'
+  )
+
+  await user.click(screen.getByRole('button'))
+
+  expect(
+    await screen.findByText(/contraseña es obligatoria/i)
+  ).toBeInTheDocument()
 })
 })

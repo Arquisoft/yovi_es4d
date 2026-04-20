@@ -24,7 +24,9 @@ export default function Sidebar() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <h3 className="navbar-title">{t('menu.team')}</h3>
+        <button className="navbar-button" onClick={() => navigate('/')}>
+            {t('menu.team')}
+        </button>
       </div>
 
       <ul className="navbar-menu">

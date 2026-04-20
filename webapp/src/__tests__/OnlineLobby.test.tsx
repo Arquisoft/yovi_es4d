@@ -422,4 +422,47 @@ describe('OnlineLobby', () => {
         unmount()
         expect(mockSocket.disconnect).toHaveBeenCalled()
     })
+
+    test('no crea sala si el socket aún no está inicializado', async () => {
+        const user = userEvent.setup()
+
+        renderLobby()
+
+        const createBtn = await screen.findByRole('button', { name: /crear sala/i })
+
+        await user.click(createBtn)
+
+        expect(mockSocket.emit).toHaveBeenCalled()
+    })
+
+    test('no se une si el socket aún no existe', async () => {
+        const user = userEvent.setup()
+
+        renderLobby()
+
+        const input = await screen.findByPlaceholderText('Ej: XKQZ')
+        await user.type(input, 'ABCD')
+
+        const joinBtn = screen.getByRole('button', { name: /unirse/i })
+
+        await user.click(joinBtn)
+
+        expect(mockSocket.emit).toHaveBeenCalled()
+   })
+
+    test('no se une si el código solo contiene espacios', async () => {
+        const user = userEvent.setup()
+        renderLobby()
+
+        await screen.findByText('Unirse a sala')
+
+        const input = screen.getByPlaceholderText('Ej: XKQZ')
+        await user.type(input, '    ') // espacios
+
+        const joinBtn = screen.getByRole('button', { name: /unirse/i })
+
+        await user.click(joinBtn)
+
+        expect(mockSocket.emit).not.toHaveBeenCalled()
+    })
 })
