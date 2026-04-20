@@ -39,6 +39,16 @@ import {
   rejectFriendRequest,
 } from '../services/friendService'
 
+const makeExploreResponse = (users: Array<{ _id: string; username: string }> = [], hasNext = false, page = 1) => ({
+  users,
+  pagination: {
+    page,
+    limit: 10,
+    hasPrev: page > 1,
+    hasNext,
+  },
+})
+
 const renderFriends = (user: any = { _id: 'user1', username: 'TestUser' }) =>
   render(
     <I18nProvider defaultLang="es" resources={resources}>
@@ -75,10 +85,12 @@ describe('Friends', () => {
   })
 
   test('renders explore users on initial load', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([
-      { _id: 'u1', username: 'Carlos' },
-      { _id: 'u2', username: 'Ana' },
-    ])
+    vi.mocked(exploreUsers).mockResolvedValue(
+      makeExploreResponse([
+        { _id: 'u1', username: 'Carlos' },
+        { _id: 'u2', username: 'Ana' },
+      ])
+    )
 
     renderFriends()
 
@@ -89,7 +101,7 @@ describe('Friends', () => {
   })
 
   test('shows empty message when explore has no users', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
 
     renderFriends()
 
@@ -97,7 +109,7 @@ describe('Friends', () => {
   })
 
   test('switches to friends tab and loads friends list', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriends).mockResolvedValue([{ _id: 'f1', username: 'Lucia' }])
 
     const user = userEvent.setup()
@@ -113,7 +125,7 @@ describe('Friends', () => {
   })
 
   test('switches to requests tab and loads requests list', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([
       {
         _id: 'r1',
@@ -137,7 +149,7 @@ describe('Friends', () => {
   })
 
   test('shows empty message when requests tab has no requests', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([])
 
     const user = userEvent.setup()
@@ -152,7 +164,7 @@ describe('Friends', () => {
   })
 
   test('updates search and reloads explore data', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
 
     const user = userEvent.setup()
     renderFriends()
@@ -166,7 +178,7 @@ describe('Friends', () => {
   })
 
   test('sends friend request when clicking add button', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([{ _id: 'u5', username: 'Mario' }])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse([{ _id: 'u5', username: 'Mario' }]))
     vi.mocked(sendFriendRequest).mockResolvedValue(undefined)
 
     const user = userEvent.setup()
@@ -181,7 +193,7 @@ describe('Friends', () => {
   })
 
   test('shows sending error if send friend request fails', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([{ _id: 'u5', username: 'Mario' }])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse([{ _id: 'u5', username: 'Mario' }]))
     vi.mocked(sendFriendRequest).mockRejectedValue(new Error('fail'))
 
     const user = userEvent.setup()
@@ -196,7 +208,7 @@ describe('Friends', () => {
   })
 
   test('accepts a friend request', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([
       {
         _id: 'r1',
@@ -225,7 +237,7 @@ describe('Friends', () => {
   })
 
   test('shows accepting error if accept request fails', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([
       {
         _id: 'r1',
@@ -254,7 +266,7 @@ describe('Friends', () => {
   })
 
   test('rejects a friend request', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([
       {
         _id: 'r1',
@@ -283,7 +295,7 @@ describe('Friends', () => {
   })
 
   test('shows rejecting error if reject request fails', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
     vi.mocked(getFriendRequests).mockResolvedValue([
       {
         _id: 'r1',
@@ -320,7 +332,7 @@ describe('Friends', () => {
   })
 
   test('changes page when clicking next pagination button', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse([], true))
 
     const user = userEvent.setup()
     renderFriends()
@@ -334,7 +346,7 @@ describe('Friends', () => {
   })
 
   test('does not go below page 1 when clicking previous pagination button', async () => {
-    vi.mocked(exploreUsers).mockResolvedValue([])
+    vi.mocked(exploreUsers).mockResolvedValue(makeExploreResponse())
 
     const user = userEvent.setup()
     renderFriends()
@@ -347,3 +359,4 @@ describe('Friends', () => {
     })
   })
 })
+

@@ -7,6 +7,16 @@ export interface User {
   avatar?: string;
 }
 
+export interface ExploreUsersResponse {
+  users: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    hasPrev: boolean;
+    hasNext: boolean;
+  };
+}
+
 // Solicitud de amistad
 export interface Request {
   _id: string;
@@ -17,12 +27,12 @@ export interface Request {
 }
 
 // Explorar usuarios
-export const exploreUsers = async (search = '', page = 1): Promise<User[]> => {
+export const exploreUsers = async (search = '', page = 1): Promise<ExploreUsersResponse> => {
   const res = await axios.get(`${API_URL}/api/friends/explore`, {
     params: { search, page },
     withCredentials: true,
   });
-  return res.data.users;
+  return res.data;
 };
 
 // Obtener amigos

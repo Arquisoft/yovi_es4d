@@ -106,12 +106,7 @@ const Notifications: React.FC = () => {
                         </p>
                         <small>{new Date(n.createdAt).toLocaleString()}</small>
                       </div>
-                      <button onClick={() => handleAccept(n)}>
-                        {t('notifications.accept')}
-                      </button>
-                      <button onClick={() => handleReject(n)}>
-                        {t('notifications.reject')}
-                      </button>
+                      
                     </div>
                   ))
                 )}

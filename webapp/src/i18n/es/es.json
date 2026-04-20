@@ -105,6 +105,7 @@
     "confirmPassword": "Confirmar contraseña",
     "changePassword": "Cambiar contraseña",
     "usernameUpdated": "Nombre de usuario actualizado correctamente",
+    "usernameUnchanged": "El nombre de usuario es el mismo que el actual",
     "passwordChanged": "Contraseña cambiada correctamente",
     "passwordMatch": "Las contraseñas no coinciden"
   }, "historial": {
@@ -163,7 +164,7 @@
     "emptyExplore": "No hay usuarios nuevos 😅",
     "emptyRequests": "No tienes solicitudes pendientes 👍",
 
-    "page": "Página {{page}}"
+    "page": "Página "
   },
   "back": {
     "loading": "Cargando..."
