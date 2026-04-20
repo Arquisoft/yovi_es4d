@@ -6,7 +6,6 @@ WORKDIR /usr/src/friends
 COPY package*.json ./
 RUN npm install
 
-COPY --chown=node:node . .
 
 RUN chmod -R a-w /usr/src/friends
 
