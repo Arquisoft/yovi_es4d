@@ -36,8 +36,29 @@ endif::arc42help[]
 |===
 |Term |Definition
 
-|<Term-1>
+| React
 |<definition-1>
+
+| Gateway
+|<definition-2>
+
+| Rust
+|<definition-2>
+
+| Docker
+|<definition-2>
+
+| Azure
+|<definition-2>
+
+|<
+|<definition-2>
+
+|<Term-2>
+|<definition-2>
+
+|<Term-2>
+|<definition-2>
 
 |<Term-2>
 |<definition-2>

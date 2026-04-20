@@ -28,7 +28,8 @@ endif::arc42help[]
 * RU1. El sistema debe permitir registrarse a un usuario no identificado.
 ** RU1.1. El sistema solicitará los datos necesarios al usuario no identificado para registrarse.
 *** RU1.1.1. Solicitará un nombre de usuario (dato obligatorio).
-*** RU1.1.2. Solicitará una contraseña (dato obligatorio).
+*** RU1.1.2. Solicitará un correo electrónico (dato obligatorio).
+*** RU1.1.3. Solicitará una contraseña (dato obligatorio).
 
 * RU2. El sistema registrará al usuario no registrado.
 ** RU2.1. El sistema guardará en la BBDD al usuario nuevo y todos sus datos asociados.
@@ -38,7 +39,7 @@ endif::arc42help[]
 
 * IU1. El sistema debe permitir autenticarse a un usuario registrado no identificado.
 ** IU1.1. El sistema solicitará los siguientes datos para su identificación.
-*** IU1.1.1. Solicitará un nombre de usuario (dato obligatorio).
+*** IU1.1.1. Solicitará un correo electrónico (dato obligatorio).
 *** IU1.1.2. Solicitará una contraseña (dato obligatorio).
 
 * IU2. El sistema permitirá al usuario registrado cerrar sesión de forma segura, devolviendo la aplicación a la pantalla de inicio de sesión.
@@ -49,20 +50,58 @@ endif::arc42help[]
 ** GP1.1. El sistema solicitará los siguientes datos para iniciar una nueva partida.
 *** GP1.1.1. Solicitará el tamaño del tablero (dato obligatorio).
 *** GP1.1.2. Solicitará la estrategia del bot (dato obligatorio).
+*** GP1.1.3. Solicitará la modalidad de juego (dato obligatorio).
 
 ** GP1.2. El sistema deberá registrar y actualizar el estado de la partida durante el juego.
-*** GP1.2.1. El usuario deberá poder realizar movimientos en la partida.
-*** GP1.2.2. El usuario deberá poder consultar el estado actual de la partida.
-*** GP1.2.3. El sistema deberá verificar la validez de los movimientos realizados por el usuario.
-*** GP1.2.4. El sistema y el jugador deberán realizar movimientos en la partida.
-*** GP1.2.5. El sistema deberá detectar el final de la partida y declarar un ganador.
-*** GP1.2.6. El sistema deberá permitir al usuario deshacer el último movimiento realizado.
+*** GP1.2.1. El sistema deberá permitir al usuario seleccionar quién empieza el juego.
+*** GP1.2.2. El usuario deberá poder realizar movimientos en la partida.
+*** GP1.2.3. El usuario deberá poder consultar el estado actual de la partida.
+*** GP1.2.4. El sistema deberá verificar la validez de los movimientos realizados por el usuario.
+*** GP1.2.5. El sistema y el jugador deberán realizar movimientos en la partida.
+*** GP1.2.6. El sistema deberá detectar el final de la partida y declarar un ganador.
+*** GP1.2.7. El sistema deberá permitir al usuario deshacer el último movimiento realizado.
 
 ===== **Gestión del historial de partidas**
 
 * HP1. El sistema debe permitir a un usuario registrado consultar su historial de partidas.
-** HP1.1. El sistema deberá mostrar una lista con las partidas jugadas por el usuario.
-** HP1.2. El sistema deberá permitir al usuario consultar los detalles de una partida específica.
+** HP1.1. El sistema deberá mostrar un gráfico con las estadísticas de las partidas jugadas.
+** HP1.2. El sistema deberá mostrar una lista con las partidas jugadas por el usuario.
+** HP1.3. El sistema deberá permitir al usuario consultar los detalles de una partida específica.
+** HP1.4. El sistema deberá permitir ordenar el historial por nº de movimientos y por fecha.
+
+===== **Gestión de amigos**
+
+* FA1. El sistema debe permitir a un usuario registrado e identificado agregar a otro usuario como amigo.
+** FA1.1. El sistema deberá permitir al usuario identificado buscar al usuario objetivo y mandar una solicitud de amistad.
+** FA1.2. El sistema deberá enviar una solicitud de amistad al usuario objetivo.
+** FA1.3. El sistema deberá permitir al usuario objetivo aceptar o rechazar la solicitud de amistad.
+** FA1.4. El sistema deberá notificar al usuario que envió la solicitud sobre la respuesta recibida.
+** FA1.5. El sistema deberá permitir a los usuarios ver su lista de amigos.
+
+===== **Gestión de perfil**
+
+* FP1. El sistema debe permitir a un usuario registrado e identificado modificar su perfil.
+** FP1.1. El sistema deberá permitir al usuario identificado actualizar su información personal.
+** FP1.2. El sistema deberá permitir al usuario identificado cambiar su contraseña.
+** FP1.3. El sistema deberá permitir al usuario identificado cambiar su nombre de usuario.
+** FP1.4. El sistema deberá permitir al usuario identificado cambiar su imagen de perfil.
+
+===== **Gestión de notificaciones**
+
+* FN1. El sistema debe permitir a un usuario registrado e identificado recibir notificaciones sobre eventos relevantes.
+** FN1.1. El sistema deberá enviar notificaciones push al usuario cuando tenga solicitudes de amistad pendientes.
+** FN1.2. El sistema deberá enviar notificaciones push al usuario sobre invitaciones a partidas.
+
+===== **Gestión de partidas**
+
+* GP1. El sistema debe permitir a un usuario registrado iniciar una nueva partida.
+** GP1.1. El sistema solicitará los siguientes datos para iniciar una nueva partida.
+*** GP1.1.1. Solicitará el tamaño del tablero (dato obligatorio).
+*** GP1.1.2. Solicitará la estrategia del bot (dato obligatorio).
+*** GP1.1.3. Solicitará la modalidad de juego (dato obligatorio).
+** FP1.4. El sistema deberá permitir al usuario identificado cambiar su imagen de perfil.
+
+
 
 ifdef::arc42help[]
 [role="arc42help"]
