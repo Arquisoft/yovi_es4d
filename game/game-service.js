@@ -87,19 +87,55 @@ app.get('/api/game/bot-modes', (req, res) => {
  */
 app.get('/api/game/history', async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const { userId, page = 1, sortBy = 'date', sortOrder = 'desc' } = req.query;
+    const limit = 5;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const startIndex = (pageNum - 1) * limit;
+    const endIndex = startIndex + limit;
 
     if (!userId) {
       return res.status(400).json({ error: 'Falta userId en la query' });
     }
 
     const filtro = { userId };
+    const allGames = await GameModel.find(filtro).lean();
+    const sortedGames = [...allGames].sort((a, b) => {
+      if (sortBy === 'moves') {
+        const movesA = a.moves?.length || 0;
+        const movesB = b.moves?.length || 0;
+        return sortOrder === 'asc' ? movesA - movesB : movesB - movesA;
+      }
 
-    const games = await GameModel.find(filtro)
-      .sort({ createdAt: -1 })
-      .lean();
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
-    res.json(games);
+    const games = sortedGames.slice(startIndex, endIndex);
+    const totalGames = allGames.length;
+    const totalWins = allGames.filter((game) => game.winner === 'j1').length;
+    const totalDraws = allGames.filter((game) => !game.winner).length;
+    const totalLosses = totalGames - totalWins - totalDraws;
+    const winPercentage = totalGames
+      ? Math.round((totalWins / totalGames) * 100)
+      : 0;
+
+    res.json({
+      games,
+      pagination: {
+        page: pageNum,
+        limit,
+        hasPrev: pageNum > 1,
+        hasNext: sortedGames.length > endIndex,
+      },
+      summary: {
+        totalGames,
+        totalWins,
+        totalDraws,
+        totalLosses,
+        winPercentage,
+      }
+    });
 
   } catch (error) {
     console.error('[HISTORIAL] Error obteniendo historial:', error);
