@@ -15,9 +15,9 @@ const RegisterForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateEmail = (email: string) => {
-  // Chequea que tenga al menos un carácter antes del @,
-  // seguido de un dominio con un punto y algo después
+ const validateEmail = (email: string) => {
+  if (email.length > 254) return false;
+
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
