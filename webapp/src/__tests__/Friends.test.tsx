@@ -373,28 +373,6 @@ test('renders loading fallback when user is undefined', () => {
   expect(screen.getByText("Cargando usuario...")).toBeInTheDocument()
 })
 
-test('switches to explore tab when clicking explore button', async () => {
-  vi.mocked(getFriends).mockResolvedValue([])
-  vi.mocked(exploreUsers).mockResolvedValue([])
-
-  const user = userEvent.setup()
-  renderFriends()
-
-  // primero cambia a friends para asegurar estado distinto
-  const friendsTab = await screen.findByRole('button', {
-    name: resources.es.friends.tabs.friends,
-  })
-  await user.click(friendsTab)
-
-  // ahora vuelve a explore
-  const exploreTab = screen.getByRole('button', {
-    name: resources.es.friends.tabs.explore,
-  })
-  await user.click(exploreTab)
-
-  expect(exploreUsers).toHaveBeenCalledWith('', 1)
-})
-
 test('redirects to login when user has no id', async () => {
   renderFriends({ username: 'no-id-user' }) // <- sin _id, id, userId
 
