@@ -90,3 +90,8 @@ button {
   justify-content: center;
   gap: 10px;
 }
+
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

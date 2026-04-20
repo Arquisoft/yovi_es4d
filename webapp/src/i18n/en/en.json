@@ -95,6 +95,7 @@
     "confirmPassword": "Confirm Password",
     "changePassword": "Change Password",
     "usernameUpdated": "Username updated successfully",
+    "usernameUnchanged": "The username is the same as the current one",
     "passwordChanged": "Password changed successfully",
     "passwordMatch": "Passwords do not match",
     "currentPasswordWrong": "Current password is incorrect",
@@ -155,7 +156,7 @@
     "emptyExplore": "No new users 😅",
     "emptyRequests": "No pending requests 👍",
 
-    "page": "Page {{page}}"
+    "page": "Page "
   },
   "back": {
     "loading": "Loading..."

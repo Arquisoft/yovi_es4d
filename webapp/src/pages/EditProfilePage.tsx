@@ -49,6 +49,11 @@ const loadProfile = async () => {
     setError(null);
     setSuccess(null);
 
+    if (username === user.username) {
+    setError(t("editUser.usernameUnchanged"));
+    return;
+  }
+
     try {
       await axios.post(`${API_URL}/api/user/editUsername`, { username }, {
         withCredentials: true,
