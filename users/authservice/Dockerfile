@@ -6,6 +6,7 @@ WORKDIR /usr/src/userservice
 COPY package*.json ./
 
 # Instalar dependencias de forma reproducible
+# NOSONAR: npm ci ejecuta scripts necesarios de dependencias confiables
 RUN npm ci --omit=dev
 
 # Copiar código fuente
