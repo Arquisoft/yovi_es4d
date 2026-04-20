@@ -8,9 +8,6 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm install --production
 
-# Copiar código
-COPY . .
-
 # Exponer puerto
 EXPOSE 8003
 
