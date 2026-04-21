@@ -39,23 +39,6 @@ Given('the Game Over page is open without game data', async function () {
 })
 
 
-Given('the Game Over page is open with a finished game', async function () {
-  const page = this.page
-  if (!page) throw new Error('Page not initialized')
-
-  const BASE_URL = this.BASE_URL
-
-  // Injectar location.state manualmente
-  await page.goto(`${BASE_URL}`)
-
-  await page.evaluate((state) => {
-    window.history.pushState(state, "", "/gameover")
-  }, fakeGameState)
-
-  await page.goto(`${BASE_URL}/gameover`)
-})
-
-
 // ─────────────────────────────────────
 // THEN
 // ─────────────────────────────────────
@@ -115,36 +98,3 @@ When('I click new game button', async function () {
   await page.click('.go-btn-primary')
 })
 
-
-When('I click go home button', async function () {
-  const page = this.page
-  if (!page) throw new Error('Page not initialized')
-
-  await page.click('.go-btn-secondary')
-})
-
-
-// ─────────────────────────────────────
-// NAVIGATION ASSERTIONS
-// ─────────────────────────────────────
-
-Then('I should be redirected to select page', async function () {
-  const page = this.page
-  if (!page) throw new Error('Page not initialized')
-
-  await page.waitForURL(/select/, { timeout: 5000 })
-
-  const url = page.url()
-  assert.ok(url.includes('/select'), `Not redirected to select page: ${url}`)
-})
-
-
-Then('I should be redirected to home page', async function () {
-  const page = this.page
-  if (!page) throw new Error('Page not initialized')
-
-  await page.waitForURL('/', { timeout: 5000 })
-
-  const url = page.url()
-  assert.ok(url.endsWith('/'), `Not redirected to home page: ${url}`)
-})

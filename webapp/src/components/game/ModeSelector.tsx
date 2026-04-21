@@ -5,9 +5,9 @@ import "./game.css";
 import UserHeader from "../UserHeader";
 
 const BOT_MODES: Record<string, { label: string; description: string; tagLabel: string; tagClass: string }> = {
-    random_bot:       { label: "Aleatorio",  description: "El bot elige nodos al azar.",                        tagLabel: "Facil",   tagClass: "text-green-700 bg-green-100 border border-green-300"   },
-    intermediate_bot: { label: "Intermedio", description: "El bot intenta agrupar conexiones utiles.",          tagLabel: "Medio",   tagClass: "text-yellow-700 bg-yellow-100 border border-yellow-300" },
-    hard_bot:         { label: "Dificil",    description: "El bot prioriza rutas que acerquen a las 4 caras.", tagLabel: "Dificil", tagClass: "text-red-700 bg-red-100 border border-red-300"         },
+    random_bot:       { label: "Aleatorio",  description: "El bot elige nodos al azar.",                        tagLabel: "Fácil",   tagClass: "text-green-700 bg-green-100 border border-green-300"   },
+    intermediate_bot: { label: "Intermedio", description: "El bot intenta agrupar conexiones útiles.",         tagLabel: "Medio",   tagClass: "text-yellow-700 bg-yellow-100 border border-yellow-300" },
+    hard_bot:         { label: "Difícil",    description: "El bot prioriza rutas que acerquen a las 4 caras.", tagLabel: "Difícil", tagClass: "text-red-700 bg-red-100 border border-red-300"         },
 };
 
 
@@ -25,27 +25,27 @@ const BOARD_SIZES = [
     { value: 19, label: "Extra",   description: "190 celdas · Expertos", tag: "19×" },
 ]
 const LOCAL_MODES: { id: string; label: string; description: string }[] = [
-    { id: "vsBot",       label: "Contra la maquina", description: "Juega solo contra la IA."             },
+    { id: "vsBot",       label: "Contra la máquina", description: "Juega solo contra la IA."             },
     { id: "multiplayer", label: "2 Jugadores",       description: "Dos personas en el mismo ordenador."  },
 
 ];
 
 const BOARD_VARIANTS: { id: "classic" | "tetra3d"; label: string; description: string }[] = [
-    { id: "classic", label: "Tablero clasico", description: "La version original de Y sobre triangulo." },
+    { id: "classic", label: "Tablero clásico", description: "La versión original de Y sobre triángulo." },
     { id: "tetra3d", label: "Tetraedro 3D", description: "Conecta las 4 caras del tetraedro para ganar." },
 ];
 
 const CLASSIC_BOARD_SIZES = [
-    { value: 8,  label: "Pequeno", description: "36 celdas · Rapida",    tag: "8x"  },
-    { value: 11, label: "Normal",  description: "66 celdas · Agil",      tag: "11x" },
-    { value: 15, label: "Grande",  description: "120 celdas · Tactica",  tag: "15x" },
-    { value: 19, label: "Extra",   description: "190 celdas · Expertos", tag: "19x" },
+    { value: 8,  label: "Pequeño", description: "36 celdas · Rápida",    tag: "8×"  },
+    { value: 11, label: "Normal",  description: "66 celdas · Ágil",      tag: "11×" },
+    { value: 15, label: "Grande",  description: "120 celdas · Táctica",  tag: "15×" },
+    { value: 19, label: "Extra",   description: "190 celdas · Expertos", tag: "19×" },
 ];
 
 const TETRA_BOARD_SIZES = [
-    { value: 3, label: "Base",     description: "10 nodos · Muy rapida",  tag: "T3" },
+    { value: 3, label: "Base",     description: "10 nodos � Muy r�pida",  tag: "T3" },
     { value: 4, label: "Normal",   description: "20 nodos · Equilibrada", tag: "T4" },
-    { value: 5, label: "Amplia",   description: "35 nodos · Estrategica", tag: "T5" },
+    { value: 5, label: "Amplia",   description: "35 nodos � Estrat�gica", tag: "T5" },
     { value: 6, label: "Profunda", description: "56 nodos · Compleja",    tag: "T6" },
 ];
 
@@ -65,13 +65,21 @@ const ModeSelector: React.FC = () => {
 
     useEffect(() => {
         fetch(`${API_URL}/api/game/bot-modes`, { credentials: "include" })
-            .then((r) => r.json())
-            .then((data) => {
-                const modes: string[] = data.botModes ?? [];
-                setBotModes(modes);
-                if (modes.length > 0) setBotMode(modes[0]);
+            .then((r) => {
+                if (!r.ok) throw new Error("Error cargando modos de bot");
+                return r.json();
             })
-            .catch(() => setBotModes(["random_bot"]))
+            .then((data) => {
+                const modes: string[] = Array.isArray(data.botModes) && data.botModes.length
+                    ? data.botModes
+                    : ["random_bot"];
+                setBotModes(modes);
+                setBotMode(modes[0]);
+            })
+            .catch(() => {
+                setBotModes(["random_bot"]);
+                setBotMode("random_bot");
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -136,7 +144,7 @@ const ModeSelector: React.FC = () => {
 
                     <div className="fade-up">
                         <p className="ms-section-label">Modo de juego</p>
-                        <div className="ms-difficulty-list">
+                        <div className="ms-difficulty-list ms-local-mode-list">
                             {LOCAL_MODES.map(({ id, label, description }) => (
                                 <button
                                     key={id}
@@ -199,7 +207,7 @@ const ModeSelector: React.FC = () => {
 
                     <div className="fade-up">
                         <p className="ms-section-label">Estructura del tablero</p>
-                        <div className="ms-difficulty-list">
+                        <div className="ms-difficulty-list ms-board-variant-list">
                             {BOARD_VARIANTS.map(({ id, label, description }) => (
                                 <button
                                     key={id}
@@ -222,7 +230,7 @@ const ModeSelector: React.FC = () => {
 
                     <div className="fade-up">
                         <p className="ms-section-label">Turno inicial</p>
-                        <div className="ms-difficulty-list">
+                        <div className="ms-difficulty-list ms-starting-player-list">
                             {(gameMode === "vsBot"
                                 ? [
                                     { id: "j1", label: "Empiezas tu", description: "Tu haces el primer movimiento." },
@@ -262,7 +270,7 @@ const ModeSelector: React.FC = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="ms-difficulty-list">
+                                <div className="ms-difficulty-list ms-bot-difficulty-list">
                                     {botModes.map((mode) => {
                                         const meta = BOT_MODES[mode];
                                         return (
@@ -344,3 +352,4 @@ const ModeSelector: React.FC = () => {
 };
 
 export default ModeSelector;
+

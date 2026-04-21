@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "test:e2e:run": "cucumber-js --import test/e2e/support/setup.mjs --import test/e2e/steps/**/*.mjs test/e2e/features --format progress",
-    "test:e2e": "start-server-and-test start:all http://localhost:5173 test:e2e:run",
+    "test:e2e": "concurrently -k -s first \"npm run start:all\" \"wait-on http://localhost:5173 && npm run test:e2e:run\"",
     "test:e2e:install-browsers": "npx playwright install",
     "start:all": "concurrently \"npm run dev\" \"npm --prefix ../users start\"",
     "loadtest": "docker run --rm -e BASE_URL -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.WebAppSmokeSimulation",

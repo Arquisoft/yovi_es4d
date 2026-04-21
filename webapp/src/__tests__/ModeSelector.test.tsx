@@ -56,7 +56,7 @@ describe('ModeSelector', () => {
   test('muestra las descripciones de cada modo', async () => {
     renderSelector()
     expect(await screen.findByText(/El bot elige nodos al azar/i)).toBeInTheDocument()
-    expect(screen.getByText(/agrupar conexiones utiles/i)).toBeInTheDocument()
+    expect(screen.getByText(/agrupar conexiones útiles/i)).toBeInTheDocument()
   })
 
   test('muestra random_bot como fallback si la API falla', async () => {
@@ -110,7 +110,7 @@ describe('ModeSelector', () => {
     renderSelector()
     await screen.findByText('Aleatorio')
 
-    expect(screen.getByText('Contra la maquina')).toBeInTheDocument()
+    expect(screen.getByText('Contra la máquina')).toBeInTheDocument()
     expect(screen.getByText('2 Jugadores')).toBeInTheDocument()
   })
 
@@ -118,7 +118,7 @@ describe('ModeSelector', () => {
     renderSelector()
     await screen.findByText('Aleatorio')
 
-    expect(screen.getByText('Tablero clasico')).toBeInTheDocument()
+    expect(screen.getByText('Tablero clásico')).toBeInTheDocument()
     expect(screen.getByText('Tetraedro 3D')).toBeInTheDocument()
   })
 

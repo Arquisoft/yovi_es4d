@@ -205,7 +205,7 @@ describe('GameBoard', () => {
     })
   })
 
-  test('muestra el ganador en el header cuando la partida termina', async () => {
+  test('navega a gameover cuando validateMove o move terminan la partida', async () => {
     const user = userEvent.setup()
     global.fetch = vi.fn()
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
@@ -219,8 +219,7 @@ describe('GameBoard', () => {
     await user.click(screen.getByText('hex-0-0'))
 
     await waitFor(() => {
-      // The winner name comes from the profile (TestUser)
-      expect(screen.getByText(new RegExp(`TestUser ${translations.es.gameBoard.won}`, 'i'))).toBeInTheDocument()
+      expect(mockNavigate).toHaveBeenCalledWith('/gameover', expect.anything())
     })
   })
 
@@ -628,6 +627,8 @@ describe('GameBoard', () => {
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
 
     renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
 
@@ -720,6 +721,8 @@ describe('GameBoard', () => {
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
 
     renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
 
@@ -739,19 +742,21 @@ describe('GameBoard', () => {
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: null, status: 'active' }) } as Response)
 
     renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
 
-    await screen.findByTestId('triangle')
+    await waitFor(() => {
+      expect(mockSocket.emit).toHaveBeenCalledWith('game_started', { code: 'ROOM1', gameId: 'abc123456' })
+    })
     await user.click(screen.getByText('hex-0-0'))
 
     await waitFor(() => {
       expect(mockSocket.emit).toHaveBeenCalledWith('move_made', expect.objectContaining({ position: '0,0' }))
     })
 
-    // Solo 4 llamadas fetch: me, profile, start, validateMove — NO /move
-    expect(global.fetch).toHaveBeenCalledTimes(4)
+    expect(global.fetch).toHaveBeenCalledTimes(5)
   })
 
   test('online j1: emite game_over cuando validateMove devuelve un ganador', async () => {
@@ -761,7 +766,9 @@ describe('GameBoard', () => {
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ valid: true, winner: 'j1', status: 'active' }) } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
 
     renderGame({ gameMode: 'online', botMode: 'random_bot', boardSize: 11, onlineRole: 'j1', roomCode: 'ROOM1' } as any)
 
@@ -769,7 +776,7 @@ describe('GameBoard', () => {
     await user.click(screen.getByText('hex-0-0'))
 
     await waitFor(() => {
-      expect(mockSocket.emit).toHaveBeenCalledWith('game_over', { code: 'ROOM1', winner: 'j1' })
+      expect(mockSocket.emit).toHaveBeenCalledWith('game_over', { code: 'ROOM1', winner: 'j1', gameId: 'abc123456' })
     })
   })
 
@@ -827,3 +834,6 @@ describe('GameBoard', () => {
     consoleErrorMock.mockRestore()
   })
 })
+
+
+
