@@ -3,13 +3,13 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copiar manifests
-COPY package*.json ./
+COPY --chmod=444 package*.json ./
 
 # Instalar dependencias como root
 RUN npm ci --omit=dev
 
 # Copiar código con permisos normales
-COPY --chown=node:node game-service.js gameModel.js conection.js ./
+COPY --chown=node:node --chmod=444 game-service.js gameModel.js conection.js ./
 
 # Cambiar a usuario no root
 USER node

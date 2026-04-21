@@ -3,13 +3,13 @@ FROM node:22
 WORKDIR /usr/src/userservice
 
 # 1. Copiar dependencias primero (caché)
-COPY package*.json ./
+COPY --chmod=444 package*.json ./
 
 # 2. Instalar dependencias
 RUN npm ci --omit=dev --ignore-scripts
 
 # 3. Copiar código
-COPY --chown=node:node user-service.js user-model.js ./
+COPY --chown=node:node --chmod=444 user-service.js user-model.js ./
 
 # 4. Ajustar ownership
 RUN chown -R node:node /usr/src/userservice
