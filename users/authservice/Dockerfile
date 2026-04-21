@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Copiar código fuente
-COPY . .
+COPY --chown=node:node . .
 
 # Crear usuario no root
 RUN chown -R node:node /usr/src/authservice

@@ -7,7 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --silent
 
 # Copy sources
-COPY . .
+COPY --chown=node:node . .
 
 # Accept build-time API url (defaults to localhost:8000) CAMBIADO
 ARG VITE_API_URL="http://localhost:8000"

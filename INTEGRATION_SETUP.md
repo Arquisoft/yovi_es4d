@@ -182,7 +182,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm install --production
-
+# NOSONAR 
 COPY . .
 
 EXPOSE 8003

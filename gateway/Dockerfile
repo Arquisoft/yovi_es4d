@@ -9,8 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Copy the app source code to the working directory
-# NOSONAR
-COPY . .
+COPY --chown=node:node . .
 
 # Crear usuario no root y ajustar permisos
 RUN chown -R node:node /usr/src/gatewayservice

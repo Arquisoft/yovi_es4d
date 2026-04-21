@@ -433,8 +433,11 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     }
 
    // NOSONAR: uso de Math.random solo para delay UX, no afecta seguridad
-  await sleep(Math.floor(Math.random() * 1000) + 1000);
+const array = new Uint32Array(1);
+crypto.getRandomValues(array);
 
+const delay = (array[0] % 1000) + 1000;
+await sleep(delay);
     // Llamar a Rust usando el botMode guardado en el juego
     const { toLogical } = getPlayerMapping(game);
     const botRoute = BOT_ROUTES[game.botMode] || BOT_ROUTES['random_bot'];

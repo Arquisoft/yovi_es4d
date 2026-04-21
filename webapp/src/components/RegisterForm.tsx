@@ -17,10 +17,9 @@ const RegisterForm: React.FC = () => {
 
  const validateEmail = (email: string) => {
   if (email.length > 254) return false;
-
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
+  return email.includes("@") && email.includes(".");
 };
+
 
 
   const validatePassword = (password: string) => {
