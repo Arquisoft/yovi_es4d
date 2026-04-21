@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import ModeSelector from '../components/game/ModeSelector'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import '@testing-library/jest-dom'
+import { time } from 'console'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -175,6 +176,7 @@ describe('ModeSelector', () => {
           boardSize: 11,
           player2Name: 'Jugador 2',
           startingPlayer: 'j1',
+          timeLimit: 0,
         },
       })
     })
@@ -197,6 +199,7 @@ describe('ModeSelector', () => {
           boardSize: 11,
           player2Name: 'Jugador 2',
           startingPlayer: 'j1',
+          timeLimit: 0,
         },
       })
     })
@@ -219,6 +222,7 @@ describe('ModeSelector', () => {
           boardSize: 15,
           player2Name: 'Jugador 2',
           startingPlayer: 'j1',
+          timeLimit: 0,
         },
       })
     })
@@ -242,6 +246,7 @@ describe('ModeSelector', () => {
           boardSize: 11,
           player2Name: 'Mi Amigo',
           startingPlayer: 'j1',
+          timeLimit: 0,
         },
       })
     })
@@ -262,6 +267,7 @@ describe('ModeSelector', () => {
           boardVariant: 'classic',
           player2Name: 'Jugador 2',
           startingPlayer: 'j1',
+          timeLimit: 0,
         }),
       })
     })
