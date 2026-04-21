@@ -23,6 +23,7 @@ const OnlineLobby: React.FC = () => {
   const [inputCode, setInputCode]   = useState<string>("");
   const [error, setError]           = useState<string>("");
   const [boardSize, setBoardSize]   = useState<number>(11);
+  const [startingPlayer, setStartingPlayer] = useState<"j1" | "j2">("j1");
 
   useEffect(() => {
     const s = io(API_URL, { withCredentials: true });
@@ -33,7 +34,7 @@ const OnlineLobby: React.FC = () => {
       setLobbyState("waiting");
     });
 
-    s.on('your_role', ({ role, code, boardSize: bs }: { role: string; code: string; boardSize: number }) => {
+    s.on('your_role', ({ role, code, boardSize: bs, startingPlayer: sp }: { role: string; code: string; boardSize: number; startingPlayer: "j1" | "j2" }) => {
       setLobbyState("ready");
       navigate("/game", {
         state: {
@@ -42,6 +43,7 @@ const OnlineLobby: React.FC = () => {
           onlineRole: role,
           roomCode:  code,
           socketId:  s.id,
+          startingPlayer: sp,
         },
       });
     });
@@ -58,7 +60,7 @@ const OnlineLobby: React.FC = () => {
     if (!socket) return;
     setError("");
     setLobbyState("creating");
-    socket.emit('create_room', { boardSize });
+    socket.emit('create_room', { boardSize, startingPlayer });
   };
 
   const handleJoin = () => {
@@ -107,6 +109,32 @@ const OnlineLobby: React.FC = () => {
                     >
                       <div className="ms-size-badge">{s.tag}</div>
                       <div className="ms-size-label">{s.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="ms-section-label mb-3">Turno inicial</p>
+                <div className="ms-difficulty-list">
+                  {[
+                    { id: "j1", label: "Empiezas tu", description: "Tu haces el primer movimiento." },
+                    { id: "j2", label: "Empieza rival", description: "El otro jugador juega primero." },
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setStartingPlayer(opt.id as "j1" | "j2")}
+                      className={`ms-mode-card${startingPlayer === opt.id ? " selected" : ""}`}
+                    >
+                      <div className="ms-mode-info">
+                        <div className="ms-mode-name-row">
+                          <span className="ms-mode-name">{opt.label}</span>
+                        </div>
+                        <p className="ms-mode-desc">{opt.description}</p>
+                      </div>
+                      <div className={`ms-radio${startingPlayer === opt.id ? " checked" : ""}`}>
+                        {startingPlayer === opt.id && <span className="ms-radio-dot" />}
+                      </div>
                     </button>
                   ))}
                 </div>

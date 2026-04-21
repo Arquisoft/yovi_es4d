@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import Triangle from "./Triangle";
+import Triangle3D from "./Triangle3D";
 import Jugador from "./player";
 import UserHeader from "../UserHeader";
 import { API_URL } from "../../config";
@@ -28,16 +29,30 @@ interface GameState {
   status: "active" | "finished" | null;
   winner: "j1" | "j2" | null;
   botPlaying: boolean;
+  connectedFaces: {
+    j1: string[];
+    j2: string[];
+  };
+  connectionEdges: {
+    j1: Array<{ from: string; to: string }>;
+    j2: Array<{ from: string; to: string }>;
+  };
+  hasBranch: {
+    j1: boolean;
+    j2: boolean;
+  };
 }
 
 interface LocationState {
   gameMode?:    string;
   botMode?:     string;
+  boardVariant?: string;
   boardSize?:   number;
   timeLimit?:   number;
   onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
   roomCode?:    string;
   player2Name?: string;
+  startingPlayer?: "j1" | "j2";
 }
 
 const GameBoard: React.FC = () => {
@@ -49,11 +64,13 @@ const GameBoard: React.FC = () => {
   const {
     gameMode    = "vsBot",
     botMode     = "random_bot",
+    boardVariant = "classic",
     boardSize   = 11,
     timeLimit   = 0,
     onlineRole  = "j1",
     roomCode    = "",
     player2Name,
+    startingPlayer = "j1",
   } = (location.state as LocationState) ?? {};
 
   useEffect(() => {
@@ -72,6 +89,7 @@ const GameBoard: React.FC = () => {
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
+  const startGameRef = useRef(false);
 
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
 
@@ -83,6 +101,9 @@ const GameBoard: React.FC = () => {
     status: null,
     winner: null,
     botPlaying: false,
+    connectedFaces: { j1: [], j2: [] },
+    connectionEdges: { j1: [], j2: [] },
+    hasBranch: { j1: false, j2: false },
   });
 
   useEffect(() => {
@@ -91,7 +112,7 @@ const GameBoard: React.FC = () => {
 
   useEffect(() => {
     if (gameState.status === "finished") {
-      navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, onlineRole, player2Name } });
+      navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, boardVariant, onlineRole, player2Name } });
     }
   }, [gameState.status, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -136,6 +157,9 @@ const GameBoard: React.FC = () => {
           status:     data.status || "active",
           winner:     data.winner || null,
           botPlaying: false,
+          connectedFaces: data.connectedFaces || { j1: [], j2: [] },
+          connectionEdges: data.connectionEdges || { j1: [], j2: [] },
+          hasBranch: data.hasBranch || { j1: false, j2: false },
         });
         // Registrar nombre propio (j2) en el servidor
         if (profilesRef.current.my) {
@@ -199,6 +223,8 @@ const GameBoard: React.FC = () => {
   useEffect(() => {
     const startGame = async () => {
       try {
+        if (startGameRef.current) return;
+        startGameRef.current = true;
         // 1. Obtener userId real del JWT
         const meRes = await fetch(`${API_URL}/api/auth/me`, {
           credentials: "include",
@@ -239,7 +265,7 @@ const GameBoard: React.FC = () => {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: resolvedUserId, gameMode, botMode, boardSize }),
+          body: JSON.stringify({ userId: resolvedUserId, gameMode, botMode, boardSize, startingPlayer, boardVariant }),
         });
         const data = await res.json();
 
@@ -256,10 +282,45 @@ const GameBoard: React.FC = () => {
           status:     data.status || "active",
           winner:     data.winner || null,
           botPlaying: false,
+          connectedFaces: data.connectedFaces || { j1: [], j2: [] },
+          connectionEdges: data.connectionEdges || { j1: [], j2: [] },
+          hasBranch: data.hasBranch || { j1: false, j2: false },
         });
 
         // Arrancar el temporizador al inicio de la partida (vsBot, turno j1)
         if (gameMode === "vsBot") startTimer();
+
+        const shouldBotStart = gameMode === "vsBot" && (data.turn === "j2" || startingPlayer === "j2");
+        if (shouldBotStart) {
+          setGameState(prev => ({ ...prev, botPlaying: true }));
+          try {
+            const moveRes = await fetch(`${API_URL}/api/game/${data.gameId}/move`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: resolvedUserId, mode: "vsBot" }),
+            });
+            const moveData = await moveRes.json();
+
+            setGameState(prev => ({
+              ...prev,
+              hexData: moveData.board,
+              turn:    moveData.turn,
+              winner:  moveData.winner,
+              status:  moveData.status,
+              connectedFaces: moveData.connectedFaces || prev.connectedFaces,
+              connectionEdges: moveData.connectionEdges || prev.connectionEdges,
+              hasBranch: moveData.hasBranch || prev.hasBranch,
+              players: prev.players.map(p =>
+                p.id === "bot" && moveData.turn === "j1" ? { ...p, points: p.points + 5 } : p
+              ),
+              botPlaying: false,
+            }));
+          } catch (error) {
+            console.error("Error during bot first move:", error);
+            setGameState(prev => ({ ...prev, botPlaying: false }));
+          }
+        }
 
         // En modo online, j1 notifica al servidor con el gameId para que j2 pueda unirse
         if (gameMode === "online") {
@@ -349,6 +410,19 @@ const GameBoard: React.FC = () => {
 
       const currentTurn = gameState.turn; // j1 ó j2 según el turno
 
+
+      setGameState(prev => ({
+        ...prev,
+        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
+        players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
+        winner:  validateData.winner || prev.winner,
+        status:  validateData.status || prev.status,
+        connectedFaces: validateData.connectedFaces || prev.connectedFaces,
+        connectionEdges: validateData.connectionEdges || prev.connectionEdges,
+        hasBranch: validateData.hasBranch || prev.hasBranch,
+      }));
+
+
       // En modo online emitir movimiento al rival y no llamar al bot
       if (gameMode === "online" && socketRef.current) {
         const nextTurn = currentTurn === "j1" ? "j2" : "j1";
@@ -400,6 +474,9 @@ const GameBoard: React.FC = () => {
         turn:    moveData.turn,
         winner:  moveData.winner,
         status:  moveData.status,
+        connectedFaces: moveData.connectedFaces || prev.connectedFaces,
+        connectionEdges: moveData.connectionEdges || prev.connectionEdges,
+        hasBranch: moveData.hasBranch || prev.hasBranch,
 
         // En vsBot suma puntos al bot, en multiplayer no hace falta ya se suma arriba
         players: gameMode === "vsBot"
@@ -441,6 +518,7 @@ const GameBoard: React.FC = () => {
   const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
   const p2Name   = isMySlotJ1 ? opponentName                              : myName;
   const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+  const tetraFaces = ["A", "B", "C", "D"];
 
   if (opponentDisconnected) {
     return (
@@ -461,7 +539,7 @@ const GameBoard: React.FC = () => {
   }
 
   return (
-      <div className="game-bg min-h-screen flex flex-col">
+      <div className={`game-bg min-h-screen flex flex-col ${boardVariant === "tetra3d" ? "game-bg-3d" : ""}`}>
         <UserHeader />
 
         {/* ── Header ─────────────────────────────────────── */}
@@ -516,9 +594,55 @@ const GameBoard: React.FC = () => {
             />
           </aside>
 
-          <section className="gb-board-section">
+          <section className={`gb-board-section ${boardVariant === "tetra3d" ? "gb-board-section-3d" : ""}`}>
+            {boardVariant === "tetra3d" && (
+              <div className="gb-tetra-progress">
+                <div className="gb-tetra-track">
+                  <span className="gb-tetra-track-label">{p1Name}</span>
+                  <div className="gb-tetra-face-row">
+                    {tetraFaces.map((face) => (
+                      <span
+                        key={`j1-${face}`}
+                        className={`gb-tetra-face-pill ${gameState.connectedFaces.j1.includes(face) ? "active violet" : ""}`}
+                      >
+                        {face}
+                      </span>
+                    ))}
+                  </div>
+                  <span className={`gb-tetra-branch ${gameState.hasBranch.j1 ? "active violet" : ""}`}>
+                    {gameState.hasBranch.j1 ? "Bifurcacion" : "Sin bifurcacion"}
+                  </span>
+                </div>
+
+                <div className="gb-tetra-track">
+                  <span className="gb-tetra-track-label">{p2Name}</span>
+                  <div className="gb-tetra-face-row">
+                    {tetraFaces.map((face) => (
+                      <span
+                        key={`j2-${face}`}
+                        className={`gb-tetra-face-pill ${gameState.connectedFaces.j2.includes(face) ? "active coral" : ""}`}
+                      >
+                        {face}
+                      </span>
+                    ))}
+                  </div>
+                  <span className={`gb-tetra-branch ${gameState.hasBranch.j2 ? "active coral" : ""}`}>
+                    {gameState.hasBranch.j2 ? "Bifurcacion" : "Sin bifurcacion"}
+                  </span>
+                </div>
+              </div>
+            )}
             {gameState.gameId ? (
-                <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
+                boardVariant === "tetra3d"
+                  ? (
+                    <Triangle3D
+                      hexData={gameState.hexData}
+                      onHexClick={handleHexClick}
+                      scale={0.98}
+                      connectionEdges={gameState.connectionEdges}
+                    />
+                  )
+                  : <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
             ) : (
                 <div className="gb-loading">
                   <div className="gb-loading-dots">

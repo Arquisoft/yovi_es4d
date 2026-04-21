@@ -1,0 +1,273 @@
+.tetra-stage {
+  width: min(82vw, 920px);
+  height: min(74vh, 800px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.tetra-controls {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(126, 103, 66, 0.16);
+  box-shadow: 0 16px 36px rgba(90, 63, 28, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.tetra-controls-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tetra-controls-row {
+  justify-content: space-between;
+}
+
+.tetra-controls-title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8c7c69;
+}
+
+.tetra-face-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tetra-pill,
+.tetra-nav,
+.tetra-reset {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.tetra-pill {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(244, 238, 229, 0.95);
+  color: #635647;
+  font-weight: 700;
+}
+
+.tetra-pill:hover,
+.tetra-nav:hover,
+.tetra-reset:hover {
+  transform: translateY(-1px);
+}
+
+.tetra-pill.active {
+  background: linear-gradient(135deg, #7c6ff7 0%, #f97058 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(124, 111, 247, 0.24);
+}
+
+.tetra-nav,
+.tetra-reset {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #554836;
+  box-shadow: 0 8px 20px rgba(74, 52, 21, 0.08);
+}
+
+.tetra-nav {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.tetra-reset {
+  padding: 0 16px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.tetra-hint {
+  justify-content: space-between;
+  color: #8e816f;
+  font-size: 0.84rem;
+}
+
+.tetra-scene {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.32) 32%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 248, 240, 0.9) 0%, rgba(240, 229, 212, 0.76) 100%);
+  border: 1px solid rgba(132, 116, 87, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 24px 60px rgba(86, 63, 30, 0.16);
+  touch-action: none;
+  user-select: none;
+}
+
+.tetra-faces,
+.tetra-node-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.tetra-faces {
+  width: 100%;
+  height: 100%;
+}
+
+.tetra-face {
+  stroke-width: 1.4;
+}
+
+.tetra-face-a {
+  fill: rgba(124, 111, 247, 0.1);
+  stroke: rgba(124, 111, 247, 0.36);
+}
+
+.tetra-face-b {
+  fill: rgba(249, 112, 88, 0.08);
+  stroke: rgba(249, 112, 88, 0.3);
+}
+
+.tetra-face-c {
+  fill: rgba(255, 208, 96, 0.09);
+  stroke: rgba(185, 140, 45, 0.28);
+}
+
+.tetra-face-d {
+  fill: rgba(107, 195, 170, 0.08);
+  stroke: rgba(80, 143, 125, 0.28);
+}
+
+.tetra-face-label {
+  font-size: 24px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: rgba(84, 67, 44, 0.7);
+  letter-spacing: 0.06em;
+}
+
+.tetra-link {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 9;
+  fill: none;
+  opacity: 0.82;
+}
+
+.tetra-link-j1 {
+  stroke: rgba(109, 92, 240, 0.8);
+  filter: drop-shadow(0 0 10px rgba(109, 92, 240, 0.28));
+}
+
+.tetra-link-j2 {
+  stroke: rgba(249, 112, 88, 0.84);
+  filter: drop-shadow(0 0 10px rgba(249, 112, 88, 0.28));
+}
+
+.tetra-node {
+  position: absolute;
+  margin-left: calc(var(--node-size, 0px) / -2);
+  margin-top: calc(var(--node-size, 0px) / -2);
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: filter 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+}
+
+.tetra-node.surface {
+  opacity: 1;
+}
+
+.tetra-node.inner {
+  opacity: 0.56;
+}
+
+.tetra-node:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: scale(1.08);
+}
+
+.tetra-node:disabled {
+  cursor: default;
+}
+
+.tetra-node-core,
+.tetra-node-shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tetra-node-core {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, #f7f0e3 0%, #c8a676 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -8px 12px rgba(82, 56, 26, 0.24),
+    0 14px 24px rgba(63, 43, 16, 0.16);
+}
+
+.tetra-node-shadow {
+  inset: auto 14% -12px 14%;
+  height: 15px;
+  background: radial-gradient(circle, rgba(37, 24, 8, 0.26), rgba(37, 24, 8, 0) 70%);
+  filter: blur(5px);
+}
+
+.tetra-node.j1 .tetra-node-core {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, #c0b9ff 0%, #6d5cf0 100%);
+}
+
+.tetra-node.j2 .tetra-node-core {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, #ffcbbd 0%, #f97058 100%);
+}
+
+@media (max-width: 920px) {
+  .tetra-stage {
+    width: 100%;
+    height: min(72vh, 760px);
+  }
+
+  .tetra-hint {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tetra-stage {
+    height: min(76vh, 780px);
+  }
+
+  .tetra-controls {
+    padding: 12px;
+  }
+
+  .tetra-controls-row {
+    justify-content: flex-start;
+  }
+
+  .tetra-face-label {
+    font-size: 18px;
+  }
+}

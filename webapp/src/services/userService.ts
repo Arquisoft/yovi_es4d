@@ -26,31 +26,37 @@ export interface BackendGameRecord {
   moves?: unknown[];
 }
 
-export const getHistory = async (userId?: string): Promise<BackendGameRecord[]> => {
+export interface HistoryResponse {
+  games: BackendGameRecord[];
+  pagination: {
+    page: number;
+    limit: number;
+    hasPrev: boolean;
+    hasNext: boolean;
+  };
+  summary: {
+    totalGames: number;
+    totalWins: number;
+    totalDraws: number;
+    totalLosses: number;
+    winPercentage: number;
+  };
+}
 
-  try {
-    const queryString = `?userId=${userId}`;
-    const res = await fetch(`${API_URL}/api/game/history${queryString}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
+export type HistoryResult = HistoryResponse | BackendGameRecord[];
 
-    if (!res.ok) {
-      console.warn(`History request returned ${res.status}`);
-      return [];
-    }
+export const getHistory = async (
+  userId?: string,
+  page = 1,
+  sortBy: 'date' | 'moves' = 'date',
+  sortOrder: 'asc' | 'desc' = 'desc'
+): Promise<HistoryResult> => {
+  const res = await axios.get(`${API_URL}/api/game/history`, {
+    params: { userId, page, sortBy, sortOrder },
+    withCredentials: true,
+  });
 
-    const data = await res.json();
-    if (!Array.isArray(data)) {
-      console.warn('History response is not an array');
-      return [];
-    }
-    return data as BackendGameRecord[];
-  } catch (error) {
-    console.error('Error fetching game history:', error);
-    return [];
-  }
+  return res.data;
 };
 
 export const login = async (credentials: {email: string, password: string}) => {
@@ -93,6 +99,6 @@ export const logout = async () => {
     },
   });
 
-  if (!res.ok) throw new Error("Error al cerrar sesión");
+  if (!res.ok) throw new Error("Error al cerrar sesiÃ³n");
   return res.json();
 };

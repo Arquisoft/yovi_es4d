@@ -14,6 +14,7 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
+app.disable('x-powered-by');
 const port = process.env.PORT || 8003;
 
 
@@ -32,6 +33,10 @@ const gameSchema = new mongoose.Schema({
   gameId: { type: String, required: true, unique: true },
   userId: String,
   gameMode: String,
+  boardVariant: String,
+  connectedFaces: mongoose.Schema.Types.Mixed,
+  connectionEdges: mongoose.Schema.Types.Mixed,
+  hasBranch: mongoose.Schema.Types.Mixed,
   boardSize: Number,
   board: [{ position: String, player: String }],
   players: [{
@@ -53,7 +58,23 @@ const GameModel = mongoose.model('Game', gameSchema);
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 const games = new Map();
 
@@ -106,19 +127,55 @@ app.get('/play', async (req, res) => {
  */
 app.get('/api/game/history', async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const { userId, page = 1, sortBy = 'date', sortOrder = 'desc' } = req.query;
+    const limit = 5;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const startIndex = (pageNum - 1) * limit;
+    const endIndex = startIndex + limit;
 
     if (!userId) {
       return res.status(400).json({ error: 'Falta userId en la query' });
     }
 
     const filtro = { userId };
+    const allGames = await GameModel.find(filtro).lean();
+    const sortedGames = [...allGames].sort((a, b) => {
+      if (sortBy === 'moves') {
+        const movesA = a.moves?.length || 0;
+        const movesB = b.moves?.length || 0;
+        return sortOrder === 'asc' ? movesA - movesB : movesB - movesA;
+      }
 
-    const games = await GameModel.find(filtro)
-      .sort({ createdAt: -1 })
-      .lean();
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
-    res.json(games);
+    const games = sortedGames.slice(startIndex, endIndex);
+    const totalGames = allGames.length;
+    const totalWins = allGames.filter((game) => game.winner === 'j1').length;
+    const totalDraws = allGames.filter((game) => !game.winner).length;
+    const totalLosses = totalGames - totalWins - totalDraws;
+    const winPercentage = totalGames
+      ? Math.round((totalWins / totalGames) * 100)
+      : 0;
+
+    res.json({
+      games,
+      pagination: {
+        page: pageNum,
+        limit,
+        hasPrev: pageNum > 1,
+        hasNext: sortedGames.length > endIndex,
+      },
+      summary: {
+        totalGames,
+        totalWins,
+        totalDraws,
+        totalLosses,
+        winPercentage,
+      }
+    });
 
   } catch (error) {
     console.error('[HISTORIAL] Error obteniendo historial:', error);
@@ -146,17 +203,27 @@ app.post('/api/game/start', async (req, res) => {
       role      = 'j1',
       gameMode  = 'vsBot',
       botMode   = 'random_bot',
+      boardVariant = 'classic',
       boardSize: rawBoardSize = 11,
+      startingPlayer = 'j1',
     } = req.body;
 
-    const ALLOWED_BOARD_SIZES = [8, 11, 15, 19];
+    const ALLOWED_BOARD_SIZES = boardVariant === 'tetra3d'
+      ? [3, 4, 5, 6]
+      : [8, 11, 15, 19];
     const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
       ? Number(rawBoardSize)
-      : 11;
+      : (boardVariant === 'tetra3d' ? 4 : 11);
 
-    const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const gameId = `game_${crypto.randomUUID()}`;
+    
+    if (boardVariant === 'tetra3d') {
+      await axios.post(`${GAMEY_BOT_URL}/v1/tetra/start`, { size: boardSize }, { timeout: 5000 });
+    } else {
+      await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
+    }
 
-    await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize, game_id: gameId }, { timeout: 5000 });
+    const normalizedStartingPlayer = startingPlayer === 'j2' ? 'j2' : 'j1';
 
     // Crear estado del juego en Node
     const game = {
@@ -165,13 +232,18 @@ app.post('/api/game/start', async (req, res) => {
       role,
       gameMode,
       botMode,
+      boardVariant,
       boardSize,
-      board: initializeBoard(boardSize),
+      startingPlayer: normalizedStartingPlayer,
+      board: boardVariant === 'tetra3d' ? initializeTetraBoard(boardSize) : initializeBoard(boardSize),
+      connectedFaces: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
+      connectionEdges: boardVariant === 'tetra3d' ? { j1: [], j2: [] } : undefined,
+      hasBranch: boardVariant === 'tetra3d' ? { j1: false, j2: false } : undefined,
       players: [
         { id: userId, role, name: 'Player 1', color: 'j1', points: 0 },
         { id: gameMode === 'vsBot' ? 'bot' : 'player2', role: 'j2', name: gameMode === 'vsBot' ? 'Bot' : 'Player 2', color: 'j2', points: 0 }
       ],
-      currentPlayer: 'j1',
+      currentPlayer: normalizedStartingPlayer,
       moves: [],
       status: 'active',
       winner: null,
@@ -186,7 +258,11 @@ app.post('/api/game/start', async (req, res) => {
       players: game.players,
       turn: game.currentPlayer,
       status: game.status,
-      winner: null
+      winner: null,
+      boardVariant: game.boardVariant,
+      connectedFaces: game.connectedFaces || { j1: [], j2: [] },
+      connectionEdges: game.connectionEdges || { j1: [], j2: [] },
+      hasBranch: game.hasBranch || { j1: false, j2: false },
     });
 
   } catch (error) {
@@ -214,11 +290,50 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   const game = games.get(gameId);
   if (!game) return res.status(404).json({ error: 'Game not found' });
 
+  if (game.boardVariant === 'tetra3d') {
+    try {
+      const { toGamey, toLogical } = getPlayerMapping(game);
+      const tetraMove = parseTetraPosition(move);
+      const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/tetra/move`, {
+        ...tetraMove,
+        player: toGamey[game.currentPlayer],
+      });
+
+      game.moves.push({ position: move, userId });
+      game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
+      game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
+      game.connectionEdges = mapConnectionEdges(rustResponse.data.connectionEdges, toLogical);
+      game.hasBranch = mapHasBranch(rustResponse.data.hasBranch, toLogical);
+      game.currentPlayer = rustResponse.data.turn === null || rustResponse.data.turn === undefined
+        ? game.currentPlayer
+        : toLogical[rustResponse.data.turn];
+
+      if (rustResponse.data.status === 'finished') {
+        game.winner = toLogical[rustResponse.data.winner];
+        await finishGameAndSave(game);
+      }
+
+      return res.json({
+        valid: true,
+        winner: rustResponse.data.status === 'finished' ? toLogical[rustResponse.data.winner] : null,
+        status: rustResponse.data.status,
+        connectedFaces: game.connectedFaces,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
+      });
+    } catch (error) {
+      return res.status(error.response?.status || 400).json({
+        error: error.response?.data?.message || 'Invalid tetra move',
+      });
+    }
+  }
+
   const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
 
   // Usamos el turno actual del juego para determinar el player
   // (no el userId, que puede variar según el JWT)
-  const playerNum = game.currentPlayer === 'j1' ? 0 : 1;
+  const { toGamey, toLogical } = getPlayerMapping(game);
+  const playerNum = toGamey[game.currentPlayer];
 
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
@@ -234,7 +349,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   game.currentPlayer = game.currentPlayer === 'j1' ? 'j2' : 'j1';
 
   if (rustResponse.data.status === 'finished') {
-    game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+    game.winner = toLogical[rustResponse.data.winner];
     await finishGameAndSave(game);
   }
  rustResponse.data.board.forEach(move => {
@@ -242,10 +357,10 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
     return x === move.x && y === move.y && z === move.z;
   });
-  if (cell) cell.player = move.player === 0 ? 'j1' : 'j2';
+  if (cell) cell.player = toLogical[move.player];
 });
   res.json({ valid: true,
-    winner: rustResponse.data.status === 'finished' ? (rustResponse.data.winner === 0 ? 'j1' : 'j2') : null,
+    winner: rustResponse.data.status === 'finished' ? toLogical[rustResponse.data.winner] : null,
     status: rustResponse.data.status
    });
 });
@@ -273,9 +388,54 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
       return res.status(400).json({ message: 'No es turno del bot', valid: false });
     }
 
-    await sleep(Math.floor(Math.random() * 1000) + 1000);
+    if (game.boardVariant === 'tetra3d') {
+      const { toLogical } = getPlayerMapping(game);
+      const rustResponse = await axios.post(
+        `${GAMEY_BOT_URL}/v1/tetra/bot/${game.botMode}`
+      );
+
+      game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
+      game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
+      game.connectionEdges = mapConnectionEdges(rustResponse.data.connectionEdges, toLogical);
+      game.hasBranch = mapHasBranch(rustResponse.data.hasBranch, toLogical);
+
+      if (rustResponse.data.turn !== null && rustResponse.data.turn !== undefined) {
+        game.currentPlayer = toLogical[rustResponse.data.turn];
+      }
+
+      if (rustResponse.data.status === 'finished') {
+        game.status = 'finished';
+        game.winner = toLogical[rustResponse.data.winner];
+        await finishGameAndSave(game);
+      }
+
+      const move = rustResponse.data.lastMove;
+      if (move) {
+        game.moves.push({
+          position: `(${move.a},${move.b},${move.c},${move.d})`,
+          player: 'j2',
+          userId: 'bot'
+        });
+      }
+
+      return res.json({
+        gameId,
+        board: game.board,
+        moves: game.moves,
+        turn: game.currentPlayer,
+        winner: game.winner || null,
+        status: game.status,
+        connectedFaces: game.connectedFaces,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
+      });
+    }
+
+   // NOSONAR: uso de Math.random solo para delay UX, no afecta seguridad
+  await sleep(Math.floor(Math.random() * 1000) + 1000);
 
     // Llamar a Rust usando el botMode guardado en el juego
+    const { toLogical } = getPlayerMapping(game);
     const botRoute = BOT_ROUTES[game.botMode] || BOT_ROUTES['random_bot'];
     const rustResponse = await axios.post(
       `${GAMEY_BOT_URL}${botRoute}`,
@@ -294,7 +454,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   });
 
   if (cell && cell.player === null) {
-    cell.player = m.player === 0 ? 'j1' : 'j2';
+    cell.player = toLogical[m.player];
 
     game.moves.push({
       position: `(${m.x},${m.y},${m.z})`,
@@ -304,11 +464,11 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   }
 });
 
-    game.currentPlayer = rustResponse.data.turn === 0 ? 'j1' : 'j2';
+    game.currentPlayer = toLogical[rustResponse.data.turn];
 
     if (rustResponse.data.status === 'finished') {
       game.status = 'finished';
-      game.winner = rustResponse.data.winner === 0 ? 'j1' : 'j2';
+      game.winner = toLogical[rustResponse.data.winner];
       await finishGameAndSave(game);
     }
 
@@ -369,7 +529,11 @@ app.get('/api/game/:gameId', (req, res) => {
     moves: game.moves,
     turn: game.currentPlayer,
     status: game.status,
-    winner: game.winner || null
+    winner: game.winner || null,
+    boardVariant: game.boardVariant || 'classic',
+    connectedFaces: game.connectedFaces || { j1: [], j2: [] },
+    connectionEdges: game.connectionEdges || { j1: [], j2: [] },
+    hasBranch: game.hasBranch || { j1: false, j2: false },
   });
 });
 
@@ -406,6 +570,10 @@ async function finishGameAndSave(game) {
         gameId: dbKey,
         userId: game.userId,
         gameMode: game.gameMode,
+        boardVariant: game.boardVariant,
+        connectedFaces: game.connectedFaces,
+        connectionEdges: game.connectionEdges,
+        hasBranch: game.hasBranch,
         boardSize: game.boardSize,
         players: game.players,
         moves: game.moves,
@@ -547,6 +715,89 @@ function initializeBoard(boardSize) {
   return board;
 }
 
+function initializeTetraBoard(boardSize) {
+  const board = [];
+  const total = boardSize - 1;
+
+  for (let a = 0; a <= total; a++) {
+    for (let b = 0; b <= total - a; b++) {
+      for (let c = 0; c <= total - a - b; c++) {
+        const d = total - a - b - c;
+        board.push({ position: `(${a},${b},${c},${d})`, player: null });
+      }
+    }
+  }
+
+  return board;
+}
+
+function parseTetraPosition(move) {
+  const parts = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  if (parts.length !== 4 || parts.some(Number.isNaN)) {
+    throw new Error('Invalid tetra position');
+  }
+  return { a: parts[0], b: parts[1], c: parts[2], d: parts[3] };
+}
+
+function updateTetraBoardFromRust(rustBoard, toLogical) {
+  return rustBoard.map(cell => ({
+    position: `(${cell.a},${cell.b},${cell.c},${cell.d})`,
+    player: cell.player === null || cell.player === undefined ? null : toLogical[cell.player],
+  }));
+}
+
+function mapConnectedFaces(rawConnectedFaces, toLogical) {
+  const connectedFaces = { j1: [], j2: [] };
+
+  if (!rawConnectedFaces || typeof rawConnectedFaces !== 'object') {
+    return connectedFaces;
+  }
+
+  Object.entries(rawConnectedFaces).forEach(([gameyPlayer, faces]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer) return;
+    connectedFaces[logicalPlayer] = Array.isArray(faces) ? faces : [];
+  });
+
+  return connectedFaces;
+}
+
+function mapConnectionEdges(rawConnectionEdges, toLogical) {
+  const connectionEdges = { j1: [], j2: [] };
+
+  if (!rawConnectionEdges || typeof rawConnectionEdges !== 'object') {
+    return connectionEdges;
+  }
+
+  Object.entries(rawConnectionEdges).forEach(([gameyPlayer, edges]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer || !Array.isArray(edges)) return;
+
+    connectionEdges[logicalPlayer] = edges.map((edge) => ({
+      from: `(${edge.from.a},${edge.from.b},${edge.from.c},${edge.from.d})`,
+      to: `(${edge.to.a},${edge.to.b},${edge.to.c},${edge.to.d})`,
+    }));
+  });
+
+  return connectionEdges;
+}
+
+function mapHasBranch(rawHasBranch, toLogical) {
+  const hasBranch = { j1: false, j2: false };
+
+  if (!rawHasBranch || typeof rawHasBranch !== 'object') {
+    return hasBranch;
+  }
+
+  Object.entries(rawHasBranch).forEach(([gameyPlayer, value]) => {
+    const logicalPlayer = toLogical[Number(gameyPlayer)];
+    if (!logicalPlayer) return;
+    hasBranch[logicalPlayer] = Boolean(value);
+  });
+
+  return hasBranch;
+}
+
 /**
  * Convertir estado del juego a formato YEN para el bot de Rust
  * @param {Object} game - El objeto del juego
@@ -558,7 +809,8 @@ function initializeBoard(boardSize) {
 function convertToYEN(game) {
   const size = game.boardSize;
   const players = ['B', 'R'];
-  const turn = game.currentPlayer === 'j1' ? 0 : 1;
+  const { toGamey } = getPlayerMapping(game);
+  const turn = toGamey[game.currentPlayer];
   const rows = [];
   let idx = 0;
   for (let r = 0; r < size; r++) {
@@ -566,13 +818,26 @@ function convertToYEN(game) {
     for (let c = 0; c <= r; c++) {
       const cell = game.board[idx];
       if (!cell || cell.player === null) row += '.';
-      else if (cell.player === 'j1') row += players[0];
-      else if (cell.player === 'j2') row += players[1];
+      else if (cell.player === 'j1') row += players[toGamey.j1];
+      else if (cell.player === 'j2') row += players[toGamey.j2];
       idx++;
     }
     rows.push(row);
   }
   return { size, turn, players, layout: rows.join('/') };
+}
+
+function getPlayerMapping(game) {
+  if (game.startingPlayer === 'j2') {
+    return {
+      toGamey: { j1: 1, j2: 0 },
+      toLogical: { 0: 'j2', 1: 'j1' },
+    };
+  }
+  return {
+    toGamey: { j1: 0, j2: 1 },
+    toLogical: { 0: 'j1', 1: 'j2' },
+  };
 }
 
 /**
@@ -608,3 +873,20 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports._test = {
+  GameModel,
+  BOT_ROUTES,
+  games,
+  initializeBoard,
+  initializeTetraBoard,
+  parseTetraPosition,
+  updateTetraBoardFromRust,
+  mapConnectedFaces,
+  mapConnectionEdges,
+  mapHasBranch,
+  convertToYEN,
+  getPlayerMapping,
+  indexToCoords,
+  sleep,
+  finishGameAndSave,
+};

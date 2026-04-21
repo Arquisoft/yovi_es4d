@@ -1,11 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import axios from 'axios'
 import Notifications from '../components/Notifications'
 import { I18nProvider } from '../i18n'
 import resources from '../i18n/resources'
-import * as friendService from '../services/friendService'
 import '@testing-library/jest-dom'
 
 const mockNavigate = vi.fn()
@@ -25,11 +24,6 @@ vi.mock('../components/Sidebar', () => ({
 
 vi.mock('../config', () => ({
   API_URL: 'http://localhost:8000',
-}))
-
-vi.mock('../services/friendService', () => ({
-  acceptFriendRequest: vi.fn(),
-  rejectFriendRequest: vi.fn(),
 }))
 
 const renderNotifications = () =>
@@ -73,12 +67,13 @@ describe('Notifications', () => {
       },
     })
 
-    renderNotifications()
+    const { container } = renderNotifications()
 
     expect(await screen.findByText('Carlos')).toBeInTheDocument()
     expect(screen.getByText(resources.es.notifications.friendRequest)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: resources.es.notifications.accept })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: resources.es.notifications.reject })).toBeInTheDocument()
+    expect(container.querySelector('.notification-card.unread')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: resources.es.notifications.accept })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: resources.es.notifications.reject })).not.toBeInTheDocument()
   })
 
   test('shows empty message when there are no notifications', async () => {
@@ -109,155 +104,7 @@ describe('Notifications', () => {
     expect(await screen.findByText(resources.es.notifications.errorLoading)).toBeInTheDocument()
   })
 
-  test('accepts a notification request and reloads data', async () => {
-    vi.mocked(axios.get)
-      .mockResolvedValueOnce({
-        data: {
-          notifications: [
-            {
-              _id: 'n1',
-              type: 'friend_request',
-              read: false,
-              createdAt: '2026-01-01T10:00:00.000Z',
-              requestId: 'r1',
-              relatedUser: {
-                _id: 'u1',
-                username: 'Carlos',
-                email: 'carlos@test.com',
-              },
-            },
-          ],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: { notifications: [] },
-      })
-
-    vi.mocked(friendService.acceptFriendRequest).mockResolvedValue({ success: true })
-
-    const user = userEvent.setup()
-    renderNotifications()
-
-    const acceptButton = await screen.findByRole('button', {
-      name: resources.es.notifications.accept,
-    })
-    await user.click(acceptButton)
-
-    expect(friendService.acceptFriendRequest).toHaveBeenCalledWith('r1')
-
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  test('shows accept error if accept request fails', async () => {
-    vi.mocked(axios.get).mockResolvedValue({
-      data: {
-        notifications: [
-          {
-            _id: 'n1',
-            type: 'friend_request',
-            read: false,
-            createdAt: '2026-01-01T10:00:00.000Z',
-            requestId: 'r1',
-            relatedUser: {
-              _id: 'u1',
-              username: 'Carlos',
-              email: 'carlos@test.com',
-            },
-          },
-        ],
-      },
-    })
-
-    vi.mocked(friendService.acceptFriendRequest).mockRejectedValue(new Error('fail'))
-
-    const user = userEvent.setup()
-    renderNotifications()
-
-    const acceptButton = await screen.findByRole('button', {
-      name: resources.es.notifications.accept,
-    })
-    await user.click(acceptButton)
-
-    expect(await screen.findByText(resources.es.notifications.errorAccept)).toBeInTheDocument()
-  })
-
-  test('rejects a notification request and reloads data', async () => {
-    vi.mocked(axios.get)
-      .mockResolvedValueOnce({
-        data: {
-          notifications: [
-            {
-              _id: 'n1',
-              type: 'friend_request',
-              read: false,
-              createdAt: '2026-01-01T10:00:00.000Z',
-              requestId: 'r1',
-              relatedUser: {
-                _id: 'u1',
-                username: 'Carlos',
-                email: 'carlos@test.com',
-              },
-            },
-          ],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: { notifications: [] },
-      })
-
-    vi.mocked(friendService.rejectFriendRequest).mockResolvedValue({ success: true })
-
-    const user = userEvent.setup()
-    renderNotifications()
-
-    const rejectButton = await screen.findByRole('button', {
-      name: resources.es.notifications.reject,
-    })
-    await user.click(rejectButton)
-
-    expect(friendService.rejectFriendRequest).toHaveBeenCalledWith('r1')
-
-    await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  test('shows reject error if reject request fails', async () => {
-    vi.mocked(axios.get).mockResolvedValue({
-      data: {
-        notifications: [
-          {
-            _id: 'n1',
-            type: 'friend_request',
-            read: false,
-            createdAt: '2026-01-01T10:00:00.000Z',
-            requestId: 'r1',
-            relatedUser: {
-              _id: 'u1',
-              username: 'Carlos',
-              email: 'carlos@test.com',
-            },
-          },
-        ],
-      },
-    })
-
-    vi.mocked(friendService.rejectFriendRequest).mockRejectedValue(new Error('fail'))
-
-    const user = userEvent.setup()
-    renderNotifications()
-
-    const rejectButton = await screen.findByRole('button', {
-      name: resources.es.notifications.reject,
-    })
-    await user.click(rejectButton)
-
-    expect(await screen.findByText(resources.es.notifications.errorReject)).toBeInTheDocument()
-  })
-
-  test('does nothing on accept if notification has no requestId', async () => {
+  test('renders multiple notifications returned by the api', async () => {
     vi.mocked(axios.get).mockResolvedValue({
       data: {
         notifications: [
@@ -272,49 +119,37 @@ describe('Notifications', () => {
               email: 'carlos@test.com',
             },
           },
-        ],
-      },
-    })
-
-    const user = userEvent.setup()
-    renderNotifications()
-
-    const acceptButton = await screen.findByRole('button', {
-      name: resources.es.notifications.accept,
-    })
-    await user.click(acceptButton)
-
-    expect(friendService.acceptFriendRequest).not.toHaveBeenCalled()
-  })
-
-  test('does nothing on reject if notification has no requestId', async () => {
-    vi.mocked(axios.get).mockResolvedValue({
-      data: {
-        notifications: [
           {
-            _id: 'n1',
+            _id: 'n2',
             type: 'friend_request',
-            read: false,
-            createdAt: '2026-01-01T10:00:00.000Z',
+            read: true,
+            createdAt: '2026-01-02T10:00:00.000Z',
             relatedUser: {
-              _id: 'u1',
-              username: 'Carlos',
-              email: 'carlos@test.com',
+              _id: 'u2',
+              username: 'Ana',
+              email: 'ana@test.com',
             },
           },
         ],
       },
     })
 
-    const user = userEvent.setup()
     renderNotifications()
 
-    const rejectButton = await screen.findByRole('button', {
-      name: resources.es.notifications.reject,
-    })
-    await user.click(rejectButton)
+    expect(await screen.findByText('Carlos')).toBeInTheDocument()
+    expect(screen.getByText('Ana')).toBeInTheDocument()
+  })
 
-    expect(friendService.rejectFriendRequest).not.toHaveBeenCalled()
+  test('renders the back button after loading notifications', async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      data: {
+        notifications: [],
+      },
+    })
+
+    renderNotifications()
+
+    expect(await screen.findByRole('button', { name: resources.es.common.back })).toBeInTheDocument()
   })
 
   test('navigates back to home when back button is clicked', async () => {

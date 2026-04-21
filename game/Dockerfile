@@ -5,11 +5,17 @@ WORKDIR /app
 # Copiar package files
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install --production
+# Instalar dependencias (mejor reproducibilidad)
+RUN npm ci --omit=dev
 
 # Copiar código
 COPY . .
+
+# Cambiar ownership al usuario node (importante para no root)
+RUN chown -R node:node /app
+
+# Cambiar a usuario no root
+USER node
 
 # Exponer puerto
 EXPOSE 8003

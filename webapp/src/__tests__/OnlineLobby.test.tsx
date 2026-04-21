@@ -183,7 +183,7 @@ describe('OnlineLobby', () => {
         const createBtn = screen.getByRole('button', { name: /crear sala/i })
         await user.click(createBtn)
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('create_room', { boardSize: 11 })
+        expect(mockSocket.emit).toHaveBeenCalledWith('create_room', { boardSize: 11, startingPlayer: 'j1' })
     })
 
     test('crea una sala con el tamaño de tablero seleccionado', async () => {
@@ -197,7 +197,7 @@ describe('OnlineLobby', () => {
         const createBtn = screen.getByRole('button', { name: /crear sala/i })
         await user.click(createBtn)
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('create_room', { boardSize: 19 })
+        expect(mockSocket.emit).toHaveBeenCalledWith('create_room', { boardSize: 19, startingPlayer: 'j1' })
     })
 
     // ── Unirse a sala ───────────────────────────────────────

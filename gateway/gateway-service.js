@@ -34,6 +34,7 @@ const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 const { Server } = require('socket.io'); //Para partidas online (WebSockets)
 
 const app = express();
+app.disable('x-powered-by');
 const port = 8000;
 
 
@@ -119,10 +120,18 @@ const verifyToken = (req, res, next) => {
 app.get('/api/game/history', verifyToken, async (req, res) => {
   try {
     const userId = req.body.userId;
+    const { page, sortBy, sortOrder } = req.query;
 
     const gameRes = await axios.get(
       `${gameServiceUrl}/api/game/history`,
-      { params: { userId } }
+      {
+        params: {
+          userId,
+          page,
+          sortBy,
+          sortOrder,
+        }
+      }
     );
 
     res.json(gameRes.data);
@@ -459,6 +468,8 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
       gameMode: req.body.gameMode || 'vsBot',
       botMode:  req.body.botMode  || 'random_bot', // ← propagamos al game-service
       boardSize: req.body.boardSize || 11, // <- tamaño del tablero
+      startingPlayer: req.body.startingPlayer || 'j1',
+      boardVariant: req.body.boardVariant || 'classic',
     });
     res.json(startResponse.data);
   } catch (error) {
@@ -518,9 +529,11 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 
     const { move, userId, mode } = req.body;
 
-
-    if (!move || !userId) {
-      return res.status(400).json({ error: 'Move and userId are required' });
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    if (mode !== 'vsBot' && !move) {
+      return res.status(400).json({ error: 'Move is required' });
     }
 
     let backendEndpoint;
@@ -532,8 +545,14 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
       return res.status(400).json({ error: 'Invalid game mode' });
     }
 
+    const payload = {
+      userId,
+      mode,
+      ...(move ? { move } : {}),
+      ...(mode === 'vsBot' ? { role: 'j2' } : {}),
+    };
 
-    const moveResponse = await axios.post(backendEndpoint, { userId, move, mode });
+    const moveResponse = await axios.post(backendEndpoint, payload);
 
     res.json(moveResponse.data);
   } catch (error) {
@@ -853,6 +872,7 @@ const io = new Server(server, {
 const rooms = new Map();
  
 function generateCode() {
+  // NOSONAR: delay no requiere seguridad criptográfica
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
  
@@ -860,11 +880,11 @@ io.on('connection', (socket) => {
   console.log(` Socket conectado: ${socket.id}`);
  
   // ── Crear sala ──────────────────────────────────────────
-  socket.on('create_room', ({ boardSize = 11 } = {}) => {
+  socket.on('create_room', ({ boardSize = 11, startingPlayer = 'j1' } = {}) => {
     let code;
     do { code = generateCode(); } while (rooms.has(code));
- 
-    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize });
+
+    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize, startingPlayer });
     socket.join(code);
     socket.emit('room_created', { code });
     console.log(`Sala creada: ${code} por ${socket.id}`);
@@ -887,8 +907,8 @@ io.on('connection', (socket) => {
     socket.join(code.toUpperCase());
 
     // Decir a cada jugador su rol
-    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
-    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
+    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize, startingPlayer: room.startingPlayer });
+    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize, startingPlayer: room.startingPlayer });
 
     console.log(`Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
   });
