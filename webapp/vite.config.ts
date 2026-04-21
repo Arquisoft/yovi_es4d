@@ -23,6 +23,11 @@ export default defineConfig({
       'load-tests/**',
     ],
     css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+    },
   },
 
   server: {
