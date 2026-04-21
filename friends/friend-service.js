@@ -77,6 +77,10 @@ app.get('/friends/explore', async (req, res) => {
   try {
     const { userId, search = '', page = 1 } = req.query;
     const limit = 10;
+    const batchSize = 50;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const startIndex = (pageNum - 1) * limit;
+    const endIndex = startIndex + limit;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
     const relations = await FriendRequest.find({
@@ -89,33 +93,53 @@ app.get('/friends/explore', async (req, res) => {
       r.senderId.toString() === userId ? r.receiverId.toString() : r.senderId.toString()
     );
 
-    // Traer usuarios desde user-service
-    const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
-      params: { search, page, limit }
+    const pendingRequests = await FriendRequest.find({
+      $or: [
+        { senderId: userId, status: 'pending' },
+        { receiverId: userId, status: 'pending' }
+      ]
     });
-// Obtener solicitudes pendientes
-const pendingRequests = await FriendRequest.find({
-  $or: [
-    { senderId: userId, status: 'pending' },
-    { receiverId: userId, status: 'pending' }
-  ]
-});
 
-// IDs de usuarios con solicitud pendiente
-const pendingIds = pendingRequests.map(r =>
-  r.senderId.toString() === userId
-    ? r.receiverId.toString()
-    : r.senderId.toString()
-);
-    
-    const users = response.data.filter(u => {
-      if (u._id === userId) return false;
+    const pendingIds = pendingRequests.map(r =>
+      r.senderId.toString() === userId
+        ? r.receiverId.toString()
+        : r.senderId.toString()
+    );
 
-      if (friendIds.includes(u._id)) return false;
-       if (pendingIds.includes(u._id)) return false;
-      return true;
+    const filteredUsers = [];
+    let rawPage = 1;
+    let hasMoreRawPages = true;
+
+    // Pagina sobre usuarios ya filtrados para que el frontend no pueda avanzar a paginas vacias.
+    while (hasMoreRawPages && filteredUsers.length <= endIndex) {
+      const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
+        params: { search, page: rawPage, limit: batchSize }
+      });
+
+      const rawUsers = Array.isArray(response.data) ? response.data : [];
+      const allowedUsers = rawUsers.filter(u => {
+        if (u._id === userId) return false;
+        if (friendIds.includes(u._id)) return false;
+        if (pendingIds.includes(u._id)) return false;
+        return true;
+      });
+
+      filteredUsers.push(...allowedUsers);
+      hasMoreRawPages = rawUsers.length === batchSize;
+      rawPage += 1;
+    }
+
+    const users = filteredUsers.slice(startIndex, endIndex);
+
+    res.json({
+      users,
+      pagination: {
+        page: pageNum,
+        limit,
+        hasPrev: pageNum > 1,
+        hasNext: filteredUsers.length > endIndex,
+      }
     });
-    res.json({ users });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });

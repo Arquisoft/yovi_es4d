@@ -11,6 +11,7 @@ import {
   acceptFriendRequest,
   rejectFriendRequest
 } from '../services/friendService';
+import type { ExploreUsersResponse } from '../services/friendService';
 import './Friends.css';
 
 type User = {
@@ -35,6 +36,12 @@ const Friends: React.FC = () => {
   const [data, setData] = useState<User[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [page, setPage] = useState(1);
+  const [explorePagination, setExplorePagination] = useState<ExploreUsersResponse['pagination']>({
+    page: 1,
+    limit: 10,
+    hasPrev: false,
+    hasNext: false,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +67,8 @@ const Friends: React.FC = () => {
 
       if (tab === 'explore') {
         const res = await exploreUsers(search, page);
-        setData(Array.isArray(res) ? res : []);
+        setData(Array.isArray(res.users) ? res.users : []);
+        setExplorePagination(res.pagination);
       } else if (tab === 'friends') {
         const res = await getFriends(search, page);
         setData(Array.isArray(res) ? res : []);
@@ -116,13 +124,13 @@ const Friends: React.FC = () => {
         </header>
 
         <div className="tabs">
-          <button onClick={() => setTab('explore')} className={tab === 'explore' ? 'active' : ''}>
+          <button onClick={() => { setTab('explore'); setPage(1); }} className={tab === 'explore' ? 'active' : ''}>
             {t('friends.tabs.explore')}
           </button>
-          <button onClick={() => setTab('friends')} className={tab === 'friends' ? 'active' : ''}>
+          <button onClick={() => { setTab('friends'); setPage(1); }} className={tab === 'friends' ? 'active' : ''}>
             {t('friends.tabs.friends')}
           </button>
-          <button onClick={() => setTab('requests')} className={tab === 'requests' ? 'active' : ''}>
+          <button onClick={() => { setTab('requests'); setPage(1); }} className={tab === 'requests' ? 'active' : ''}>
             {t('friends.tabs.requests')}
           </button>
         </div>
@@ -184,11 +192,25 @@ const Friends: React.FC = () => {
               </div>
             )}
 
-            {tab !== 'requests' && (
+            {tab === 'explore' && (
               <div className="pagination">
-                <button onClick={() => setPage((p) => Math.max(p - 1, 1))}>⇦</button>
+                <button
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={!explorePagination.hasPrev}
+                >
+                  ⇦
+                </button>
                 <span>{t('friends.page')} {page}</span>
-                <button onClick={() => setPage((p) => p + 1)}>⇨</button>
+                <button
+                  onClick={() => {
+                    if (explorePagination.hasNext) {
+                      setPage((p) => p + 1);
+                    }
+                  }}
+                  disabled={!explorePagination.hasNext}
+                >
+                  ⇨
+                </button>
               </div>
             )}
           </>

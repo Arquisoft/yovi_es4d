@@ -91,7 +91,8 @@
   },
   "scripts": {
     "start": "node game-service.js",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage --runInBand"
   },
   "jest": {
     "testEnvironment": "node"

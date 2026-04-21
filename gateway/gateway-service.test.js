@@ -19,6 +19,11 @@ describe('Gateway Service', () => {
     return `token=${token}`;
   };
 
+  const createCookieWithoutUserId = () => {
+    const token = jwt.sign({}, privateKey);
+    return `token=${token}`;
+  };
+
   it('should login and forward cookie', async () => {
 
     axios.post.mockResolvedValue({
@@ -359,7 +364,7 @@ it('should return 400 for invalid game mode', async () => {
   expect(res.body.error).toBe('Invalid game mode');
 });
 
-it('should return 400 if move or userId is missing', async () => {
+it.skip('should return 400 if move or userId is missing', async () => {
   const res = await request(app)
     .post('/api/game/123/move')
     .set('Cookie', createCookie('user123')) // ← Cookie válida
@@ -579,7 +584,12 @@ it('should handle error getting friends', async () => {
 });
 
 it('should explore users', async () => {
-  axios.get.mockResolvedValue({ data: [{ username: 'userX' }] });
+  axios.get.mockResolvedValue({
+    data: {
+      users: [{ username: 'userX' }],
+      pagination: { page: 2, limit: 10, hasPrev: true, hasNext: false }
+    }
+  });
 
   const res = await request(app)
     .get('/api/friends/explore')
@@ -588,7 +598,10 @@ it('should explore users', async () => {
     .send({ userId: 'user1' });
 
   expect(res.statusCode).toBe(200);
-  expect(res.body).toEqual([{ username: 'userX' }]);
+  expect(res.body).toEqual({
+    users: [{ username: 'userX' }],
+    pagination: { page: 2, limit: 10, hasPrev: true, hasNext: false }
+  });
 });
 
 it('should send friend request', async () => {
@@ -886,7 +899,7 @@ describe('Gateway Service - Coverage extra', () => {
   });
 
   // ================= /api/game/:gameId/move 485-486 =================
-  it('should return 400 if move or userId missing', async () => {
+  it.skip('should return 400 if move or userId missing', async () => {
     const res = await request(app)
       .post('/api/game/game123/move')
       .set('Cookie', createCookie('user1'))
@@ -922,5 +935,359 @@ describe('Gateway Service - Coverage extra', () => {
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Error rechazando solicitud');
   });
+
+  it('should return 400 if userId is missing in move', async () => {
+    const tokenWithoutUserId = jwt.sign({}, privateKey);
+
+    const res = await request(app)
+      .post('/api/game/123/move')
+      .set('Cookie', `token=${tokenWithoutUserId}`)
+      .send({ mode: 'vsBot', move: 'A1' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('userId is required');
+  });
+
+  it('should return 400 if multiplayer move is missing', async () => {
+    const res = await request(app)
+      .post('/api/game/123/move')
+      .set('Cookie', createCookie('user123'))
+      .send({ mode: 'multiplayer' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Move is required');
+  });
+
+  it('should return gateway health status', async () => {
+    const res = await request(app).get('/health');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('Gateway Service is running');
+  });
 });
+});
+
+function createCookieExtra(userId = 'testUser') {
+  const token = jwt.sign({ userId }, privateKey);
+  return `token=${token}`;
+}
+
+function loadGatewayWithMocks() {
+  jest.resetModules();
+
+  jest.doMock('axios', () => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+  }));
+
+  jest.doMock('socket.io', () => ({
+    Server: jest.fn(),
+  }));
+
+  const isolatedApp = require('./gateway-service');
+  const isolatedAxios = require('axios');
+  const { Server } = require('socket.io');
+
+  return { isolatedApp, isolatedAxios, MockSocketServer: Server };
+}
+
+function createMockSocket(id) {
+  const handlers = {};
+  const roomEmitter = { emit: jest.fn() };
+
+  return {
+    id,
+    handlers,
+    on: jest.fn((event, handler) => {
+      handlers[event] = handler;
+    }),
+    join: jest.fn(),
+    emit: jest.fn(),
+    to: jest.fn(() => roomEmitter),
+    roomEmitter,
+  };
+}
+
+describe('Gateway Service extra coverage merged', () => {
+  let isolatedApp;
+  let isolatedAxios;
+  let MockSocketServer;
+
+  beforeEach(() => {
+    ({ isolatedApp, isolatedAxios, MockSocketServer } = loadGatewayWithMocks());
+    jest.clearAllMocks();
+  });
+
+  it('rejects disallowed CORS origins', async () => {
+    const res = await request(isolatedApp)
+      .get('/metrics')
+      .set('Origin', 'http://evil.example');
+
+    expect(res.statusCode).toBe(500);
+  });
+
+  it('returns game history successfully', async () => {
+    isolatedAxios.get.mockResolvedValueOnce({
+      data: [{ id: 'game1', winner: 'user1' }],
+    });
+
+    const res = await request(isolatedApp)
+      .get('/api/game/history')
+      .set('Cookie', createCookieExtra('user1'));
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([{ id: 'game1', winner: 'user1' }]);
+  });
+
+  it('returns update avatar service errors', async () => {
+    isolatedAxios.post.mockRejectedValueOnce({
+      response: { status: 404, data: { error: 'User not found' } },
+    });
+
+    const res = await request(isolatedApp)
+      .post('/api/user/updateAvatar')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({});
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('User not found');
+  });
+
+  it('returns generic avatar update error without response', async () => {
+    isolatedAxios.post.mockRejectedValueOnce(new Error('avatar fail'));
+
+    const res = await request(isolatedApp)
+      .post('/api/user/updateAvatar')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({});
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal error');
+  });
+
+  it('uses default values when starting a game without body options', async () => {
+    isolatedAxios.post.mockResolvedValueOnce({
+      data: { gameId: 'g-default' },
+    });
+
+    const res = await request(isolatedApp)
+      .post('/api/game/start')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({});
+
+    expect(res.statusCode).toBe(200);
+    expect(isolatedAxios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/api/game/start'),
+      expect.objectContaining({
+        userId: 'user1',
+        gameMode: 'vsBot',
+        botMode: 'random_bot',
+        boardSize: 11,
+        startingPlayer: 'j1',
+        boardVariant: 'classic',
+      })
+    );
+  });
+
+  it('returns generic game bot modes error without response', async () => {
+    isolatedAxios.get.mockRejectedValueOnce(new Error('bot modes down'));
+
+    const res = await request(isolatedApp).get('/api/game/bot-modes');
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Error obteniendo modos de bot');
+  });
+
+  it('returns move errors when the game service fails without response', async () => {
+    isolatedAxios.post.mockRejectedValueOnce(new Error('Network move fail'));
+
+    const res = await request(isolatedApp)
+      .post('/api/game/game123/move')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({ move: '(1,1,1)', mode: 'vsBot' });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Network move fail');
+  });
+
+  it('sends vsBot move without move field when not provided', async () => {
+    isolatedAxios.post.mockResolvedValueOnce({ data: { ok: true } });
+
+    const res = await request(isolatedApp)
+      .post('/api/game/game123/move')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({ mode: 'vsBot' });
+
+    expect(res.statusCode).toBe(200);
+    expect(isolatedAxios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/vsBot/move'),
+      { userId: 'user1', mode: 'vsBot', role: 'j2' }
+    );
+  });
+
+  it('returns internal server error when move fails with a plain object', async () => {
+    isolatedAxios.post.mockRejectedValueOnce({});
+
+    const res = await request(isolatedApp)
+      .post('/api/game/game123/move')
+      .set('Cookie', createCookieExtra('user1'))
+      .send({ move: '(1,1,1)', mode: 'multiplayer' });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('enriches missing receiver data in friend requests', async () => {
+    isolatedAxios.get.mockResolvedValueOnce({
+      data: [{
+        _id: 'r1',
+        status: 'pending',
+        createdAt: 'now',
+        sender: { _id: 'sender1', username: 'sender', email: 'sender@mail.com' },
+        receiver: { _id: 'receiver1' },
+      }],
+    });
+    isolatedAxios.post.mockResolvedValueOnce({
+      data: { username: 'receiver', email: 'receiver@mail.com' },
+    });
+
+    const res = await request(isolatedApp)
+      .get('/api/friends/requests')
+      .set('Cookie', createCookieExtra('user1'))
+      .query({ type: 'received' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body[0].receiver).toEqual({
+      _id: 'receiver1',
+      username: 'receiver',
+      email: 'receiver@mail.com',
+    });
+  });
+
+  it('returns 500 when friend request retrieval fails', async () => {
+    isolatedAxios.get.mockRejectedValueOnce(new Error('Friend service down'));
+
+    const res = await request(isolatedApp)
+      .get('/api/friends/requests')
+      .set('Cookie', createCookieExtra('user1'))
+      .query({ type: 'received' });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Error obteniendo solicitudes');
+  });
+
+  it('starts the websocket server and handles room lifecycle events', () => {
+    const fakeHttpServer = { close: jest.fn() };
+    let connectionHandler;
+
+    const ioInstance = {
+      on: jest.fn((event, handler) => {
+        if (event === 'connection') {
+          connectionHandler = handler;
+        }
+      }),
+      to: jest.fn(() => ({ emit: jest.fn() })),
+    };
+
+    MockSocketServer.mockImplementation(() => ioInstance);
+    jest.spyOn(isolatedApp, 'listen').mockImplementation((port, callback) => {
+      if (callback) callback();
+      return fakeHttpServer;
+    });
+
+    const server = isolatedApp.startServer();
+
+    expect(server).toBe(fakeHttpServer);
+    expect(isolatedApp.listen).toHaveBeenCalledWith(8000, expect.any(Function));
+
+    const socket1 = createMockSocket('socket-1');
+    const socket2 = createMockSocket('socket-2');
+    const socket3 = createMockSocket('socket-3');
+    const socket4 = createMockSocket('socket-4');
+
+    connectionHandler(socket1);
+    connectionHandler(socket2);
+    connectionHandler(socket3);
+    connectionHandler(socket4);
+
+    socket1.handlers.create_room();
+    const createdRoom = socket1.emit.mock.calls.find(([event]) => event === 'room_created')[1].code;
+
+    socket3.handlers.join_room({ code: 'missing' });
+    expect(socket3.emit).toHaveBeenCalledWith('room_error', { message: 'Sala no encontrada' });
+
+    socket2.handlers.join_room({ code: createdRoom.toLowerCase() });
+    socket3.handlers.join_room({ code: createdRoom });
+    expect(socket3.emit).toHaveBeenCalledWith('room_error', { message: 'Sala llena' });
+
+    socket2.handlers.disconnect();
+    socket2.handlers.rejoin_room({ code: createdRoom, role: 'j2' });
+    socket1.handlers.player_info({ code: createdRoom, name: 'Alice', avatar: 'alice.png' });
+    socket2.handlers.rejoin_room({ code: createdRoom, role: 'j2' });
+    socket1.handlers.game_started({ code: createdRoom, gameId: 'game-1' });
+    socket2.handlers.rejoin_room({ code: createdRoom, role: 'j2' });
+    socket1.handlers.move_made({ code: createdRoom, position: '(1,1)', turn: 'j2' });
+    socket1.handlers.game_over({ code: createdRoom, winner: 'j1' });
+    socket4.handlers.create_room({ boardSize: 13 });
+    socket4.handlers.disconnect();
+    socket1.handlers.disconnect();
+
+    expect(socket1.roomEmitter.emit).toHaveBeenCalledWith('opponent_disconnected');
+  });
+
+  it('covers additional websocket branches for j1 rejoin and transition cleanup', () => {
+    const fakeHttpServer = { close: jest.fn() };
+    let connectionHandler;
+
+    const roomEmitters = new Map();
+    const ioInstance = {
+      on: jest.fn((event, handler) => {
+        if (event === 'connection') {
+          connectionHandler = handler;
+        }
+      }),
+      to: jest.fn((target) => {
+        if (!roomEmitters.has(target)) {
+          roomEmitters.set(target, { emit: jest.fn() });
+        }
+        return roomEmitters.get(target);
+      }),
+    };
+
+    MockSocketServer.mockImplementation(() => ioInstance);
+    jest.spyOn(isolatedApp, 'listen').mockImplementation((port, callback) => {
+      if (callback) callback();
+      return fakeHttpServer;
+    });
+
+    isolatedApp.startServer();
+
+    const socket1 = createMockSocket('j1-socket');
+    const socket2 = createMockSocket('j2-socket');
+    connectionHandler(socket1);
+    connectionHandler(socket2);
+
+    socket1.handlers.create_room({ boardSize: 9, startingPlayer: 'j2' });
+    const roomCode = socket1.emit.mock.calls.find(([event]) => event === 'room_created')[1].code;
+
+    socket2.handlers.join_room({ code: roomCode });
+    socket1.handlers.rejoin_room({ code: 'missing', role: 'j1' });
+    socket1.handlers.player_info({ code: 'missing', name: 'Ghost', avatar: 'ghost.png' });
+    socket1.handlers.game_started({ code: 'missing', gameId: 'g-missing' });
+    socket1.handlers.player_info({ code: roomCode, name: 'Alice', avatar: 'alice.png' });
+    socket1.handlers.rejoin_room({ code: roomCode, role: 'j1' });
+    socket1.handlers.disconnect();
+    socket2.handlers.disconnect();
+
+    expect(roomEmitters.get('j1-socket').emit).toHaveBeenCalledWith(
+      'your_role',
+      expect.objectContaining({ role: 'j1', startingPlayer: 'j2', boardSize: 9 })
+    );
+    expect(roomEmitters.get('j2-socket').emit).toHaveBeenCalledWith('opponent_info', {
+      name: 'Alice',
+      avatar: 'alice.png',
+    });
+  });
 });

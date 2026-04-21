@@ -1,8 +1,0 @@
-{
-  "registerForm": {
-    "errorEmail": "Correo electrónico inválido",
-    "errorPasswordContent": "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios",
-    "errorPasswordMatch": "Las contraseñas no coinciden",
-    "errorUsername": "El nombre de usuario debe tener al menos 3 caracteres"
-  }
-}

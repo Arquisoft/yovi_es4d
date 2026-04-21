@@ -432,6 +432,8 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
       gameMode: req.body.gameMode || 'vsBot',
       botMode:  req.body.botMode  || 'random_bot', // ← propagamos al game-service
       boardSize: req.body.boardSize || 11, // <- tamaño del tablero
+      startingPlayer: req.body.startingPlayer || 'j1',
+      boardVariant: req.body.boardVariant || 'classic',
     });
     res.json(startResponse.data);
   } catch (error) {
@@ -491,9 +493,11 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 
     const { move, userId, mode } = req.body;
 
-
-    if (!move || !userId) {
-      return res.status(400).json({ error: 'Move and userId are required' });
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    if (mode !== 'vsBot' && !move) {
+      return res.status(400).json({ error: 'Move is required' });
     }
 
     let backendEndpoint;
@@ -505,8 +509,14 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
       return res.status(400).json({ error: 'Invalid game mode' });
     }
 
+    const payload = {
+      userId,
+      mode,
+      ...(move ? { move } : {}),
+      ...(mode === 'vsBot' ? { role: 'j2' } : {}),
+    };
 
-    const moveResponse = await axios.post(backendEndpoint, { userId, move, mode });
+    const moveResponse = await axios.post(backendEndpoint, payload);
 
     res.json(moveResponse.data);
   } catch (error) {
@@ -812,11 +822,11 @@ io.on('connection', (socket) => {
   console.log(` Socket conectado: ${socket.id}`);
  
   // ── Crear sala ──────────────────────────────────────────
-  socket.on('create_room', ({ boardSize = 11 } = {}) => {
+  socket.on('create_room', ({ boardSize = 11, startingPlayer = 'j1' } = {}) => {
     let code;
     do { code = generateCode(); } while (rooms.has(code));
- 
-    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize });
+
+    rooms.set(code, { j1: socket.id, j2: null, gameId: null, boardSize, startingPlayer });
     socket.join(code);
     socket.emit('room_created', { code });
     console.log(`Sala creada: ${code} por ${socket.id}`);
@@ -839,8 +849,8 @@ io.on('connection', (socket) => {
     socket.join(code.toUpperCase());
 
     // Decir a cada jugador su rol
-    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize });
-    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize });
+    io.to(room.j1).emit('your_role', { role: 'j1', code: code.toUpperCase(), boardSize: room.boardSize, startingPlayer: room.startingPlayer });
+    io.to(room.j2).emit('your_role', { role: 'j2', code: code.toUpperCase(), boardSize: room.boardSize, startingPlayer: room.startingPlayer });
 
     console.log(`Sala ${code.toUpperCase()} lista: j1=${room.j1} j2=${room.j2}`);
   });

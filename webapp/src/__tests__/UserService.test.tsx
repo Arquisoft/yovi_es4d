@@ -129,23 +129,6 @@ describe("API Service", () => {
       expect(result).toEqual(mockResponse);
     });
 
-    test("should log error if register request fails", async () => {
-
-        const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
-        (axios.post as any).mockRejectedValue(new Error("Register error"));
-
-        const result = await register({
-            email: "test@test.com",
-            password: "123456"
-        });
-
-        expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
-        expect(result).toBeUndefined();
-
-        consoleSpy.mockRestore();
-    });
-
   });
 
   describe("getProfile", () => {

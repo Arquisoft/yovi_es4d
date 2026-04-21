@@ -62,12 +62,15 @@ export const login = async (credentials: {email: string, password: string}) => {
 
 export const register = async (userData: any) => {
   try {
-    const response = await axios.post(`${API_URL}/adduser`, userData,{
-      withCredentials: true
-    });
+    const response = await axios.post(
+      `${API_URL}/adduser`,
+      userData,
+      { withCredentials: true }
+    );
     return response.data;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 

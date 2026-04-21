@@ -334,7 +334,7 @@ describe('GameBoard', () => {
     expect(header).toHaveTextContent('TestUser')
   })
 
-  test('no hace nada si no es turno de j1', async () => {
+  test('no valida un click manual mientras el bot hace el primer movimiento', async () => {
     global.fetch = vi.fn()
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
@@ -345,6 +345,7 @@ describe('GameBoard', () => {
             turn: 'j2',
           }),
         } as Response)
+        .mockImplementationOnce(() => new Promise(() => {}))
 
     const user = userEvent.setup()
     renderGame()
@@ -352,10 +353,10 @@ describe('GameBoard', () => {
     await screen.findByTestId('triangle')
     await user.click(screen.getByText('hex-0-0'))
 
-    // Should only have 3 calls (me, profile, start), no validateMove
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(3)
+      expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
     })
+    expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
   test('muestra mensaje por defecto si no hay error en validateMove', async () => {
@@ -570,7 +571,7 @@ describe('GameBoard', () => {
     expect(global.fetch).toHaveBeenCalledTimes(4) // me, profile, start, validateMove
   })
 
-  test('no ejecuta el map si no es turno j1', async () => {
+  test('no ejecuta validateMove si el bot está resolviendo el primer turno', async () => {
     const user = userEvent.setup()
 
     global.fetch = vi.fn()
@@ -589,16 +590,17 @@ describe('GameBoard', () => {
             status: 'active',
           }),
         } as Response)
+        .mockImplementationOnce(() => new Promise(() => {}))
 
     renderGame()
 
     await screen.findByTestId('triangle')
     await user.click(screen.getByText('hex-0-0'))
 
-    // Should only have 3 calls (me, profile, start) - no validateMove
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(3)
+      expect(screen.getByText(translations.es.gameBoard.botPlaying)).toBeInTheDocument()
     })
+    expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
   // ── Tests modo online ─────────────────────────────────────────────────────
