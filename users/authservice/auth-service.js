@@ -139,6 +139,9 @@ app.post('/login', loginLimiter, [
 
   } catch (error) {
     console.log(error);
+    if (error.message && error.message.startsWith('Missing required field')) {
+      return res.status(400).json({ error: 'Invalid value' });
+    }
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
