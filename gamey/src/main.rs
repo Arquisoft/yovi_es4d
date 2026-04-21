@@ -57,7 +57,7 @@ struct PlayQuery {
     position: String,
     /// Identificador del bot a usar. Por defecto: hard_bot.
     bot_id: Option<String>,
-
+}
 #[derive(Debug, Deserialize)]
 struct TetraStartRequest {
     size: u32,

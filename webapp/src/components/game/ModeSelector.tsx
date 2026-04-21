@@ -23,7 +23,7 @@ const BOARD_SIZES = [
     { value: 11, label: "Normal",  description: "66 celdas · Ágil",      tag: "11×" },
     { value: 15, label: "Grande",  description: "120 celdas · Táctica",  tag: "15×" },
     { value: 19, label: "Extra",   description: "190 celdas · Expertos", tag: "19×" },
-
+]
 const LOCAL_MODES: { id: string; label: string; description: string }[] = [
     { id: "vsBot",       label: "Contra la maquina", description: "Juega solo contra la IA."             },
     { id: "multiplayer", label: "2 Jugadores",       description: "Dos personas en el mismo ordenador."  },
@@ -156,44 +156,46 @@ const ModeSelector: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                {/* Aviso de que la partida local no se guarda en el historial */}
-                {gameMode === "multiplayer" && (
-                    <div className="fade-up flex items-center gap-2 rounded-xl px-4 py-3 mb-1" style={{ background: "rgba(255,180,0,0.10)", border: "1px solid rgba(255,180,0,0.35)" }}>
-                        <span style={{ fontSize: "1rem" }}>⚠️</span>
-                        <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
-                            <strong style={{ color: "var(--text)" }}>Esta partida no quedará guardada en el historial.</strong>
-                        </p>
-                    </div>
-                )}
 
-               
-
-                {/* Nombre del jugador 2 (solo en multiplayer) */}
-                {gameMode === "multiplayer" && (
-                    <div className="fade-up rounded-2xl p-5 mb-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                        <div className="flex items-center gap-2 mb-3">
-                            <p className="ms-section-label" style={{ margin: 0 }}>Nombre del jugador 2</p>
+                    {/* Aviso de que la partida local no se guarda en el historial */}
+                    {gameMode === "multiplayer" && (
+                        <div className="fade-up flex items-center gap-2 rounded-xl px-4 py-3 mb-1" style={{ background: "rgba(255,180,0,0.10)", border: "1px solid rgba(255,180,0,0.35)" }}>
+                            <span style={{ fontSize: "1rem" }}>⚠️</span>
+                            <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+                                <strong style={{ color: "var(--text)" }}>Esta partida no quedará guardada en el historial.</strong>
+                            </p>
                         </div>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                maxLength={20}
-                                placeholder="Nombre del rival..."
-                                value={player2Name}
-                                onChange={e => setPlayer2Name(e.target.value)}
-                                className="w-full rounded-xl px-4 py-3 outline-none transition-all"
-                                style={{
-                                    background: "var(--bg)",
-                                    border: `2px solid ${player2Name.trim() ? "var(--coral)" : "var(--border)"}`,
-                                    color: "var(--text)",
-                                    fontSize: "1rem",
-                                }}
-                            />
-                            {player2Name.trim() && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "var(--coral)" }}>
-                                    ✓
-                                </span>
-                            )}
+                    )}
+
+                    {/* Nombre del jugador 2 (solo en multiplayer) */}
+                    {gameMode === "multiplayer" && (
+                        <div className="fade-up rounded-2xl p-5 mb-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <p className="ms-section-label" style={{ margin: 0 }}>Nombre del jugador 2</p>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    maxLength={20}
+                                    placeholder="Nombre del rival..."
+                                    value={player2Name}
+                                    onChange={e => setPlayer2Name(e.target.value)}
+                                    className="w-full rounded-xl px-4 py-3 outline-none transition-all"
+                                    style={{
+                                        background: "var(--bg)",
+                                        border: `2px solid ${player2Name.trim() ? "var(--coral)" : "var(--border)"}`,
+                                        color: "var(--text)",
+                                        fontSize: "1rem",
+                                    }}
+                                />
+                                {player2Name.trim() && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "var(--coral)" }}>
+                                        ✓
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="fade-up">
                         <p className="ms-section-label">Estructura del tablero</p>
@@ -250,30 +252,6 @@ const ModeSelector: React.FC = () => {
                         </div>
                     </div>
 
-                    {gameMode === "multiplayer" && (
-                        <div className="fade-up rounded-2xl p-5 mb-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <p className="ms-section-label" style={{ margin: 0 }}>Nombre del jugador 2</p>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    maxLength={20}
-                                    placeholder="Nombre del rival..."
-                                    value={player2Name}
-                                    onChange={(e) => setPlayer2Name(e.target.value)}
-                                    className="w-full rounded-xl px-4 py-3 outline-none transition-all"
-                                    style={{
-                                        background: "var(--bg)",
-                                        border: `2px solid ${player2Name.trim() ? "var(--coral)" : "var(--border)"}`,
-                                        color: "var(--text)",
-                                        fontSize: "1rem",
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     {gameMode === "vsBot" && (
                         <div className="fade-up">
                             <p className="ms-section-label">Dificultad</p>
@@ -313,8 +291,26 @@ const ModeSelector: React.FC = () => {
                         </div>
                     )}
 
+                    {gameMode === "vsBot" && (
+                        <div className="fade-up">
+                            <p className="ms-section-label">Tiempo por turno</p>
+                            <div className="ms-size-grid">
+                                {TIME_LIMITS.map(t => (
+                                    <button
+                                        key={t.value}
+                                        onClick={() => setTimeLimit(t.value)}
+                                        className={`ms-size-card${timeLimit === t.value ? " selected" : ""}`}
+                                    >
+                                        <div className="ms-size-badge">{t.label}</div>
+                                        <div className="ms-size-desc">{t.description}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="fade-up">
-                        <p className="ms-section-label">{boardVariant === "tetra3d" ? "Nivel del tetraedro" : "Tamano del tablero"}</p>
+                        <p className="ms-section-label">{boardVariant === "tetra3d" ? "Nivel del tetraedro" : "Tamaño del tablero"}</p>
                         <div className="ms-size-grid">
                             {boardSizes.map((size) => (
                                 <button
@@ -329,47 +325,11 @@ const ModeSelector: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                )}
 
-                {/* Tiempo por turno (solo vsBot) */}
-                {gameMode === "vsBot" && (
-                    <div className="fade-up">
-                        <p className="ms-section-label">Tiempo por turno</p>
-                        <div className="ms-size-grid">
-                            {TIME_LIMITS.map(t => (
-                                <button
-                                    key={t.value}
-                                    onClick={() => setTimeLimit(t.value)}
-                                    className={`ms-size-card${timeLimit === t.value ? " selected" : ""}`}
-                                >
-                                    <div className="ms-size-badge">{t.label}</div>
-                                    <div className="ms-size-desc">{t.description}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Tamaño del tablero */}
-                <div className="fade-up">
-                    <p className="ms-section-label">Tamaño del tablero</p>
-                    <div className="ms-size-grid">
-                        {BOARD_SIZES.map(size => (
-                            <button
-                                key={size.value}
-                                onClick={() => setBoardSize(size.value)}
-                                className={`ms-size-card${boardSize === size.value ? " selected" : ""}`}
-                            >
-                                <div className="ms-size-badge">{size.tag}</div>
-                                <div className="ms-size-label">{size.label}</div>
-                                <div className="ms-size-desc">{size.description}</div>
-                            </button>
-                        ))}
                     <div className="fade-up">
                         <button className="ms-play-btn" onClick={handleStart} disabled={loading}>
                             Jugar →
                         </button>
-
                     </div>
                 </div>
 
