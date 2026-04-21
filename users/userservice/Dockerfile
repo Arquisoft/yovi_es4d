@@ -9,7 +9,7 @@ COPY --chmod=444 package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # 3. Copiar código
-COPY --chown=node:node --chmod=444 user-service.js user-model.js ./
+COPY --chown=root:root --chmod=444 user-service.js user-model.js ./
 
 # 4. Ajustar ownership
 RUN chown -R node:node /usr/src/userservice

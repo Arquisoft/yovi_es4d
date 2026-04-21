@@ -7,9 +7,9 @@ COPY --chmod=444 package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Copiar código con usuario correcto
-COPY --chown=node:node --chmod=444 friend-service.js conection.js ./
-COPY --chown=node:node --chmod=555 middlewares ./middlewares
-COPY --chown=node:node --chmod=555 models ./models
+COPY --chown=root:root --chmod=444 friend-service.js conection.js ./
+COPY --chown=root:root --chmod=555 middlewares ./middlewares
+COPY --chown=root:root --chmod=555 models ./models
 
 # Crear logs antes de bajar privilegios
 RUN mkdir -p /usr/src/friends/logs \

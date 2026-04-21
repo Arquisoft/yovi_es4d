@@ -9,7 +9,7 @@ COPY --chmod=444 package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Copiar código fuente con ownership correcto
-COPY --chown=node:node --chmod=444 auth-service.js auth-model.js ./
+COPY --chown=root:root --chmod=444 auth-service.js auth-model.js ./
 
 # Usuario no root (seguridad)
 USER node

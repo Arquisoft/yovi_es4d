@@ -9,7 +9,7 @@ COPY --chmod=444 package*.json ./
 RUN npm ci --omit=dev
 
 # Copiar código con permisos normales
-COPY --chown=node:node --chmod=444 game-service.js gameModel.js conection.js ./
+COPY --chown=root:root --chmod=444 game-service.js gameModel.js conection.js ./
 
 # Cambiar a usuario no root
 USER node
