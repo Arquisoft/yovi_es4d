@@ -219,7 +219,6 @@ app.get('/friends/requests', async (req, res) => {
     }
 
     const safeUserId = new mongoose.Types.ObjectId(userId);
-    const safeUserId = new mongoose.Types.ObjectId(userId);
 
     let query;
 
@@ -234,8 +233,7 @@ app.get('/friends/requests', async (req, res) => {
         status: 'pending'
       };
     }
-
-    let query = {};
+    
     //if (type === 'received') query = { receiverId: userId, status: 'pending' };
     //else if (type === 'sent') query = { senderId: userId, status: 'pending' };
 
