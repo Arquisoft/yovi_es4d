@@ -106,9 +106,8 @@ function mockHistory(result, reject = false) {
   const lean = reject
     ? jest.fn().mockRejectedValue(new Error('db error'))
     : jest.fn().mockResolvedValue(result);
-  const sort = jest.fn(() => ({ lean }));
-  GameModel.find = jest.fn(() => ({ sort }));
-  return { sort, lean };
+  GameModel.find = jest.fn(() => ({ lean }));
+  return { lean };
 }
 
 async function startClassicGame(overrides = {}) {
@@ -259,15 +258,36 @@ describe('GET /api/game/history', () => {
   });
 
   test('devuelve el historial cuando la consulta funciona', async () => {
-    const history = [{ gameId: 'g1' }];
+    const history = [{
+      gameId: 'g1',
+      userId: 'u1',
+      createdAt: '2026-04-21T10:00:00.000Z',
+      moves: [],
+      winner: null,
+    }];
     const chain = mockHistory(history);
 
     const res = await request(app).get('/api/game/history').query({ userId: 'u1' });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(history);
+    expect(res.body).toEqual({
+      games: history,
+      pagination: {
+        page: 1,
+        limit: 5,
+        hasPrev: false,
+        hasNext: false,
+      },
+      summary: {
+        totalGames: 1,
+        totalWins: 0,
+        totalDraws: 1,
+        totalLosses: 0,
+        winPercentage: 0,
+      }
+    });
     expect(GameModel.find).toHaveBeenCalledWith({ userId: 'u1' });
-    expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
+    expect(chain.lean).toHaveBeenCalled();
   });
 
   test('maneja errores al obtener el historial', async () => {
@@ -292,7 +312,9 @@ describe('POST /api/game/start', () => {
     expect(res.body.players.map((player) => player.id)).toEqual(['jugador1', 'bot']);
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/v1/game/start'),
-      { board_size: 11 },
+      { board_size: 11,
+        game_id: res.body.gameId,
+       },
       { timeout: 5000 }
     );
   });
