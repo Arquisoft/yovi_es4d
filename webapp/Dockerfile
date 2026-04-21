@@ -1,20 +1,24 @@
 # Build stage
 FROM node:22-alpine AS builder
+
 WORKDIR /app
 
-# Install deps
 COPY package.json package-lock.json ./
-RUN npm ci --silent
+RUN npm ci
 
-# Copy sources
-COPY --chown=node:node . .
+COPY . .
 
-# Accept build-time API url (defaults to localhost:8000) CAMBIADO
-ARG VITE_API_URL="http://localhost:8000"
-RUN export VITE_API_URL=${VITE_API_URL} && npm run build
+ARG VITE_API_URL=http://localhost:8000
+ENV VITE_API_URL=$VITE_API_URL
 
-# Production image
+RUN npm run build
+
+
+# Production stage
 FROM nginx:stable-alpine
+
 COPY --from=builder /app/dist /usr/share/nginx/html
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

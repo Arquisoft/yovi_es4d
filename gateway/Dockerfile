@@ -2,20 +2,16 @@ FROM node:22
 
 WORKDIR /usr/src/gatewayservice
 
-# Copiar solo manifests primero (mejor caching)
+# Copiar dependencias primero (mejor cache)
 COPY package*.json ./
 
-# Instalar dependencias de forma reproducible
+# Instalar dependencias reproducibles
 RUN npm ci --omit=dev --ignore-scripts
 
-# Copy the app source code to the working directory
+# Copiar código con ownership correcto
 COPY --chown=node:node . .
 
-# Crear usuario no root y ajustar permisos
-RUN chown -R node:node /usr/src/gatewayservice
-
-# Cambiar a usuario no root (clave para SonarQube)
+# Cambiar a usuario no root
 USER node
 
-# Ejecutar app
 CMD ["node", "gateway-service.js"]

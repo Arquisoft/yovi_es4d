@@ -2,24 +2,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar package files
+# Copiar manifests
 COPY package*.json ./
 
-# Instalar dependencias (mejor reproducibilidad)
-RUN npm ci --omit=dev --ignore-scripts
+# Instalar dependencias como root
+RUN npm ci --omit=dev
 
-# Cambiar ownership al usuario node (importante para no root)
-RUN chown -R node:node /app
+# Copiar código con permisos normales
 COPY --chown=node:node . .
+
 # Cambiar a usuario no root
 USER node
 
-# Exponer puerto
 EXPOSE 8003
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8003/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
-
-# Comando de inicio
 CMD ["npm", "start"]
