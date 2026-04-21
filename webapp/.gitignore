@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+load-tests/results/*
+!load-tests/results/.gitkeep

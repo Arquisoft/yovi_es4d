@@ -5,7 +5,7 @@ import assert from 'assert'
 const BASE_URL = 'http://localhost:5173'
 const API_URL  = process.env.REACT_APP_API_URL || 'http://localhost:8000'
 
-// ── Mocks de API ─────────────────────────────────────────────
+// ── Helpers de mock ───────────────────────────────────────────
 
 async function mockBotModes(page) {
     await page.route(`${API_URL}/api/game/bot-modes`, route =>
@@ -47,7 +47,7 @@ async function mockUserHeader(page) {
     )
 }
 
-async function mockGameStart(page, players) {
+async function mockGameStart(page, players, boardSize = 11) {
     const board = Array.from({ length: 66 }, (_, i) => ({
         position: `(${i},0,0)`,
         player: null,
@@ -72,18 +72,58 @@ async function mockGameStart(page, players) {
     )
 }
 
-// Navega a /game inyectando location.state via sessionStorage + script
+async function mockAuthFail(page) {
+    await page.route(`${API_URL}/api/auth/me`, route =>
+        route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) })
+    )
+}
+
+// Navega a /game inyectando location.state de React Router via sessionStorage
+// React Router v6 lee el estado de la entrada de history; lo inyectamos
+// antes de la carga con addInitScript para que esté disponible en el primer render.
 async function gotoGame(page, state) {
-    // Inyectamos el state en sessionStorage antes de que React cargue
-    // React Router lee window.history.state, así que usamos replaceState
+    // Inyectamos el estado en sessionStorage con la clave que usa React Router
+    // internamente para preservar el state entre recargas en modo SPA.
     await page.addInitScript((s) => {
-        // Sobrescribir pushState para que el primer push lleve nuestro state
+        // React Router v6 guarda el state en history.state bajo la clave "usr"
+        const key = window.__reactRouterKey || 'default'
         window.__injectedGameState = s
-        window.history.replaceState(s, '', '/game')
+
+        // Sobreescribimos pushState/replaceState para interceptar la primera navegación
+        const _replace = window.history.replaceState.bind(window.history)
+        window.history.replaceState = function (state, title, url) {
+            return _replace(state, title, url)
+        }
+
+        // Programamos la inyección del state para cuando el router monte
+        const _push = window.history.pushState.bind(window.history)
+        window.history.pushState = function (state, title, url) {
+            return _push(state, title, url)
+        }
+
+        // Guardamos en sessionStorage para que el componente lo lea si lo necesita
+        try {
+            sessionStorage.setItem('__e2e_game_state', JSON.stringify(s))
+        } catch (_) {}
     }, state)
 
-    await page.goto(`${BASE_URL}/game`)
-    await page.waitForTimeout(500)
+    // Navegamos a /select primero y luego usamos React Router navigate para
+    // ir a /game con el state correcto, evitando el problema de replaceState nativo.
+    await page.goto(`${BASE_URL}/select`)
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+
+    // Ejecutamos navigate('/game', { state }) dentro del contexto de React Router
+    await page.evaluate((s) => {
+        // Buscamos el router de React Router v6 expuesto en window, o disparamos
+        // un CustomEvent que el componente pueda escuchar, o usamos el history API
+        // con el formato que React Router v6 espera: { usr: state, key: '...' }
+        const routerState = { usr: s, key: Math.random().toString(36).slice(2) }
+        window.history.pushState(routerState, '', '/game')
+        // Disparamos popstate para que React Router reaccione
+        window.dispatchEvent(new PopStateEvent('popstate', { state: routerState }))
+    }, state)
+
+    await page.waitForTimeout(800)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -135,11 +175,60 @@ Given('the game board is open without state', async function () {
     await page.waitForTimeout(500)
 })
 
+Given('the game board is loading', async function () {
+    const page = this.page
+    if (!page) throw new Error('Page not initialized')
+
+    await mockAuth(page)
+    await mockProfile(page)
+    await mockUserHeader(page)
+
+    // La llamada a /start nunca responde → el gameId permanece null → se muestra el spinner
+    await page.route(`${API_URL}/api/game/start`, route => {
+        // no fulfill → la petición queda pendiente
+    })
+
+    await gotoGame(page, {
+        gameMode:  'vsBot',
+        botMode:   'random_bot',
+        boardSize: 11,
+    })
+})
+
+Given('the game board is open with failed auth', async function () {
+    const page = this.page
+    if (!page) throw new Error('Page not initialized')
+
+    await mockUserHeader(page)
+    await mockAuthFail(page)
+
+    await gotoGame(page, {
+        gameMode:  'vsBot',
+        botMode:   'random_bot',
+        boardSize: 11,
+    })
+})
+
+Given('the game board is open with board size {int}', async function (size) {
+    const page = this.page
+    if (!page) throw new Error('Page not initialized')
+
+    await mockBotModes(page)
+    await mockAuth(page)
+    await mockProfile(page)
+    await mockUserHeader(page)
+    await mockGameStart(page, null, size)
+
+    await gotoGame(page, {
+        gameMode:  'vsBot',
+        botMode:   'random_bot',
+        boardSize: size,
+    })
+})
+
 // ─────────────────────────────────────────────────────────────
 // THEN
 // ─────────────────────────────────────────────────────────────
-
-
 
 Then('I should see the game main area', async function () {
     const page = this.page
@@ -173,11 +262,10 @@ Then('I should see the home button in header', async function () {
 Then('I should see the game board', async function () {
     const page = this.page
     await page.waitForSelector('.gb-board-section', { timeout: 8000 })
-    // Esperar a que desaparezca el spinner (gameId cargado)
     await page.waitForFunction(
         () => !document.querySelector('.gb-loading'),
         { timeout: 8000 }
-    ).catch(() => {}) // si no desaparece en 8s, continuamos igualmente
+    ).catch(() => {})
     const section = await page.$('.gb-board-section')
     assert.ok(section, 'Board section (.gb-board-section) not found')
 })
@@ -187,4 +275,90 @@ Then('I should be redirected to select page', async function () {
     await page.waitForURL(`${BASE_URL}/select`, { timeout: 5000 })
     const url = page.url()
     assert.ok(url.includes('/select'), `Expected redirect to /select, got ${url}`)
+})
+
+Then('I should be redirected to login page', async function () {
+    const page = this.page
+    await page.waitForURL(`${BASE_URL}/login`, { timeout: 5000 })
+    const url = page.url()
+    assert.ok(url.includes('/login'), `Expected redirect to /login, got ${url}`)
+})
+
+Then('the header should display the board size {string}', async function (size) {
+    const page = this.page
+    await page.waitForSelector('.gb-header-meta', { timeout: 8000 })
+    const metaText = await page.textContent('.gb-header-meta')
+    assert.ok(metaText?.includes(`${size}×`), `Expected header to contain "${size}×", got "${metaText}"`)
+})
+
+Then('the header should display the app logo', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-header-logo', { timeout: 8000 })
+    const logoText = await page.textContent('.gb-header-logo')
+    assert.ok(logoText && logoText.length > 0, 'App logo text not found in header')
+})
+
+Then('I should see the loading spinner', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-loading', { timeout: 8000 })
+    const spinner = await page.$('.gb-loading')
+    assert.ok(spinner, 'Loading spinner (.gb-loading) not found')
+})
+
+Then('the footer should contain {string}', async function (text) {
+    const page = this.page
+    await page.waitForSelector('.gb-footer-text', { timeout: 8000 })
+    const footerText = await page.textContent('.gb-footer-text')
+    assert.ok(footerText?.includes(text), `Expected footer to contain "${text}", got "${footerText}"`)
+})
+
+Then('the turn indicator should be visible', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-header-status', { timeout: 8000 })
+    const statusEl = await page.$('.gb-header-status')
+    assert.ok(statusEl, 'Turn indicator (.gb-header-status) not found')
+    const text = await page.textContent('.gb-header-status')
+    assert.ok(text && text.length > 0, 'Turn indicator text is empty')
+})
+
+Then('the player 1 panel should be active', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
+    const panels = page.locator('.gb-player-aside')
+    const firstPanel = panels.first()
+    const html = await firstPanel.innerHTML()
+    assert.ok(html.length > 0, 'Player 1 panel is empty')
+})
+
+Then('the player 2 panel should not be active', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
+    const statusText = await page.textContent('.gb-header-status')
+    assert.ok(!statusText?.includes('j2'), 'Player 2 should not be active at game start')
+})
+
+Then('I should see {string} as player 2 name', async function (expectedName) {
+    const page = this.page
+    await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
+    const panels = await page.$$('.gb-player-aside')
+    assert.ok(panels.length === 2, 'Expected 2 player panels')
+    const secondPanelText = await panels[1].textContent()
+    assert.ok(
+        secondPanelText?.includes(expectedName),
+        `Expected player 2 panel to contain "${expectedName}", got "${secondPanelText}"`
+    )
+})
+
+Then('both players should start with 0 points', async function () {
+    const page = this.page
+    await page.waitForSelector('.gb-player-aside', { timeout: 8000 })
+    const pointEls = await page.$$eval('[class*="point"], [class*="score"], [class*="pts"]', els =>
+        els.map(el => el.textContent?.trim())
+    )
+    const panels = await page.$$('.gb-player-aside')
+    for (const panel of panels) {
+        const text = await panel.textContent()
+        const hasNonZeroPoints = /\b[1-9]\d*\b/.test(text ?? '')
+        assert.ok(!hasNonZeroPoints, `Player panel should show 0 points, got: "${text}"`)
+    }
 })
