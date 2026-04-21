@@ -164,60 +164,6 @@ paths:
                     description: Error information.
                     example: Too many requests, please try again later
                   
-  /api/game/new:
-    post:
-      summary: Configure a new game with selected topics and language
-      operationId: configureNewGame
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - topics
-                - lang
-              properties:
-                topics:
-                  type: array
-                  items:
-                    type: string
-                  example: ["art", "history"]
-                lang:
-                  type: string
-                  enum: [es, en]
-                  example: es
-      responses:
-        '200':
-          description: Game configured successfully. Returns a cacheId to be used in next requests.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cacheId:
-                    type: string
-                    example: abc123def456ghi789
-        '400':
-          description: Bad request - Invalid topics or language.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid topics or language
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal Server Error
 
 
 
@@ -384,6 +330,229 @@ paths:
                   status:
                     type: string
                     example: active
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}:
+    get:
+      summary: Get the current state of a game.
+      operationId: getGameState
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      responses:
+        '200':
+          description: Current game state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                    example: game_1713000000000_abc123
+                  board:
+                    type: array
+                    items:
+                      type: object
+                  players:
+                    type: array
+                    items:
+                      type: object
+                  moves:
+                    type: array
+                    items:
+                      type: string
+                  turn:
+                    type: string
+                    example: j1
+                  status:
+                    type: string
+                    example: active
+                  winner:
+                    type: string
+                    nullable: true
+                    example: null
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}/move:
+    post:
+      summary: Trigger the bot response (vsBot) or get updated state (multiplayer) after a player move.
+      description: >
+        **Must be called AFTER `/api/game/{gameId}/validateMove`**, which applies the human player's move
+        and advances the turn to j2. This endpoint then triggers the bot response (vsBot mode) or returns
+        the updated board state (multiplayer mode).
+
+        Flow for vsBot: `validateMove` (human plays) → `move` (bot plays).
+      operationId: makeMove
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - move
+                - mode
+              properties:
+                move:
+                  type: string
+                  description: Cell position in (x,y,z) format. Same move already validated with validateMove.
+                  example: (1,1,0)
+                mode:
+                  type: string
+                  enum: [vsBot, multiplayer]
+                  description: "Game mode. vsBot: triggers bot response (requires it to be j2 turn). multiplayer: returns current board state."
+                  example: vsBot
+      responses:
+        '200':
+          description: Updated game state after the move.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                  board:
+                    type: array
+                    items:
+                      type: object
+                  moves:
+                    type: array
+                    items:
+                      type: string
+                  turn:
+                    type: string
+                    example: j1
+                  winner:
+                    type: string
+                    nullable: true
+                    example: null
+                  status:
+                    type: string
+                    example: active
+        '400':
+          description: Missing required fields or invalid game mode.
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}/setPlayerName:
+    post:
+      summary: Set the real name of a player in an online game.
+      operationId: setPlayerName
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - name
+              properties:
+                role:
+                  type: string
+                  enum: [j1, j2]
+                  example: j1
+                name:
+                  type: string
+                  example: Jorge
+      responses:
+        '200':
+          description: Player name updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+
+  /api/game/{gameId}/saveForPlayer:
+    post:
+      summary: Save an online game in a specific player's history.
+      operationId: saveForPlayer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: 65f756db3fa22d227a4b7c7d
+                winner:
+                  type: string
+                  example: j1
+                playerNames:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Jorge", "Rival"]
+      responses:
+        '200':
+          description: Game saved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '400':
+          description: Missing userId.
         '401':
           description: Unauthorized.
         '500':
