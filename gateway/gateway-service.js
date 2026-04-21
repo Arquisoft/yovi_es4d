@@ -119,10 +119,18 @@ const verifyToken = (req, res, next) => {
 app.get('/api/game/history', verifyToken, async (req, res) => {
   try {
     const userId = req.body.userId;
+    const { page, sortBy, sortOrder } = req.query;
 
     const gameRes = await axios.get(
       `${gameServiceUrl}/api/game/history`,
-      { params: { userId } }
+      {
+        params: {
+          userId,
+          page,
+          sortBy,
+          sortOrder,
+        }
+      }
     );
 
     res.json(gameRes.data);
