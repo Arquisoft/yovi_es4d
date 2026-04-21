@@ -123,10 +123,10 @@ app.get('/friends/explore', async (req, res) => {
       const rawUsers = Array.isArray(response.data) ? response.data : [];
       const allowedUsers = rawUsers.filter(u => {
         if (u._id === userId) return false;
-        if (friendIds.includes(u._id)) {
+        if (friendIds.has(u._id)) {
           return false;
         }
-        if (pendingIds.includes(u._id)) {
+        if (pendingIds.has(u._id)) {
           return false;
         }
         return true;
