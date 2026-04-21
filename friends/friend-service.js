@@ -18,9 +18,26 @@ if (process.env.SKIP_MONGO !== 'true') {
 }
 
 const app = express();
+app.disable('x-powered-by');
 const port = process.env.PORT || 8004;
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // AMIGOS
@@ -60,6 +77,10 @@ app.get('/friends/explore', async (req, res) => {
   try {
     const { userId, search = '', page = 1 } = req.query;
     const limit = 10;
+    const batchSize = 50;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const startIndex = (pageNum - 1) * limit;
+    const endIndex = startIndex + limit;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
     const relations = await FriendRequest.find({
@@ -68,37 +89,65 @@ app.get('/friends/explore', async (req, res) => {
         { receiverId: userId, status: 'accepted' }
       ]
     });
-    const friendIds = relations.map(r =>
-      r.senderId.toString() === userId ? r.receiverId.toString() : r.senderId.toString()
+    const friendIds = new Set(
+      relations.map(r =>
+        r.senderId.toString() === userId
+          ? r.receiverId.toString()
+          : r.senderId.toString()
+      )
     );
 
-    // Traer usuarios desde user-service
-    const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
-      params: { search, page, limit }
+    const pendingRequests = await FriendRequest.find({
+      $or: [
+        { senderId: userId, status: 'pending' },
+        { receiverId: userId, status: 'pending' }
+      ]
     });
-// Obtener solicitudes pendientes
-const pendingRequests = await FriendRequest.find({
-  $or: [
-    { senderId: userId, status: 'pending' },
-    { receiverId: userId, status: 'pending' }
-  ]
-});
 
-// IDs de usuarios con solicitud pendiente
-const pendingIds = pendingRequests.map(r =>
-  r.senderId.toString() === userId
-    ? r.receiverId.toString()
-    : r.senderId.toString()
-);
-    
-    const users = response.data.filter(u => {
-      if (u._id === userId) return false;
+    const pendingIds = new Set(pendingRequests.map(r =>
+      r.senderId.toString() === userId
+        ? r.receiverId.toString()
+        : r.senderId.toString()
+    ));
 
-      if (friendIds.includes(u._id)) return false;
-       if (pendingIds.includes(u._id)) return false;
-      return true;
+    const filteredUsers = [];
+    let rawPage = 1;
+    let hasMoreRawPages = true;
+
+    // Pagina sobre usuarios ya filtrados para que el frontend no pueda avanzar a paginas vacias.
+    while (hasMoreRawPages && filteredUsers.length <= endIndex) {
+      const response = await axios.get(`${USER_SERVICE_URL}/api/users`, {
+        params: { search, page: rawPage, limit: batchSize }
+      });
+
+      const rawUsers = Array.isArray(response.data) ? response.data : [];
+      const allowedUsers = rawUsers.filter(u => {
+        if (u._id === userId) return false;
+        if (friendIds.includes(u._id)) {
+          return false;
+        }
+        if (pendingIds.includes(u._id)) {
+          return false;
+        }
+        return true;
+      });
+
+      filteredUsers.push(...allowedUsers);
+      hasMoreRawPages = rawUsers.length === batchSize;
+      rawPage += 1;
+    }
+
+    const users = filteredUsers.slice(startIndex, endIndex);
+
+    res.json({
+      users,
+      pagination: {
+        page: pageNum,
+        limit,
+        hasPrev: pageNum > 1,
+        hasNext: filteredUsers.length > endIndex,
+      }
     });
-    res.json({ users });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });
@@ -113,12 +162,19 @@ app.post('/friends/request', async (req, res) => {
     const { senderId, receiverId } = req.body;
     if (!senderId || !receiverId)
       return res.status(400).json({ error: 'senderId and receiverId required' });
+    const safeSenderId = new mongoose.Types.ObjectId(senderId);
+    const safeReceiverId = new mongoose.Types.ObjectId(receiverId);
 
-    const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
+    const existing = await FriendRequest.findOne({
+      senderId: safeSenderId,
+      receiverId: safeReceiverId,
+      status: 'pending'
+    });
+    //const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
     if (existing) return res.status(400).json({ error: 'Request already exists' });
 
     const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: senderId });
-const receiver = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: receiverId });
+    const receiver = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: receiverId });
 
     // Validar que exista email
     if (!sender.data.email || !receiver.data.email)
@@ -152,9 +208,36 @@ app.get('/friends/requests', async (req, res) => {
     const { userId, type } = req.query;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
+    const allowedTypes = ['received', 'sent'];
+
+    if (!allowedTypes.includes(type)) {
+      throw new Error('Invalid type');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid userId');
+    }
+
+    const safeUserId = new mongoose.Types.ObjectId(userId);
+    const safeUserId = new mongoose.Types.ObjectId(userId);
+
+    let query;
+
+    if (type === 'received') {
+      query = {
+        receiverId: safeUserId,
+        status: 'pending'
+      };
+    } else if (type === 'sent') {
+      query = {
+        senderId: safeUserId,
+        status: 'pending'
+      };
+    }
+
     let query = {};
-    if (type === 'received') query = { receiverId: userId, status: 'pending' };
-    else if (type === 'sent') query = { senderId: userId, status: 'pending' };
+    //if (type === 'received') query = { receiverId: userId, status: 'pending' };
+    //else if (type === 'sent') query = { senderId: userId, status: 'pending' };
 
     const requests = await FriendRequest.find(query);
 
@@ -187,11 +270,25 @@ app.patch('/friends/accept', async (req, res) => {
     // Actualizar solo status
     request.status = 'accepted';
     await request.save(); 
+
+    if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+      throw new Error('Invalid notification id');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(request.senderId)) {
+      throw new Error('Invalid senderId');
+    }
+
+    const safeSenderId =
+    new mongoose.Types.ObjectId(request.senderId);
+
+    const safeUserId =
+    new mongoose.Types.ObjectId(userId);
   
     await Notification.findOneAndDelete({
-      userId: userId, // el que recibe la notificación
+      userId: safeUserId,
       type: 'friend_request',
-      relatedUserId: request.senderId
+      relatedUserId: safeSenderId
     });
 
     res.json({ message: 'Accepted' });
@@ -250,10 +347,21 @@ app.get('/notifications', async (req, res) => {
     const limit = 10;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    const notifications = await Notification.find({ userId })
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid userId');
+    }
+
+    const safeUserId = new mongoose.Types.ObjectId(userId);
+
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(50, Math.max(1, Number(limit) || 10));
+
+    const notifications = await Notification.find({
+      userId: safeUserId
+    })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit);
 
     const unreadCount = await Notification.countDocuments({ userId, read: false });
 

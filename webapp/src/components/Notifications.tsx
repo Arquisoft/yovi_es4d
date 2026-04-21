@@ -42,6 +42,10 @@ const Notifications: React.FC = () => {
         setNotifications([]);
       }
     } catch (err: any) {
+      if (err.response?.status === 401) {
+       navigate("/login");
+       return;
+      }
       console.error(err);
       setError(t('notifications.errorLoading'));
     } finally {
@@ -106,12 +110,7 @@ const Notifications: React.FC = () => {
                         </p>
                         <small>{new Date(n.createdAt).toLocaleString()}</small>
                       </div>
-                      <button onClick={() => handleAccept(n)}>
-                        {t('notifications.accept')}
-                      </button>
-                      <button onClick={() => handleReject(n)}>
-                        {t('notifications.reject')}
-                      </button>
+                      
                     </div>
                   ))
                 )}

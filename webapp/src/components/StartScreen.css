@@ -120,6 +120,41 @@ html, body {
   font-weight: 500;
 }
 
+.navbar-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 140px;
+  padding-right: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08)),
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.95) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 50%, transparent 50%);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position:
+    0 0,
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size:
+    100% 100%,
+    6px 6px,
+    6px 6px;
+  color: #ffffff;
+}
+
+.navbar-select:hover,
+.navbar-select:focus {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  outline: none;
+}
+
+.navbar-select option {
+  background: #12308f;
+  color: #ffffff;
+}
+
 /* Main content grows to fill remaining space */
 .main-content {
   flex: 1;
@@ -303,9 +338,10 @@ html, body {
   
 }
 
-#language-select > option.es-selected:hover {
+#language-select > option:hover,
+#language-select > option:checked {
   background-color: #0066ff;
-  color: blue;
+  color: #ffffff;
 }
 /* Rules Content Styles */
 .rules-content {

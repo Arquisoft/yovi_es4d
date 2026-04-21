@@ -1,0 +1,54 @@
+API YOVI - Información de acceso
+=================================
+
+PUERTO DE LA API (Gateway)
+---------------------------
+Puerto: 8000
+URL base (local):  http://localhost:8000
+URL base (Docker): http://gateway:8000
+
+DOCUMENTACIÓN SWAGGER
+----------------------
+Swagger UI (navegador): http://localhost:8000/api-doc
+OpenAPI spec (YAML):    http://localhost:8000/openapi.yaml
+
+Para importar en Postman: Import → Link → http://localhost:8000/openapi.yaml
+
+ENDPOINTS PRINCIPALES
+---------------------
+(Públicos, sin autenticación)
+  GET  /play              - Jugada del bot. Params: position (YEN JSON), bot_id (opcional)
+  GET  /api/game/bot-modes - Modos de bot disponibles
+  GET  /health            - Estado del gateway
+
+(Sin autenticación)
+  POST /adduser           - Registrar nuevo usuario
+  POST /login             - Login (devuelve cookie JWT "token")
+  POST /logout            - Logout
+
+(Requieren cookie JWT "token")
+  POST /api/game/start              - Iniciar partida
+  POST /api/game/:gameId/move       - Hacer movimiento
+  POST /api/game/:gameId/validateMove - Validar movimiento
+  GET  /api/game/:gameId            - Estado de la partida
+  GET  /api/game/history            - Historial de partidas del usuario
+  POST /api/game/end                - Finalizar y guardar partida
+  GET  /api/auth/me                 - Usuario autenticado actual
+
+EJEMPLO DE USO DEL ENDPOINT /play (para bots externos)
+-------------------------------------------------------
+GET http://localhost:8000/play?position={"size":4,"turn":"R","players":["B","R"],"layout":"B/.B/RB./B..R"}&bot_id=random_bot
+
+Valores válidos de bot_id: random_bot, intermediate_bot, hard_bot (por defecto: hard_bot)
+
+Respuesta: {"coords":{"x":1,"y":1,"z":0}}
+
+ARQUITECTURA DE SERVICIOS
+--------------------------
+Gateway      → puerto 8000  (punto de entrada único de la API)
+Game Service → puerto 8003  (lógica de partidas, accesible solo internamente)
+Gamey Bot    → puerto 4000  (motor Rust de IA, accesible solo internamente)
+Auth Service → puerto 8002  (autenticación JWT)
+User Service → puerto 8001  (gestión de usuarios)
+Friends Svc  → puerto 8004  (amigos y notificaciones)
+MongoDB      → puerto 27017

@@ -15,12 +15,13 @@ const RegisterForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateEmail = (email: string) => {
-  // Chequea que tenga al menos un carácter antes del @,
-  // seguido de un dominio con un punto y algo después
+ const validateEmail = (email: string) => {
+  if (email.length > 254) return false;
+
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
+
 
   const validatePassword = (password: string) => {
     const minLength = 8;
@@ -39,7 +40,6 @@ const RegisterForm: React.FC = () => {
     setError(null);
     setSuccess(false);
 
-    // ✅ Validaciones frontend
     const errorUsername = t('registerForm.errorUsername') || 'Username must be at least 3 characters';
     const errorEmail = t('registerForm.errorEmail') || 'Invalid email';
     const errorPassword = t('registerForm.errorPasswordContent') || 'Password must have at least 8 characters, one uppercase and one number, and no spaces';
@@ -76,7 +76,16 @@ const RegisterForm: React.FC = () => {
       setRepassword('');
       navigate("/login");
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message);
+        if (err.response?.status === 409) {
+          setError(t("registerForm.emailExists"));
+        } else {
+          setError(
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            err.message ||
+            "Registration failed"
+          );
+        }
     } finally {
       setLoading(false);
     }

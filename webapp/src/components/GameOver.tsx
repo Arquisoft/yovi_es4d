@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
+import Triangle3D from "./game/Triangle3D";
 import UserHeader from "./UserHeader";
 import "./GameOver.css";
 import { useTranslation } from "../i18n";
@@ -33,6 +34,7 @@ const GameOver: React.FC = () => {
     const opponentProfile = gameState.opponentProfile as { username: string; avatar: string } | undefined;
     const gameMode        = gameState.gameMode        as string | undefined;
     const onlineRole      = gameState.onlineRole      as string | undefined;
+    const boardVariant    = gameState.boardVariant    as string | undefined;
 
     const myName         = userProfile?.username     || player1?.name;
     const myAvatar       = userProfile?.avatar       || "logo.png";
@@ -110,12 +112,21 @@ const GameOver: React.FC = () => {
                 </div>
 
                 {/* Tablero de solo lectura */}
-                <div className="go-board">
-                    <Triangle
-                        hexData={gameState.hexData}
-                        onHexClick={() => {}}
-                        scale={0.75}
-                    />
+                <div className={`go-board ${boardVariant === "tetra3d" ? "go-board-3d" : ""}`}>
+                    {boardVariant === "tetra3d" ? (
+                        <Triangle3D
+                            hexData={gameState.hexData}
+                            onHexClick={() => {}}
+                            scale={0.72}
+                            connectionEdges={gameState.connectionEdges}
+                        />
+                    ) : (
+                        <Triangle
+                            hexData={gameState.hexData}
+                            onHexClick={() => {}}
+                            scale={0.75}
+                        />
+                    )}
                 </div>
 
             </div>

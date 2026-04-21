@@ -97,7 +97,13 @@ describe('Friend Service', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({
-      users: [{ _id: USER_4, username: 'available' }]
+      users: [{ _id: USER_4, username: 'available' }],
+      pagination: {
+        page: 1,
+        limit: 10,
+        hasPrev: false,
+        hasNext: false
+      }
     });
   });
 
