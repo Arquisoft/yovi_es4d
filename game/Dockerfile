@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias (mejor reproducibilidad)
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Cambiar ownership al usuario node (importante para no root)
 RUN chown -R node:node /app

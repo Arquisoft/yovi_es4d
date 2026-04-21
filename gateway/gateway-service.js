@@ -872,8 +872,12 @@ const io = new Server(server, {
 const rooms = new Map();
  
 function generateCode() {
-  // NOSONAR: delay no requiere seguridad criptográfica
-  return Math.random().toString(36).substring(2, 6).toUpperCase();
+  const bytes = new Uint8Array(2);
+  crypto.getRandomValues(bytes);
+
+  return Array.from(bytes, b =>
+    b.toString(16).padStart(2, '0')
+  ).join('').toUpperCase();
 }
  
 io.on('connection', (socket) => {

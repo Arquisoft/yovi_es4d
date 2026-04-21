@@ -6,7 +6,7 @@ WORKDIR /usr/src/gatewayservice
 COPY package*.json ./
 
 # Instalar dependencias de forma reproducible
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Copy the app source code to the working directory
 COPY --chown=node:node . .

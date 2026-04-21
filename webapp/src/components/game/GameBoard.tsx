@@ -356,7 +356,10 @@ const GameBoard: React.FC = () => {
           if (gs && gs.status === "active" && gs.turn === "j1") {
             const free = gs.hexData.filter(h => h.player === null);
             if (free.length) {
-              const pick = free[Math.floor(Math.random() * free.length)];
+              const bytes = new Uint32Array(1);
+              crypto.getRandomValues(bytes);
+
+              const pick = free[bytes[0] % free.length];
               handleHexClickRef.current(pick.position);
             }
           }

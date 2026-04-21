@@ -4,7 +4,7 @@ WORKDIR /usr/src/friends
 
 # Dependencias primero
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 
 RUN chmod -R a-w /usr/src/friends
