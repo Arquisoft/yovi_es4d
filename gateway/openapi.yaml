@@ -19,68 +19,40 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - username
+                - email
+                - password
               properties:
                 username:
                   type: string
-                  description: User ID that will be unique.
+                  description: Unique display name for the user.
                   example: student
+                email:
+                  type: string
+                  description: Email address of the user (unique).
+                  example: student@example.com
                 password:
                   type: string
-                  description: User password that must be at least 8 characters long and contain at least one uppercase letter,one number and no spaces.
+                  description: Password (min 8 chars, at least one uppercase letter and one number, no spaces).
                   example: Password123
       responses:
-        '200':
-          description: User added successfully.
+        '201':
+          description: User created successfully.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  username:
+                  message:
                     type: string
-                    description: User ID
-                    example: student
-                  password:
+                    example: User created
+                  id:
                     type: string
-                    description: Hashed password
-                    example: $2b$10$ZKdNYLWFQxzt5Rei/YTc/OsZNi12YiWz30JeUFHNdAt7MyfmkTuvC
-                  _id:
-                    type: string
-                    description: Identification
+                    description: ID of the newly created user.
                     example: 65f756db3fa22d227a4b7c7d
-                  createdAt:
-                    type: string
-                    description: Creation date.
-                    example: '2024-03-17T20:47:23.935Z'
-                  ___v:
-                    type: integer
-                    example: '0'                                        
         '400':
-          description: Failed to add user due to missing fields, not secure password or invalid username format.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Missing field error.
-                        example: "Missing required field: password"
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Password security error.
-                        example: "Password error content: notSecurePassword"
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Username format error.
-                        example: "Invalid username format"
-        '409':
-          description: Username already exists.
+          description: Failed to add user due to missing fields or password not meeting requirements.
           content:
             application/json:
               schema:
@@ -88,8 +60,17 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: Error information.
-                    example: Username already exists
+                    example: "Password does not meet requirements"
+        '409':
+          description: Email or username already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email or username already exists
   /health:
     get:
       summary: Check the health status of the service.
@@ -183,72 +164,6 @@ paths:
                     description: Error information.
                     example: Too many requests, please try again later
                   
-  /api/user/editUser:
-    post:
-      summary: Change user password.
-      operationId: changeUserPassword
-      security:
-        - bearerAuth: []  # Requiere autenticación con JWT
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - currentPassword
-                - newPassword
-              properties:
-                currentPassword:
-                  type: string
-                  description: Current password of the user.
-                  example: Password123
-                newPassword:
-                  type: string
-                  description: New password.
-                  example: newSecurePass123
-      responses:
-        '200':
-          description: Password updated successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: string
-                    example: true
-        '404':
-          description: User not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: User not found
-        '401':
-          description: Unauthorized - Incorrect Password.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Incorrent current password
-        '400':
-          description: Unauthorized - Missing or invalid token.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Cast to ObjectId failed for value \"guestXXXXXXXXXXXX\" (type string) at path \"_id\" for model \"User\"
-
   /api/game/new:
     post:
       summary: Configure a new game with selected topics and language
