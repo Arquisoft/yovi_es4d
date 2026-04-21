@@ -99,8 +99,8 @@ function validateRequiredFields(req, requiredFields) {
  * @throws {500} Si hay error del servidor
  */
 app.post('/login', loginLimiter, [
-  check('email').isLength({ min: 3 }).trim().escape(),
-  check('password').isLength({ min: 3 }).trim().escape()
+  check('email').isLength({ min: 3 }).trim(),
+  check('password').isLength({ min: 3 })
 ], async (req, res) => {
   const ip = req.ip;
   try {
@@ -113,7 +113,7 @@ app.post('/login', loginLimiter, [
       });
     }
 
-    const email = req.body.email.toString();
+    const email = req.body.email.toString().trim().toLowerCase();
     const password = req.body.password.toString();
     const user = await User.findOne({ email });
         
