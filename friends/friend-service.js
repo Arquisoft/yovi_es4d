@@ -10,7 +10,7 @@ const Notification = require('./models/notification');
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:8001';
 
-// Conexión a MongoDB
+// ConexiÃ³n a MongoDB
 if (process.env.SKIP_MONGO !== 'true') {
   mongoose.connect(mongoUri)
     .then(() => console.log('Conectado a MongoDB'))
@@ -258,31 +258,23 @@ app.get('/friends/requests', async (req, res) => {
 app.patch('/friends/accept', async (req, res) => {
   try {
     const { requestId, userId } = req.body;
-    if (!requestId || !userId) return res.status(400).json({ error: 'requestId and userId required' });
+    if (!requestId || !userId) {
+      return res.status(400).json({ error: 'requestId and userId required' });
+    }
 
-    // Buscar solicitud existente
     const request = await FriendRequest.findById(requestId);
     if (!request) return res.status(404).json({ error: 'Not found' });
-    if (request.receiverId.toString() !== userId) return res.status(403).json({ error: 'Not allowed' });
 
-    // Actualizar solo status
+    if (request.receiverId.toString() !== userId) {
+      return res.status(403).json({ error: 'Not allowed' });
+    }
+
     request.status = 'accepted';
-    await request.save(); 
+    await request.save();
 
-    if (!mongoose.Types.ObjectId.isValid(notificationId)) {
-      throw new Error('Invalid notification id');
-    }
+    const safeSenderId = request.senderId.toString();
+    const safeUserId = userId.toString();
 
-    if (!mongoose.Types.ObjectId.isValid(request.senderId)) {
-      throw new Error('Invalid senderId');
-    }
-
-    const safeSenderId =
-    new mongoose.Types.ObjectId(request.senderId);
-
-    const safeUserId =
-    new mongoose.Types.ObjectId(userId);
-  
     await Notification.findOneAndDelete({
       userId: safeUserId,
       type: 'friend_request',
@@ -290,6 +282,7 @@ app.patch('/friends/accept', async (req, res) => {
     });
 
     res.json({ message: 'Accepted' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal error' });
