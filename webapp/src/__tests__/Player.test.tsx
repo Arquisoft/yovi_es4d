@@ -94,5 +94,18 @@ describe('Jugador', () => {
         })
     })
 
+    test('renderiza un span cuando imgSrc no es una ruta de imagen', () => {
+    render(
+        <Jugador
+            {...defaultProps}
+            imgSrc="🙂"
+        />
+    )
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+
+    expect(screen.getByText('🙂')).toBeInTheDocument()
+})
+
 
 })

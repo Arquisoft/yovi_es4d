@@ -6,6 +6,5 @@ npm-debug.log
 .env
 .env.*
 logs
-coverage
 dist
 build

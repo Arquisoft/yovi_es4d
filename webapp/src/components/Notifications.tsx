@@ -42,6 +42,10 @@ const Notifications: React.FC = () => {
         setNotifications([]);
       }
     } catch (err: any) {
+      if (err.response?.status === 401) {
+       navigate("/login");
+       return;
+      }
       console.error(err);
       setError(t('notifications.errorLoading'));
     } finally {

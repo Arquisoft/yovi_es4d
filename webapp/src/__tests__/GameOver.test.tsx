@@ -319,4 +319,21 @@ test('renderiza avatar como texto cuando no es imagen', () => {
   expect(screen.getByText('😀')).toBeInTheDocument()
 })
 
+test('usa 0 puntos cuando un jugador no tiene points definidos', () => {
+  vi.spyOn(reactRouter, 'useLocation').mockReturnValue({
+    state: {
+      ...baseState,
+      players: [
+        { id: 'p1', name: 'Alice' }, // SIN points
+        { id: 'p2', name: 'Bot' },   // SIN points
+      ],
+    },
+  } as any)
+
+  renderWithProviders(<GameOver />)
+
+  // Debe usar el fallback ?? 0
+  expect(screen.getAllByText('0000')).toHaveLength(2)
+})
+
 })

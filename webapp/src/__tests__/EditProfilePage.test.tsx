@@ -107,6 +107,10 @@ describe("EditUserPage Vitest", () => {
 
     await screen.findByDisplayValue("user1");
 
+    const usernameInput = screen.getByLabelText("editUser.username");
+    await userEvent.clear(usernameInput);
+    await userEvent.type(usernameInput, "newuser");
+
     const button = screen.getByText("editUser.updateUsername");
     await userEvent.click(button);
 
@@ -270,4 +274,153 @@ describe("EditUserPage Vitest", () => {
 
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });
+
+  test("shows error when current password is empty", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  // NO escribimos current password
+  await userEvent.type(
+    screen.getByLabelText(/editUser.newPassword/i),
+    "1234"
+  );
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.confirmPassword/i),
+    "1234"
+  );
+
+  await userEvent.click(screen.getByText("editUser.changePassword"));
+
+  await screen.findByText("editUser.currentPasswordWrong");
+});
+
+test("shows error when new password is empty", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.currentPassword/i),
+    "oldpass"
+  );
+
+  // new password vacío
+  await userEvent.type(
+    screen.getByLabelText(/editUser.confirmPassword/i),
+    "1234"
+  );
+
+  await userEvent.click(screen.getByText("editUser.changePassword"));
+
+  await screen.findByText("editUser.newPasswordRequired");
+});
+
+test("updates avatar successfully", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser }); // loadProfile
+  mockedAxios.post.mockResolvedValueOnce({
+    data: { avatar: "new-avatar.png" },
+  });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  const refreshButton = screen.getByRole("button", { name: "⟳" });
+
+  await userEvent.click(refreshButton);
+
+  await waitFor(() =>
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      `${API_URL}/api/user/updateAvatar`,
+      {},
+      { withCredentials: true }
+    )
+  );
+});
+
+test("shows error when avatar update fails", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+  mockedAxios.post.mockRejectedValueOnce({
+    response: { data: "Avatar error" },
+  });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  const refreshButton = screen.getByRole("button", { name: "⟳" });
+
+  await userEvent.click(refreshButton);
+
+  await screen.findByText("Avatar error");
+});
+
+test("changePassword shows currentPasswordWrong on 400 error", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+  mockedAxios.post.mockRejectedValueOnce({
+    response: { status: 400 },
+  });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.currentPassword/i),
+    "wrongpass"
+  );
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.newPassword/i),
+    "Password1"
+  );
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.confirmPassword/i),
+    "Password1"
+  );
+
+  await userEvent.click(screen.getByText("editUser.changePassword"));
+
+  await screen.findByText("editUser.currentPasswordWrong");
+});
+
+test("changePassword shows currentPasswordWrong on 401 error", async () => {
+  mockedAxios.post.mockResolvedValueOnce({ data: mockUser });
+
+  mockedAxios.post.mockRejectedValueOnce({
+    response: { status: 401 },
+  });
+
+  renderWithAuth(<EditUserPage />);
+
+  await screen.findByDisplayValue("user1");
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.currentPassword/i),
+    "wrongpass"
+  );
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.newPassword/i),
+    "Password1"
+  );
+
+  await userEvent.type(
+    screen.getByLabelText(/editUser.confirmPassword/i),
+    "Password1"
+  );
+
+  await userEvent.click(screen.getByText("editUser.changePassword"));
+
+  await screen.findByText("editUser.currentPasswordWrong");
+});
+
 });

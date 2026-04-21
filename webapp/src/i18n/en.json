@@ -1,8 +1,0 @@
-{
-  "registerForm": {
-    "errorEmail": "Invalid email",
-    "errorPasswordContent": "Password must have at least 8 characters, one uppercase and one number, and no spaces",
-    "errorPasswordMatch": "Passwords do not match",
-    "errorUsername": "Username must be at least 3 characters"
-  }
-}

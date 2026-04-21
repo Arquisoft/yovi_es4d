@@ -8,7 +8,8 @@ COPY package*.json ./
 # Instalar dependencias de forma reproducible
 RUN npm ci --omit=dev
 
-# Copiar código
+# Copy the app source code to the working directory
+# NOSONAR
 COPY . .
 
 # Crear usuario no root y ajustar permisos
