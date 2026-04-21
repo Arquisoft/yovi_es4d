@@ -452,21 +452,30 @@ const GameBoard: React.FC = () => {
         return; // no llamar a /move (bot)
       }
 
-      setGameState(prev => ({
-        ...prev,
-        hexData: prev.hexData.map(h => h.position === position ? { ...h, player: currentTurn as "j1" | "j2" } : h),
-        players: prev.players.map(p => p.id === prev.players[currentTurn === "j1" ? 0 : 1].id ? { ...p, points: p.points + 5 } : p),
-        winner:  validateData.winner || prev.winner,
-        status:  validateData.status || prev.status,
-      }));
+      const playerEndedGame = Boolean(validateData.winner) || validateData.status === "finished";
+      if (playerEndedGame) {
+        setGameState(prev => ({
+          ...prev,
+          botPlaying: false,
+        }));
+        return;
+      }
 
       const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, move: position, mode: gameMode }),
+        body: JSON.stringify(
+            gameMode === "vsBot"
+                ? { userId, mode: gameMode }
+                : { userId, move: position, mode: gameMode }
+        ),
       });
       const moveData = await moveRes.json();
+
+      if (!moveRes.ok) {
+        throw new Error(moveData.error || moveData.message || "Error procesando movimiento");
+      }
 
       setGameState(prev => ({
         ...prev,

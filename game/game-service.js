@@ -12,6 +12,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 app.disable('x-powered-by');
@@ -220,7 +221,7 @@ app.post('/api/game/start', async (req, res) => {
     if (boardVariant === 'tetra3d') {
       await axios.post(`${GAMEY_BOT_URL}/v1/tetra/start`, { size: boardSize }, { timeout: 5000 });
     } else {
-      await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize }, { timeout: 5000 });
+      await axios.post(`${GAMEY_BOT_URL}/v1/game/start`, { board_size: boardSize, game_id: gameId }, { timeout: 5000 });
     }
 
     const normalizedStartingPlayer = startingPlayer === 'j2' ? 'j2' : 'j1';
