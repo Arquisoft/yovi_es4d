@@ -148,7 +148,7 @@ describe('OnlineLobby', () => {
         const joinBtn = screen.getByRole('button', { name: /unirse/i })
 
         // Inicialmente tiene estilo normal (violet)
-        expect(joinBtn).toHaveStyle({ background: 'var(--violet)' })
+        expect(joinBtn).toHaveStyle({ background: 'rgb(196, 189, 248)' })
 
         await user.type(input, 'ABCD')
 

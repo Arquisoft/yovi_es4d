@@ -46,7 +46,7 @@ describe("post", () => {
 
     await expect(post("/users", { name: "Alice" }))
       .rejects
-      .toThrow("Algo salió mal");
+      .toThrow("Algo salio mal");
   });
 
   test("throws connection error if fetch fails with TypeError", async () => {
@@ -54,7 +54,7 @@ describe("post", () => {
 
     await expect(post("/users", { name: "Alice" }))
       .rejects
-      .toThrow("No se pudo conectar con el servidor. Asegúrate de que el microservicio de usuarios esté corriendo.");
+      .toThrow("No se pudo conectar con el gateway. Revisa que la URL del API use el protocolo correcto y que el servicio este levantado.");
   });
 
   test("rethrows other errors", async () => {
