@@ -1,18 +1,22 @@
-# Use an official Node.js runtime as a parent image
 FROM node:22
 
-# Set the working directory in the container
 WORKDIR /usr/src/gatewayservice
 
-# Copy package.json and package-lock.json to the working directory
+# Copiar solo manifests primero (mejor caching)
 COPY package*.json ./
 
-# Install app dependencies
-RUN npm install
+# Instalar dependencias de forma reproducible
+RUN npm ci --omit=dev
 
 # Copy the app source code to the working directory
 # NOSONAR
 COPY . .
 
-# Define the command to run your app
+# Crear usuario no root y ajustar permisos
+RUN chown -R node:node /usr/src/gatewayservice
+
+# Cambiar a usuario no root (clave para SonarQube)
+USER node
+
+# Ejecutar app
 CMD ["node", "gateway-service.js"]

@@ -6,6 +6,8 @@ WORKDIR /usr/src/friends
 COPY package*.json ./
 RUN npm ci --omit=dev
 
+RUN npm ci --omit=dev
+
 
 RUN chmod -R a-w /usr/src/friends
 

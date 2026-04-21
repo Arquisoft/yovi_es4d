@@ -14,13 +14,16 @@ const LoginForm: React.FC = () => {
   const { t } = useTranslation();
   const { checkAuth } = useContext(AuthContext);
 
-  const validateEmail = (email: string) => {
+const validateEmail = (email: string) => {
   if (email.length > 254) return false;
 
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
 
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

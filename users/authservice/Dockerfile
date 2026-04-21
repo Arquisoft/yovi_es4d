@@ -1,25 +1,24 @@
 FROM node:22
 
-WORKDIR /usr/src/userservice
+WORKDIR /usr/src/authservice
 
-# Copiar solo dependencias primero (mejor caching)
+# Copiar solo manifests primero (mejor caching)
 COPY package*.json ./
 
 # Instalar dependencias de forma reproducible
-# NOSONAR: npm ci ejecuta scripts necesarios de dependencias confiables
 RUN npm ci --omit=dev
 
 # Copiar código fuente
 COPY . .
 
-# Cambiar ownership al usuario node
-RUN chown -R node:node /usr/src/userservice
+# Crear usuario no root
+RUN chown -R node:node /usr/src/authservice
 
-# Ejecutar como usuario no root (clave para SonarQube)
+# Cambiar a usuario no root (esto es clave para SonarQube)
 USER node
 
 # Exponer puerto
-EXPOSE 8001
+EXPOSE 8002
 
-# Comando de arranque
-CMD ["node", "user-service.js"]
+# Ejecutar app
+CMD ["node", "auth-service.js"]

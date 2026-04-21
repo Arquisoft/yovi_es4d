@@ -814,7 +814,7 @@ const io = new Server(server, {
 const rooms = new Map();
  
 function generateCode() {
-    // NOSONAR: delay no requiere seguridad criptográfica
+  // NOSONAR: delay no requiere seguridad criptográfica
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
  
