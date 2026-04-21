@@ -21,16 +21,34 @@ const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 8004;
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://20.188.62.231:5173',
   'http://20.188.62.231:8000',
   'http://20.188.62.231'
-];
+]);
+
+function parseObjectId(value, fieldName) {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return new mongoose.Types.ObjectId(value);
+}
+
+function handleServiceError(res, err, fallbackMessage = 'Internal error') {
+  console.error(err);
+
+  if (err.message === 'Invalid type' || err.message.startsWith('Invalid ')) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  return res.status(500).json({ error: fallbackMessage });
+}
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -44,7 +62,10 @@ app.use(express.json());
 app.get('/friends', async (req, res) => {
   try {
     const { userId } = req.query;
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    const userObjectId = parseObjectId(userId, 'userId');
+    const safeUserId = userObjectId.toString();
 
     const relations = await FriendRequest.find({
       $or: [
@@ -54,7 +75,7 @@ app.get('/friends', async (req, res) => {
     });
 
     const friendIds = relations.map(r =>
-      r.senderId.toString() === userId
+      r.senderId.toString() === safeUserId
         ? r.receiverId.toString()
         : r.senderId.toString()
     );
@@ -78,20 +99,23 @@ app.get('/friends/explore', async (req, res) => {
     const { userId, search = '', page = 1 } = req.query;
     const limit = 10;
     const batchSize = 50;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
     const startIndex = (pageNum - 1) * limit;
     const endIndex = startIndex + limit;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
+    const safeUserId = parseObjectId(userId, 'userId');
+    const safeUserIdString = safeUserId.toString();
+
     const relations = await FriendRequest.find({
       $or: [
-        { senderId: userId, status: 'accepted' },
-        { receiverId: userId, status: 'accepted' }
+        { senderId: safeUserId, status: 'accepted' },
+        { receiverId: safeUserId, status: 'accepted' }
       ]
     });
     const friendIds = new Set(
       relations.map(r =>
-        r.senderId.toString() === userId
+        r.senderId.toString() === safeUserIdString
           ? r.receiverId.toString()
           : r.senderId.toString()
       )
@@ -99,13 +123,13 @@ app.get('/friends/explore', async (req, res) => {
 
     const pendingRequests = await FriendRequest.find({
       $or: [
-        { senderId: userId, status: 'pending' },
-        { receiverId: userId, status: 'pending' }
+        { senderId: safeUserId, status: 'pending' },
+        { receiverId: safeUserId, status: 'pending' }
       ]
     });
 
     const pendingIds = new Set(pendingRequests.map(r =>
-      r.senderId.toString() === userId
+      r.senderId.toString() === safeUserIdString
         ? r.receiverId.toString()
         : r.senderId.toString()
     ));
@@ -122,11 +146,12 @@ app.get('/friends/explore', async (req, res) => {
 
       const rawUsers = Array.isArray(response.data) ? response.data : [];
       const allowedUsers = rawUsers.filter(u => {
-        if (u._id === userId) return false;
-        if (friendIds.has(u._id)) {
+        const candidateId = u._id?.toString();
+        if (candidateId === safeUserIdString) return false;
+        if (friendIds.has(candidateId)) {
           return false;
         }
-        if (pendingIds.has(u._id)) {
+        if (pendingIds.has(candidateId)) {
           return false;
         }
         return true;
@@ -149,8 +174,7 @@ app.get('/friends/explore', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -162,15 +186,14 @@ app.post('/friends/request', async (req, res) => {
     const { senderId, receiverId } = req.body;
     if (!senderId || !receiverId)
       return res.status(400).json({ error: 'senderId and receiverId required' });
-    const safeSenderId = new mongoose.Types.ObjectId(senderId);
-    const safeReceiverId = new mongoose.Types.ObjectId(receiverId);
+    const safeSenderId = parseObjectId(senderId, 'senderId');
+    const safeReceiverId = parseObjectId(receiverId, 'receiverId');
 
     const existing = await FriendRequest.findOne({
       senderId: safeSenderId,
       receiverId: safeReceiverId,
       status: 'pending'
     });
-    //const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
     if (existing) return res.status(400).json({ error: 'Request already exists' });
 
     const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: senderId });
@@ -181,24 +204,23 @@ app.post('/friends/request', async (req, res) => {
       return res.status(500).json({ error: 'Cannot create friend request without emails' });
 
     const request = new FriendRequest({
-      senderId,
+      senderId: safeSenderId.toString(),
       senderEmail: sender.data.email,
-      receiverId,
+      receiverId: safeReceiverId.toString(),
       receiverEmail: receiver.data.email
     });
     await request.save();
 
     await Notification.create({
-      userId: receiverId,
+      userId: safeReceiverId.toString(),
       type: 'friend_request',
-      relatedUserId: senderId,
+      relatedUserId: safeSenderId.toString(),
       relatedUserEmail: sender.data.email
     });
 
     res.status(201).json({ message: 'Request sent' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -214,11 +236,7 @@ app.get('/friends/requests', async (req, res) => {
       throw new Error('Invalid type');
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
-    }
-
-    const safeUserId = new mongoose.Types.ObjectId(userId);
+    const safeUserId = parseObjectId(userId, 'userId');
 
     let query;
 
@@ -234,9 +252,6 @@ app.get('/friends/requests', async (req, res) => {
       };
     }
     
-    //if (type === 'received') query = { receiverId: userId, status: 'pending' };
-    //else if (type === 'sent') query = { senderId: userId, status: 'pending' };
-
     const requests = await FriendRequest.find(query);
 
     const enriched = requests.map(r => ({
@@ -249,8 +264,7 @@ app.get('/friends/requests', async (req, res) => {
 
     res.json(enriched);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -262,10 +276,13 @@ app.patch('/friends/accept', async (req, res) => {
       return res.status(400).json({ error: 'requestId and userId required' });
     }
 
+    const safeUserId = parseObjectId(userId, 'userId');
+    const safeUserIdString = safeUserId.toString();
+
     const request = await FriendRequest.findById(requestId);
     if (!request) return res.status(404).json({ error: 'Not found' });
 
-    if (request.receiverId.toString() !== userId) {
+    if (request.receiverId.toString() !== safeUserIdString) {
       return res.status(403).json({ error: 'Not allowed' });
     }
 
@@ -273,10 +290,8 @@ app.patch('/friends/accept', async (req, res) => {
     await request.save();
 
     const safeSenderId = request.senderId.toString();
-    const safeUserId = userId.toString();
-
     await Notification.findOneAndDelete({
-      userId: safeUserId,
+      userId: safeUserIdString,
       type: 'friend_request',
       relatedUserId: safeSenderId
     });
@@ -284,8 +299,7 @@ app.patch('/friends/accept', async (req, res) => {
     res.json({ message: 'Accepted' });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -305,8 +319,7 @@ app.patch('/friends/reject', async (req, res) => {
     });
     res.json({ message: 'Rejected' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -317,15 +330,16 @@ app.delete('/friends/request/:id', async (req, res) => {
     const { senderId } = req.body;
     if (!senderId) return res.status(400).json({ error: 'senderId required' });
 
+    const safeSenderId = parseObjectId(senderId, 'senderId');
+
     const request = await FriendRequest.findById(id);
     if (!request) return res.status(404).json({ error: 'Not found' });
-    if (request.senderId.toString() !== senderId) return res.status(403).json({ error: 'Not allowed' });
+    if (request.senderId.toString() !== safeSenderId.toString()) return res.status(403).json({ error: 'Not allowed' });
 
     await request.deleteOne();
     res.json({ message: 'Request cancelled' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -338,11 +352,7 @@ app.get('/notifications', async (req, res) => {
     const limit = 10;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
-    }
-
-    const safeUserId = new mongoose.Types.ObjectId(userId);
+    const safeUserId = parseObjectId(userId, 'userId');
 
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(50, Math.max(1, Number(limit) || 10));
@@ -354,7 +364,7 @@ app.get('/notifications', async (req, res) => {
       .skip((safePage - 1) * safeLimit)
       .limit(safeLimit);
 
-    const unreadCount = await Notification.countDocuments({ userId, read: false });
+    const unreadCount = await Notification.countDocuments({ userId: safeUserId, read: false });
 
     const enrichedNotifications = await Promise.all(
       notifications.map(async (n) => {
@@ -384,8 +394,7 @@ app.get('/notifications', async (req, res) => {
 
     res.json({ unreadCount, notifications: enrichedNotifications });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error obteniendo notificaciones' });
+    handleServiceError(res, err, 'Error obteniendo notificaciones');
   }
 });
 
@@ -394,11 +403,12 @@ app.patch('/notifications/read-all', async (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    await Notification.updateMany({ userId, read: false }, { read: true });
+    const safeUserId = parseObjectId(userId, 'userId');
+
+    await Notification.updateMany({ userId: safeUserId, read: false }, { read: true });
     res.json({ message: 'All notifications read' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 
@@ -407,19 +417,21 @@ app.post('/notifications/game-invite', async (req, res) => {
     const { senderId, receiverId } = req.body;
     if (!senderId || !receiverId) return res.status(400).json({ error: 'senderId and receiverId required' });
 
-    const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
+    const safeSenderId = parseObjectId(senderId, 'senderId');
+    const safeReceiverId = parseObjectId(receiverId, 'receiverId');
+
+    const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: safeSenderId.toString() });
 
     await Notification.create({
-      userId: receiverId,
+      userId: safeReceiverId.toString(),
       type: 'game_invite',
-      relatedUserId: senderId,
+      relatedUserId: safeSenderId.toString(),
       relatedUserEmail: sender.data.email
     });
 
     res.status(201).json({ message: 'Game invite sent' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal error' });
+    handleServiceError(res, err);
   }
 });
 

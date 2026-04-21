@@ -12,7 +12,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 const app = express();
 app.disable('x-powered-by');
@@ -59,16 +59,16 @@ const GameModel = mongoose.model('Game', gameSchema);
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://20.188.62.231:5173',
   'http://20.188.62.231:8000',
   'http://20.188.62.231'
-];
+]);
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -78,6 +78,31 @@ app.use(cors({
 }));
 app.use(express.json());
 const games = new Map();
+
+function parseObjectIdString(value, fieldName) {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return new mongoose.Types.ObjectId(value).toString();
+}
+
+function sanitizeGameId(gameId) {
+  if (typeof gameId !== 'string' || !/^[A-Za-z0-9_-]+$/.test(gameId)) {
+    throw new Error('Invalid gameId');
+  }
+
+  return gameId;
+}
+
+function handleGameServiceError(res, error, fallbackMessage = 'Internal error') {
+  if (error.message?.startsWith('Invalid ')) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  console.error(error);
+  return res.status(500).json({ error: fallbackMessage });
+}
 
 // Rutas de bots disponibles
 const BOT_ROUTES = {
@@ -130,7 +155,7 @@ app.get('/api/game/history', async (req, res) => {
   try {
     const { userId, page = 1, sortBy = 'date', sortOrder = 'desc' } = req.query;
     const limit = 5;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
     const startIndex = (pageNum - 1) * limit;
     const endIndex = startIndex + limit;
 
@@ -138,7 +163,8 @@ app.get('/api/game/history', async (req, res) => {
       return res.status(400).json({ error: 'Falta userId en la query' });
     }
 
-    const filtro = { userId };
+    const safeUserId = parseObjectIdString(userId, 'userId');
+    const filtro = { userId: safeUserId };
     const allGames = await GameModel.find(filtro).lean();
     const sortedGames = [...allGames].sort((a, b) => {
       if (sortBy === 'moves') {
@@ -179,8 +205,7 @@ app.get('/api/game/history', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[HISTORIAL] Error obteniendo historial:', error);
-    res.status(500).json({ error: 'Error obteniendo historial' });
+    handleGameServiceError(res, error, 'Error obteniendo historial');
   }
 });
 
@@ -209,12 +234,13 @@ app.post('/api/game/start', async (req, res) => {
       startingPlayer = 'j1',
     } = req.body;
 
-    const ALLOWED_BOARD_SIZES = boardVariant === 'tetra3d'
+    const defaultBoardSize = boardVariant === 'tetra3d' ? 4 : 11;
+    const allowedBoardSizes = boardVariant === 'tetra3d'
       ? [3, 4, 5, 6]
       : [8, 11, 15, 19];
-    const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
+    const boardSize = allowedBoardSizes.includes(Number(rawBoardSize))
       ? Number(rawBoardSize)
-      : (boardVariant === 'tetra3d' ? 4 : 11);
+      : defaultBoardSize;
 
     const gameId = `game_${crypto.randomUUID()}`;
     
@@ -267,7 +293,7 @@ app.post('/api/game/start', async (req, res) => {
     });
 
   } catch (error) {
-    console.log("BOT URL:", GAMEY_BOT_URL);
+
     console.error('❌ Error starting game:', error.message);
     res.status(500).json({ error: 'Error iniciando juego' });
   }
@@ -305,7 +331,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
       game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
       game.connectionEdges = mapConnectionEdges(rustResponse.data.connectionEdges, toLogical);
       game.hasBranch = mapHasBranch(rustResponse.data.hasBranch, toLogical);
-      game.currentPlayer = rustResponse.data.turn === null || rustResponse.data.turn === undefined
+      game.currentPlayer = rustResponse.data.turn == null
         ? game.currentPlayer
         : toLogical[rustResponse.data.turn];
 
@@ -329,7 +355,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     }
   }
 
-  const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  const [x, y, z] = move.replaceAll('(', '').replaceAll(')', '').split(',').map(v => Number(v.trim()));
 
   // Usamos el turno actual del juego para determinar el player
   // (no el userId, que puede variar según el JWT)
@@ -355,7 +381,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   }
  rustResponse.data.board.forEach(move => {
   const cell = game.board.find(c => {
-    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    const [x, y, z] = c.position.replaceAll('(', '').replaceAll(')', '').split(',').map(Number);
     return x === move.x && y === move.y && z === move.z;
   });
   if (cell) cell.player = toLogical[move.player];
@@ -381,7 +407,6 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   
   try {
     const { gameId } = req.params;
-    const { role } = req.body; 
     const game = games.get(gameId);
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
@@ -391,9 +416,12 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 
     if (game.boardVariant === 'tetra3d') {
       const { toLogical } = getPlayerMapping(game);
-      const rustResponse = await axios.post(
-        `${GAMEY_BOT_URL}/v1/tetra/bot/${game.botMode}`
-      );
+      const tetraBotRoute = BOT_ROUTES[game.botMode];
+      if (!tetraBotRoute) {
+        return res.status(400).json({ error: 'Invalid bot mode' });
+      }
+
+      const rustResponse = await axios.post(`${GAMEY_BOT_URL}${tetraBotRoute}`);
 
       game.board = updateTetraBoardFromRust(rustResponse.data.board, toLogical);
       game.connectedFaces = mapConnectedFaces(rustResponse.data.connectedFaces, toLogical);
@@ -450,11 +478,11 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     // Actualizar solo la celda correspondiente
     rustResponse.data.board.forEach(m => {
   const cell = game.board.find(c => {
-    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    const [x, y, z] = c.position.replaceAll('(', '').replaceAll(')', '').split(',').map(Number);
     return x === m.x && y === m.y && z === m.z;
   });
 
-  if (cell && cell.player === null) {
+  if (cell?.player == null) {
     cell.player = toLogical[m.player];
 
     game.moves.push({
@@ -560,16 +588,18 @@ async function finishGameAndSave(game) {
   game.finishedAt = new Date();
 
   // En modo online usamos clave compuesta gameId_userId para que cada jugador tenga su registro
-  const dbKey = game.gameMode === 'online'
-    ? `${game.gameId}_${game.userId}`
-    : game.gameId;
-
   try {
+    const safeGameId = sanitizeGameId(game.gameId);
+    const safeUserId = parseObjectIdString(game.userId, 'userId');
+    const dbKey = game.gameMode === 'online'
+      ? `${safeGameId}_${safeUserId}`
+      : safeGameId;
+
     await GameModel.findOneAndUpdate(
       { gameId: dbKey },
       {
         gameId: dbKey,
-        userId: game.userId,
+        userId: safeUserId,
         gameMode: game.gameMode,
         boardVariant: game.boardVariant,
         connectedFaces: game.connectedFaces,
@@ -585,8 +615,6 @@ async function finishGameAndSave(game) {
       },
       { upsert: true, new: true }
     );
-
-    console.log(`Juego ${game.gameId} guardado en DB para userId=${game.userId}`);
   } catch (err) {
     console.error('Error guardando juego:', err);
   }
@@ -666,19 +694,23 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
   // Actualizar nombres reales si el frontend los proporciona
   const players = game.players.map((p, idx) => ({
     ...p,
-    name: (playerNames && playerNames[idx]) ? playerNames[idx] : p.name,
+    name: playerNames?.[idx] || p.name,
   }));
 
   const resolvedWinner = winner || game.winner;
   const finishedAt = game.finishedAt || new Date();
 
   try {
+    const safeUserId = parseObjectIdString(userId, 'userId');
+    const safeGameId = sanitizeGameId(gameId);
+    const recordGameId = `${safeGameId}_${safeUserId}`;
+
     // Clave compuesta para que cada jugador tenga su propio registro
     await GameModel.findOneAndUpdate(
-      { gameId: `${gameId}_${userId}` },
+      { gameId: recordGameId },
       {
-        gameId: `${gameId}_${userId}`,
-        userId,
+        gameId: recordGameId,
+        userId: safeUserId,
         gameMode: game.gameMode,
         boardSize: game.boardSize,
         players,
@@ -691,7 +723,6 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    console.log(`Juego ${gameId} guardado en DB para userId=${userId}`);
     res.json({ ok: true });
   } catch (err) {
     console.error('Error guardando juego para jugador:', err);
@@ -733,7 +764,7 @@ function initializeTetraBoard(boardSize) {
 }
 
 function parseTetraPosition(move) {
-  const parts = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  const parts = move.replaceAll('(', '').replaceAll(')', '').split(',').map(v => Number(v.trim()));
   if (parts.length !== 4 || parts.some(Number.isNaN)) {
     throw new Error('Invalid tetra position');
   }
@@ -743,7 +774,7 @@ function parseTetraPosition(move) {
 function updateTetraBoardFromRust(rustBoard, toLogical) {
   return rustBoard.map(cell => ({
     position: `(${cell.a},${cell.b},${cell.c},${cell.d})`,
-    player: cell.player === null || cell.player === undefined ? null : toLogical[cell.player],
+    player: cell.player == null ? null : toLogical[cell.player],
   }));
 }
 
@@ -818,7 +849,7 @@ function convertToYEN(game) {
     let row = '';
     for (let c = 0; c <= r; c++) {
       const cell = game.board[idx];
-      if (!cell || cell.player === null) row += '.';
+      if (cell?.player == null) row += '.';
       else if (cell.player === 'j1') row += players[toGamey.j1];
       else if (cell.player === 'j2') row += players[toGamey.j2];
       idx++;

@@ -29,6 +29,8 @@ const {
 
 const rustClassicStartOk = { data: {} };
 const rustTetraStartOk = { data: {} };
+const USER_1 = '507f1f77bcf86cd799439011';
+const USER_2 = '507f1f77bcf86cd799439012';
 
 const rustClassicMoveOk = {
   data: {
@@ -113,7 +115,7 @@ function mockHistory(result, reject = false) {
 async function startClassicGame(overrides = {}) {
   axios.post.mockResolvedValueOnce(rustClassicStartOk);
   return request(app).post('/api/game/start').send({
-    userId: 'jugador1',
+    userId: USER_1,
     gameMode: 'vsBot',
     botMode: 'random_bot',
     ...overrides,
@@ -123,7 +125,7 @@ async function startClassicGame(overrides = {}) {
 async function startTetraGame(overrides = {}) {
   axios.post.mockResolvedValueOnce(rustTetraStartOk);
   return request(app).post('/api/game/start').send({
-    userId: 'jugador1',
+    userId: USER_1,
     gameMode: 'vsBot',
     botMode: 'random_bot',
     boardVariant: 'tetra3d',
@@ -260,14 +262,14 @@ describe('GET /api/game/history', () => {
   test('devuelve el historial cuando la consulta funciona', async () => {
     const history = [{
       gameId: 'g1',
-      userId: 'u1',
+      userId: USER_1,
       createdAt: '2026-04-21T10:00:00.000Z',
       moves: [],
       winner: null,
     }];
     const chain = mockHistory(history);
 
-    const res = await request(app).get('/api/game/history').query({ userId: 'u1' });
+    const res = await request(app).get('/api/game/history').query({ userId: USER_1 });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -286,14 +288,14 @@ describe('GET /api/game/history', () => {
         winPercentage: 0,
       }
     });
-    expect(GameModel.find).toHaveBeenCalledWith({ userId: 'u1' });
+    expect(GameModel.find).toHaveBeenCalledWith({ userId: USER_1 });
     expect(chain.lean).toHaveBeenCalled();
   });
 
   test('maneja errores al obtener el historial', async () => {
     mockHistory([], true);
 
-    const res = await request(app).get('/api/game/history').query({ userId: 'u1' });
+    const res = await request(app).get('/api/game/history').query({ userId: USER_1 });
 
     expect(res.status).toBe(500);
     expect(res.body.error).toMatch(/historial/i);
@@ -309,7 +311,7 @@ describe('POST /api/game/start', () => {
     expect(res.body.status).toBe('active');
     expect(res.body.boardVariant).toBe('classic');
     expect(res.body.board).toHaveLength(66);
-    expect(res.body.players.map((player) => player.id)).toEqual(['jugador1', 'bot']);
+    expect(res.body.players.map((player) => player.id)).toEqual([USER_1, 'bot']);
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/v1/game/start'),
       { board_size: 11,
@@ -367,7 +369,7 @@ describe('POST /api/game/start', () => {
   test('devuelve 500 si falla el arranque en rust', async () => {
     axios.post.mockRejectedValueOnce(new Error('boom'));
 
-    const res = await request(app).post('/api/game/start').send({ userId: 'jugador1' });
+    const res = await request(app).post('/api/game/start').send({ userId: USER_1 });
 
     expect(res.status).toBe(500);
     expect(res.body.error).toMatch(/iniciando juego/i);
@@ -378,7 +380,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
   test('devuelve 404 si la partida no existe', async () => {
     const res = await request(app)
       .post('/api/game/fake/validateMove')
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     expect(res.status).toBe(404);
   });
@@ -389,7 +391,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     expect(res.status).toBe(200);
     expect(res.body.valid).toBe(true);
@@ -403,7 +405,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     expect(res.status).toBe(200);
     expect(res.body.winner).toBe('j1');
@@ -416,7 +418,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(0,0,0,3)' });
+      .send({ userId: USER_1, move: '(0,0,0,3)' });
 
     expect(res.status).toBe(200);
     expect(res.body.connectedFaces).toEqual({ j1: ['A', 'B'], j2: ['C'] });
@@ -438,7 +440,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(0,0,0,3)' });
+      .send({ userId: USER_1, move: '(0,0,0,3)' });
 
     expect(res.status).toBe(200);
     expect(games.get(start.body.gameId).currentPlayer).toBe('j1');
@@ -450,7 +452,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(0,0,0,3)' });
+      .send({ userId: USER_1, move: '(0,0,0,3)' });
 
     expect(res.status).toBe(200);
     expect(res.body.winner).toBe('j1');
@@ -465,7 +467,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(0,0,0,3)' });
+      .send({ userId: USER_1, move: '(0,0,0,3)' });
 
     expect(res.status).toBe(422);
     expect(res.body.error).toMatch(/invalid tetra move/i);
@@ -477,7 +479,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(0,0,0,3)' });
+      .send({ userId: USER_1, move: '(0,0,0,3)' });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/invalid tetra move/i);
@@ -489,7 +491,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     expect(res.status).toBe(200);
     expect(games.get(start.body.gameId).currentPlayer).toBe('j1');
@@ -508,7 +510,7 @@ describe('POST /api/game/:gameId/validateMove', () => {
 
     const res = await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     expect(res.status).toBe(200);
   });
@@ -536,7 +538,7 @@ describe('POST /api/game/:gameId/vsBot/move', () => {
 
     await request(app)
       .post(`/api/game/${start.body.gameId}/validateMove`)
-      .send({ userId: 'u1', move: '(10,0,0)' });
+      .send({ userId: USER_1, move: '(10,0,0)' });
 
     axios.post.mockResolvedValueOnce(rustClassicMoveOk);
 
@@ -857,7 +859,7 @@ describe('Auxiliares internas', () => {
   test('finishGameAndSave guarda el juego y marca finishedAt', async () => {
     const game = {
       gameId: 'g1',
-      userId: 'u1',
+      userId: USER_1,
       gameMode: 'vsBot',
       boardVariant: 'classic',
       connectedFaces: undefined,
@@ -882,7 +884,7 @@ describe('Auxiliares internas', () => {
     GameModel.findOneAndUpdate.mockRejectedValueOnce(new Error('db fail'));
     const game = {
       gameId: 'g2',
-      userId: 'u1',
+      userId: USER_1,
       gameMode: 'vsBot',
       boardVariant: 'classic',
       connectedFaces: undefined,
@@ -910,3 +912,4 @@ describe('GET /health', () => {
     expect(res.body.status).toMatch(/running/i);
   });
 });
+
