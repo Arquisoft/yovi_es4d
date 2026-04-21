@@ -9,7 +9,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Copiar código con ownership correcto
-COPY --chown=node:node . .
+COPY --chown=node:node gateway-service.js openapi.yaml ./
+COPY --chown=node:node monitoring ./monitoring
 
 # Cambiar a usuario no root
 USER node

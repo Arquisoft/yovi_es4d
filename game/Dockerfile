@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Copiar código con permisos normales
-COPY --chown=node:node . .
+COPY --chown=node:node game-service.js gameModel.js conection.js ./
 
 # Cambiar a usuario no root
 USER node

@@ -7,7 +7,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Copiar código con usuario correcto
-COPY --chown=node:node . .
+COPY --chown=node:node friend-service.js conection.js ./
+COPY --chown=node:node middlewares ./middlewares
+COPY --chown=node:node models ./models
 
 # Crear logs antes de bajar privilegios
 RUN mkdir -p /usr/src/friends/logs \

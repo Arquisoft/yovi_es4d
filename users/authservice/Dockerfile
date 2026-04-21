@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # Copiar código fuente con ownership correcto
-COPY --chown=node:node . .
+COPY --chown=node:node auth-service.js auth-model.js ./
 
 # Usuario no root (seguridad)
 USER node

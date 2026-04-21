@@ -38,27 +38,33 @@ app.disable('x-powered-by');
 const port = 8000;
 
 
-// Internal microservice traffic stays on HTTP unless TLS is configured explicitly.
-const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:8002';
-const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8001';
-const gameServiceUrl = process.env.GAME_SERVICE_URL || 'http://localhost:8003';
-const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:8004';
+// Internal service URLs are configurable through env vars.
+const authServiceProtocol = process.env.AUTH_SERVICE_PROTOCOL || 'http';
+const authServiceHost = process.env.AUTH_SERVICE_HOST || 'localhost';
+const authServicePort = process.env.AUTH_SERVICE_PORT || '8002';
+const userServiceProtocol = process.env.USER_SERVICE_PROTOCOL || 'http';
+const userServiceHost = process.env.USER_SERVICE_HOST || 'localhost';
+const userServicePort = process.env.USER_SERVICE_PORT || '8001';
+const gameServiceProtocol = process.env.GAME_SERVICE_PROTOCOL || 'http';
+const gameServiceHost = process.env.GAME_SERVICE_HOST || 'localhost';
+const gameServicePort = process.env.GAME_SERVICE_PORT || '8003';
+const friendServiceProtocol = process.env.FRIEND_SERVICE_PROTOCOL || 'http';
+const friendServiceHost = process.env.FRIEND_SERVICE_HOST || 'localhost';
+const friendServicePort = process.env.FRIEND_SERVICE_PORT || '8004';
+
+const authServiceUrl = process.env.AUTH_SERVICE_URL || `${authServiceProtocol}://${authServiceHost}:${authServicePort}`;
+const userServiceUrl = process.env.USER_SERVICE_URL || `${userServiceProtocol}://${userServiceHost}:${userServicePort}`;
+const gameServiceUrl = process.env.GAME_SERVICE_URL || `${gameServiceProtocol}://${gameServiceHost}:${gameServicePort}`;
+const friendServiceUrl = process.env.FRIEND_SERVICE_URL || `${friendServiceProtocol}://${friendServiceHost}:${friendServicePort}`;
 
 
 
 // Lista de orígenes permitidos
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:8000',
-  'https://localhost:5173',
-  'https://localhost:8000',
-  'http://20.188.62.231:5173',
-  'http://20.188.62.231:8000',
-  'http://20.188.62.231',
-  'https://20.188.62.231:5173',
-  'https://20.188.62.231:8000',
-  'https://20.188.62.231'
-];
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
+  'https://localhost:5173,https://localhost:8000,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {

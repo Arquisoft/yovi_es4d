@@ -57,18 +57,16 @@ const gameSchema = new mongoose.Schema({
 const GameModel = mongoose.model('Game', gameSchema);
 
 // URL del servidor bot de Rust/Gamey
-const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
+const gameyBotProtocol = process.env.GAMEY_BOT_PROTOCOL || 'http';
+const gameyBotHost = process.env.GAMEY_BOT_HOST || 'gamey_es4d';
+const gameyBotPort = process.env.GAMEY_BOT_PORT || '3001';
+const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || `${gameyBotProtocol}://${gameyBotHost}:${gameyBotPort}`;
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://20.188.62.231:5173',
-  'http://20.188.62.231:8000',
-  'http://20.188.62.231',
-  'https://localhost:5173',
-  'https://20.188.62.231:5173',
-  'https://20.188.62.231:8000',
-  'https://20.188.62.231'
-];
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
+  'https://localhost:5173,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {

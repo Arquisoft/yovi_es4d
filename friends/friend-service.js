@@ -8,7 +8,10 @@ const FriendRequest = require('./models/friendRequest');
 const Notification = require('./models/notification');
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gameDB';
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:8001';
+const userServiceProtocol = process.env.USER_SERVICE_PROTOCOL || 'http';
+const userServiceHost = process.env.USER_SERVICE_HOST || 'localhost';
+const userServicePort = process.env.USER_SERVICE_PORT || '8001';
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || `${userServiceProtocol}://${userServiceHost}:${userServicePort}`;
 
 // ConexiÃ³n a MongoDB
 if (process.env.SKIP_MONGO !== 'true') {
@@ -21,16 +24,11 @@ const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 8004;
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://20.188.62.231:5173',
-  'http://20.188.62.231:8000',
-  'http://20.188.62.231',
-  'https://localhost:5173',
-  'https://20.188.62.231:5173',
-  'https://20.188.62.231:8000',
-  'https://20.188.62.231'
-];
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
+  'https://localhost:5173,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
