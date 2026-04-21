@@ -2,7 +2,7 @@ import axios from 'axios';
 Given('a test user exists', async function () {
   // Intenta registrar el usuario, ignora si ya existe
   try {
-    await axios.post('http://localhost:8000/adduser', {
+    await axios.post('https://localhost:8000/adduser', {
       username: 'TestUserCucumber',
       email: 'testcucumber@example.com',
       password: 'Password123'

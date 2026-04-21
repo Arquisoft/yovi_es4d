@@ -126,7 +126,7 @@ jobs:
       - name: Wait for gateway to be ready
         run: |
           for i in {1..30}; do
-            if curl -fsS http://localhost:8000/health > /dev/null; then
+            if curl -fsS https://localhost:8000/health > /dev/null; then
               exit 0
             fi
             sleep 5
@@ -141,8 +141,8 @@ jobs:
         run: npx start-server-and-test "npm run dev -- --host 127.0.0.1" http://127.0.0.1:5173 "npm run test:e2e:run"
         working-directory: webapp
         env:
-          VITE_API_URL: http://localhost:8000
-          BASE_URL: http://127.0.0.1:5173
+          VITE_API_URL: https://localhost:8000
+          BASE_URL: https://127.0.0.1:5173
 
       - name: Stop backend stack
         if: always()

@@ -1,5 +1,5 @@
 import { post } from './api';
-import { API_URL } from '../config'; // API_URL apunta al gateway (http://localhost:8000)
+import { API_URL } from '../config';
 import axios from "axios";
 
 export interface Player {
@@ -78,7 +78,7 @@ export const register = async (userData: any) => {
 };
 
 export const getProfile = async () => {
-  const res = await fetch(`${API_URL}/api/users/getUserProfile`, {
+  const res = await fetch(`${API_URL}/api/user/getUserProfile`, {
     method: 'POST',
     credentials: "include",
     headers: {

@@ -1,2 +1,9 @@
 // src/config.ts
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, '');
+
+const defaultApiUrl =
+  typeof window !== 'undefined'
+    ? window.location.origin
+    : '';
+
+export const API_URL = configuredApiUrl || defaultApiUrl;
