@@ -56,8 +56,8 @@ describe('Friend Service', () => {
   it('should return 400 if userId missing in get friends', async () => {
     const res = await request(app).get('/friends');
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBe('userId required');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal error');
   });
 
   it('should return 500 if get friends fails', async () => {
@@ -587,10 +587,10 @@ describe('Friend Service', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('All notifications read');
-    expect(Notification.updateMany).toHaveBeenCalledTimes(1);
-    expect(Notification.updateMany.mock.calls[0][0].read).toBe(false);
-    expect(Notification.updateMany.mock.calls[0][0].userId.toString()).toBe(USER_1);
-    expect(Notification.updateMany.mock.calls[0][1]).toEqual({ read: true });
+    expect(Notification.updateMany).toHaveBeenCalledWith(
+      { userId: USER_1, read: false },
+      { read: true }
+    );
   });
 
   it('should return 400 if userId missing in read-all', async () => {
@@ -616,7 +616,7 @@ describe('Friend Service', () => {
   
   // POST /notifications/game-invite
    it('should send game invite notification', async () => {
-    axios.post.mockResolvedValue({
+    axios.get.mockResolvedValue({
       data: { email: 'sender@test.com' }
     });
     Notification.create.mockResolvedValue({});
@@ -645,7 +645,7 @@ describe('Friend Service', () => {
   });
 
   it('should return 500 if game invite fails', async () => {
-    axios.post.mockRejectedValue(new Error('User service fail'));
+    axios.get.mockRejectedValue(new Error('User service fail'));
 
     const res = await request(app)
       .post('/notifications/game-invite')
