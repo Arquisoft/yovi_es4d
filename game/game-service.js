@@ -14,6 +14,7 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
+app.disable('x-powered-by');
 const port = process.env.PORT || 8003;
 
 
@@ -53,7 +54,23 @@ const GameModel = mongoose.model('Game', gameSchema);
 // URL del servidor bot de Rust/Gamey
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || 'http://gamey_es4d:3001';
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://20.188.62.231:5173',
+  'http://20.188.62.231:8000',
+  'http://20.188.62.231'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 const games = new Map();
 

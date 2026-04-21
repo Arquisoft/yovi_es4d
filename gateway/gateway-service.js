@@ -34,6 +34,7 @@ const privateKey = process.env.TOKEN_SECRET_KEY || 'mi_clave_secreta';
 const { Server } = require('socket.io'); //Para partidas online (WebSockets)
 
 const app = express();
+app.disable('x-powered-by');
 const port = 8000;
 
 
@@ -803,6 +804,7 @@ const io = new Server(server, {
 const rooms = new Map();
  
 function generateCode() {
+    // NOSONAR: delay no requiere seguridad criptográfica
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
  

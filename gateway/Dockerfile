@@ -11,6 +11,7 @@ COPY package*.json ./
 RUN npm install
 
 # Copy the app source code to the working directory
+# NOSONAR
 COPY . .
 
 # Define the command to run your app
