@@ -388,79 +388,6 @@ paths:
         '500':
           description: Internal server error.
 
-  /api/game/{gameId}/move:
-    post:
-      summary: Trigger the bot response (vsBot) or get updated state (multiplayer) after a player move.
-      description: >
-        **Must be called AFTER `/api/game/{gameId}/validateMove`**, which applies the human player's move
-        and advances the turn to j2. This endpoint then triggers the bot response (vsBot mode) or returns
-        the updated board state (multiplayer mode).
-
-        Flow for vsBot: `validateMove` (human plays) → `move` (bot plays).
-      operationId: makeMove
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: gameId
-          required: true
-          schema:
-            type: string
-          example: game_1713000000000_abc123
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - move
-                - mode
-              properties:
-                move:
-                  type: string
-                  description: Cell position in (x,y,z) format. Same move already validated with validateMove.
-                  example: (1,1,0)
-                mode:
-                  type: string
-                  enum: [vsBot, multiplayer]
-                  description: "Game mode. vsBot: triggers bot response (requires it to be j2 turn). multiplayer: returns current board state."
-                  example: vsBot
-      responses:
-        '200':
-          description: Updated game state after the move.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  gameId:
-                    type: string
-                  board:
-                    type: array
-                    items:
-                      type: object
-                  moves:
-                    type: array
-                    items:
-                      type: string
-                  turn:
-                    type: string
-                    example: j1
-                  winner:
-                    type: string
-                    nullable: true
-                    example: null
-                  status:
-                    type: string
-                    example: active
-        '400':
-          description: Missing required fields or invalid game mode.
-        '401':
-          description: Unauthorized.
-        '500':
-          description: Internal server error.
-
   /api/game/{gameId}/setPlayerName:
     post:
       summary: Set the real name of a player in an online game.
@@ -560,7 +487,11 @@ paths:
 
   /api/game/{gameId}/validateMove:
     post:
-      summary: Validate and apply a player move.
+      summary: Make a player move.
+      description: >
+        Applies the human player's move to the game. This is the main endpoint to use during a game turn.
+        After a successful call the turn advances automatically (j1 → j2 or j2 → j1).
+        If `winner` is non-null the game is over.
       operationId: validateMove
       security:
         - bearerAuth: []
@@ -570,6 +501,7 @@ paths:
           required: true
           schema:
             type: string
+          example: game_1713000000000_abc123
       requestBody:
         required: true
         content:
@@ -585,7 +517,7 @@ paths:
                   example: (1,1,0)
       responses:
         '200':
-          description: Move result.
+          description: Move applied successfully.
           content:
             application/json:
               schema:
@@ -593,10 +525,11 @@ paths:
                 properties:
                   valid:
                     type: boolean
+                    example: true
                   winner:
                     type: string
                     nullable: true
-                    example: j1
+                    example: null
                   status:
                     type: string
                     example: active
