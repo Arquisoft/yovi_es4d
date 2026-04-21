@@ -48,6 +48,7 @@ const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:800
 // Lista de orígenes permitidos
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:8000',
   'http://20.188.62.231:5173',
   'http://20.188.62.231:8000',
   'http://20.188.62.231'
