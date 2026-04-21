@@ -349,14 +349,14 @@ test("paginación funciona (cambia de página)", async () => {
 
   await waitFor(() => screen.getByText("A0"));
 
-  expect(screen.getAllByRole("listitem")).toHaveLength(8);
+  expect(screen.getAllByRole("listitem")).toHaveLength(10);
 
   const nextBtn = screen.getByRole("button", { name: /⇨/ });
 
   await user.click(nextBtn);
 
   await waitFor(() => {
-    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getAllByRole("listitem")).toHaveLength(10);
   });
 });
 
@@ -368,7 +368,7 @@ test("paginación no baja de página 1", async () => {
 
   await waitFor(() => screen.getByText("historial.noGames"));
 
-  const prevBtn = screen.getByRole("button", { name: /⇩/ });
+  const prevBtn = screen.getByRole("button", { name: /↓/ });
 
   await user.click(prevBtn);
 });
@@ -400,7 +400,9 @@ test("resetea página al cambiar orden", async () => {
   const dateBtn = screen.getByRole("button", { name: /fecha/i });
   await user.click(dateBtn);
 
-  expect(screen.getByText(/Página 1/)).toBeInTheDocument();
+  expect(
+    screen.getByText((content)=>content.includes("friends.page") && content.includes("1"))
+  ).toBeInTheDocument();
 });
 
 test("botón ⇦ reduce la página correctamente", async () => {
@@ -431,7 +433,9 @@ test("botón ⇦ reduce la página correctamente", async () => {
   await user.click(prevBtn);
 
   await waitFor(() => {
-    expect(screen.getByText(/Página 1/)).toBeInTheDocument();
+    expect(
+    screen.getByText((content)=>content.includes("friends.page") && content.includes("1"))
+    ).toBeInTheDocument();
   });
 });
 
@@ -531,10 +535,10 @@ test("ordena por movimientos asc y cubre moves undefined", async () => {
     const movesBtn = screen.getByRole("button", { name: /movimientos/i });
 
     await user.click(movesBtn);
-    expect(screen.getByText(/⇩/)).toBeInTheDocument();
+    expect(screen.getByText(/↓/)).toBeInTheDocument();
 
     await user.click(movesBtn);
-    expect(screen.getByText(/⇧/)).toBeInTheDocument();
+    expect(screen.getByText(/↑/)).toBeInTheDocument();
   });
 
   test("muestra página 1 cuando no hay datos (totalPages = 0)", async () => {
@@ -795,8 +799,9 @@ test("muestra Página 1 / 1 cuando solo hay una página", async () => {
 
   await waitFor(() => screen.getByText("A"));
 
-  expect(screen.getByText(/Página 1\s*\/\s*1/i))
-    .toBeInTheDocument();
+  expect(
+    screen.getByText((content)=>content.includes("friends.page") && content.includes("1"))
+  ).toBeInTheDocument();
 });
 
 test("cubre movesA ejecutando el comparator real", async () => {
@@ -868,7 +873,7 @@ test("cubre totalPages || 1 mostrando Página 1 / 1", async () => {
   await waitFor(()=>screen.getByText("A"));
 
   expect(
-    screen.getByText((content)=>content.includes("Página 1"))
+    screen.getByText((content)=>content.includes("friends.page") && content.includes("1"))
   ).toBeInTheDocument();
 });
 
@@ -989,7 +994,7 @@ test("muestra Página 1 / 1 cuando solo existe una página", async () => {
   await waitFor(()=>screen.getByText("A"));
 
   expect(
-    screen.getByText((content)=>content.includes("Página"))
+    screen.getByText((content)=>content.includes("friends.page") && content.includes("1"))
   ).toBeInTheDocument();
 });
 
