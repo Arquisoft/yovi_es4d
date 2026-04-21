@@ -95,6 +95,29 @@ app.get('/api/game/bot-modes', (req, res) => {
 });
 
 /**
+ * Endpoint público para competición entre bots.
+ * Recibe un estado de tablero en formato YEN y devuelve la jugada del bot indicado.
+ * @route {GET} /play
+ * @param {string} req.query.position - Estado del tablero en JSON YEN (obligatorio)
+ * @param {string} [req.query.bot_id] - Identificador del bot. Por defecto: hard_bot
+ * @returns {Object} {"coords":{"x":N,"y":N,"z":N}} o {"action":"resign"}
+ * @throws {400} Si falta position
+ * @throws {500} Si hay un error en el bot
+ */
+app.get('/play', async (req, res) => {
+  const { position, bot_id } = req.query;
+  if (!position) return res.status(400).json({ error: 'position requerido' });
+  try {
+    const response = await axios.get(`${GAMEY_BOT_URL}/play`, {
+      params: { position, bot_id: bot_id || 'hard_bot' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error en el bot' });
+  }
+});
+
+/**
  * Obtener historial de juegos de un usuario
  * @route {GET} /api/game/history
  * @param {string} req.query.userId - El ID de usuario para obtener el historial
@@ -314,7 +337,8 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
 
   const rustResponse = await axios.post(`${GAMEY_BOT_URL}/v1/game/move`, {
     x, y, z,
-    player: playerNum
+    player: playerNum,
+    game_id: gameId
   });
 
   game.moves.push({
@@ -415,7 +439,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
     const botRoute = BOT_ROUTES[game.botMode] || BOT_ROUTES['random_bot'];
     const rustResponse = await axios.post(
       `${GAMEY_BOT_URL}${botRoute}`,
-      convertToYEN(game)
+      { ...convertToYEN(game), game_id: gameId }
     );
 
     if (!rustResponse.data?.board) {
@@ -528,14 +552,22 @@ app.get('/api/game/:gameId', (req, res) => {
  * @param {Date} game.finishedAt - Fecha de finalización
  */
 async function finishGameAndSave(game) {
+  // Las partidas locales de 2 jugadores no se guardan en el historial
+  if (game.gameMode === 'multiplayer') return;
+
   game.status = 'finished';
   game.finishedAt = new Date();
 
+  // En modo online usamos clave compuesta gameId_userId para que cada jugador tenga su registro
+  const dbKey = game.gameMode === 'online'
+    ? `${game.gameId}_${game.userId}`
+    : game.gameId;
+
   try {
     await GameModel.findOneAndUpdate(
-      { gameId: game.gameId },
+      { gameId: dbKey },
       {
-        gameId: game.gameId,
+        gameId: dbKey,
         userId: game.userId,
         gameMode: game.gameMode,
         boardVariant: game.boardVariant,
@@ -545,7 +577,7 @@ async function finishGameAndSave(game) {
         boardSize: game.boardSize,
         players: game.players,
         moves: game.moves,
-        status: game.status,   
+        status: game.status,
         winner: game.winner,
         createdAt: game.createdAt,
         finishedAt: game.finishedAt
@@ -553,7 +585,7 @@ async function finishGameAndSave(game) {
       { upsert: true, new: true }
     );
 
-    console.log(`Juego ${game.gameId} guardado en DB`);
+    console.log(`Juego ${game.gameId} guardado en DB para userId=${game.userId}`);
   } catch (err) {
     console.error('Error guardando juego:', err);
   }
@@ -596,6 +628,75 @@ app.post('/api/game/endAndSaveGame', async (req, res) => {
   }
 });*/
 
+
+/**
+ * Registrar el nombre real de un jugador en la partida en memoria.
+ * El frontend lo llama nada más obtener su perfil y el del rival.
+ * @route {POST} /api/game/:gameId/setPlayerName
+ */
+app.post('/api/game/:gameId/setPlayerName', (req, res) => {
+  const { gameId } = req.params;
+  const { role, name } = req.body; // role: 'j1' | 'j2', name: string
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+  const player = game.players.find(p => p.color === role);
+  if (player && name) player.name = name;
+  res.json({ ok: true });
+});
+
+/**
+ * Guardar la partida online en el historial de un jugador concreto.
+ * @route {POST} /api/game/:gameId/saveForPlayer
+ */
+app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
+  const { gameId } = req.params;
+  // winner y playerNames los envía el frontend, que conoce los nombres reales y el resultado final
+  const { userId, winner, playerNames } = req.body;
+
+  if (!userId) return res.status(400).json({ error: 'userId requerido' });
+
+  const game = games.get(gameId);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+
+  if (game.gameMode === 'multiplayer') {
+    return res.status(400).json({ error: 'Las partidas locales no se guardan en el historial' });
+  }
+
+  // Actualizar nombres reales si el frontend los proporciona
+  const players = game.players.map((p, idx) => ({
+    ...p,
+    name: (playerNames && playerNames[idx]) ? playerNames[idx] : p.name,
+  }));
+
+  const resolvedWinner = winner || game.winner;
+  const finishedAt = game.finishedAt || new Date();
+
+  try {
+    // Clave compuesta para que cada jugador tenga su propio registro
+    await GameModel.findOneAndUpdate(
+      { gameId: `${gameId}_${userId}` },
+      {
+        gameId: `${gameId}_${userId}`,
+        userId,
+        gameMode: game.gameMode,
+        boardSize: game.boardSize,
+        players,
+        moves: game.moves,
+        status: 'finished',
+        winner: resolvedWinner,
+        createdAt: game.createdAt,
+        finishedAt
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`Juego ${gameId} guardado en DB para userId=${userId}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error guardando juego para jugador:', err);
+    res.status(500).json({ error: 'Error guardando juego' });
+  }
+});
 
 // ================= FUNCIONES AUXILIARES =================
 

@@ -160,7 +160,7 @@ const OnlineLobby: React.FC = () => {
                 </h2>
               </div>
 
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              <p className="text-sm" style={{ color: "var(--subtle)" }}>
                 Introduce el código de 4 letras que te ha compartido tu amigo.
               </p>
 
@@ -199,7 +199,7 @@ const OnlineLobby: React.FC = () => {
             <button
               onClick={() => navigate("/select")}
               className="text-sm transition-opacity hover:opacity-70"
-              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+              style={{ background: "none", border: "none", color: "var(--subtle)", cursor: "pointer" }}
             >
               ← Volver
             </button>
@@ -234,14 +234,14 @@ const OnlineLobby: React.FC = () => {
               ))}
             </div>
 
-            <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
+            <p className="text-sm text-center" style={{ color: "var(--subtle)" }}>
               Esperando a que tu amigo se una...
             </p>
 
             <button
               onClick={() => navigate("/select")}
               className="text-sm mt-2 transition-opacity hover:opacity-70"
-              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+              style={{ background: "none", border: "none", color: "var(--subtle)", cursor: "pointer" }}
             >
               ← Cancelar
             </button>
@@ -252,7 +252,7 @@ const OnlineLobby: React.FC = () => {
       {/* ── Uniéndose ── */}
       {lobbyState === "joining" && (
         <div className="fade-up" style={{ textAlign: "center" }}>
-          <p style={{ color: "var(--text-muted)" }}>Uniéndose a la sala <strong style={{ color: "var(--violet)" }}>{inputCode}</strong>...</p>
+          <p style={{ color: "var(--subtle)" }}>Uniéndose a la sala <strong style={{ color: "var(--violet)" }}>{inputCode}</strong>...</p>
         </div>
       )}
 

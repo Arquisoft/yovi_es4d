@@ -400,6 +400,48 @@
     letter-spacing: 0.1em;
 }
 
+.gb-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gb-timer {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    transition: background 0.3s, border-color 0.3s;
+}
+.gb-timer[data-urgent="true"] {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    animation: pulse-timer 0.6s ease-in-out infinite;
+}
+.gb-timer-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: color 0.3s;
+    min-width: 1.5ch;
+    text-align: right;
+}
+.gb-timer[data-urgent="true"] .gb-timer-value { color: #dc2626; }
+.gb-timer-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--subtle);
+}
+
+@keyframes pulse-timer {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.3); }
+    50%       { box-shadow: 0 0 0 4px rgba(220,38,38,0.1); }
+}
+
 .gb-main {
     display: flex;
     flex: 1;
@@ -416,6 +458,71 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 640px) {
+    .gb-main {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+        gap: 12px;
+        justify-content: flex-start;
+    }
+
+    .gb-player-aside {
+        width: 100%;
+    }
+
+    /* Card horizontal compacta en móvil */
+    .gb-player-aside .player-card {
+        flex-direction: row;
+        gap: 12px;
+        padding: 10px 14px;
+        align-items: center;
+    }
+
+    .gb-player-aside .player-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .gb-player-aside .player-name {
+        flex: 1;
+        font-size: 0.8rem;
+    }
+
+    .gb-player-aside .player-score {
+        font-size: 1.2rem;
+    }
+
+    .gb-player-aside .player-score-label {
+        font-size: 9px;
+    }
+
+    .gb-player-aside .player-thinking {
+        margin-top: 0;
+    }
+
+    .gb-board-section {
+        flex: 1;
+        width: 100%;
+    }
+
+    .gb-header {
+        padding: 10px 16px;
+    }
+
+    .gb-header-logo {
+        display: none;
+    }
+
+    .gb-header-meta {
+        display: none;
+    }
     min-height: 68vh;
     position: relative;
 }

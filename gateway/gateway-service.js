@@ -49,6 +49,7 @@ const friendServiceUrl = process.env.FRIEND_SERVICE_URL || 'http://localhost:800
 // Lista de orígenes permitidos
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:8000',
   'http://20.188.62.231:5173',
   'http://20.188.62.231:8000',
   'http://20.188.62.231'
@@ -275,6 +276,33 @@ app.post("/api/user/getUserProfile", async (req, res) => {
 
 
 // ================= GAME =================
+
+/**
+ * Endpoint público para competición entre bots.
+ * Recibe un estado de tablero en formato YEN y devuelve la jugada del bot indicado.
+ * No requiere autenticación.
+ *
+ * @route {GET} /play
+ * @param {string} req.query.position - Estado del tablero en JSON YEN (obligatorio)
+ * @param {string} [req.query.bot_id] - Identificador del bot (random_bot, intermediate_bot, hard_bot). Por defecto: hard_bot
+ * @returns {Object} {"coords":{"x":N,"y":N,"z":N}} o {"action":"resign"}
+ * @throws {400} Si falta el parámetro position
+ * @throws {500} Si hay un error procesando la jugada
+ */
+app.get('/play', async (req, res) => {
+  const { position, bot_id } = req.query;
+  if (!position) {
+    return res.status(400).json({ error: 'El parámetro position es obligatorio' });
+  }
+  try {
+    const response = await axios.get(`${gameServiceUrl}/play`, {
+      params: { position, bot_id: bot_id || 'hard_bot' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error procesando jugada del bot' });
+  }
+});
 
 /**
  * Obtener modos de bot disponibles.
@@ -558,6 +586,28 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(error.response?.status || 500).json({ error: error.response?.data?.error || 'Error obteniendo estado del juego' });
+  }
+});
+
+// Registrar nombre real de un jugador en la partida (modo online)
+app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/setPlayerName`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
+  }
+});
+
+// Guardar partida online en el historial de un jugador concreto
+app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/saveForPlayer`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });
   }
 });
 
@@ -928,8 +978,8 @@ io.on('connection', (socket) => {
   });
  
   // ── Reenviar fin de partida ─────────────────────────────
-  socket.on('game_over', ({ code, winner }) => {
-    socket.to(code).emit('game_over', { winner });
+  socket.on('game_over', ({ code, winner, gameId }) => {
+    socket.to(code).emit('game_over', { winner, gameId });
   });
  
   // ── Desconexión ─────────────────────────────────────────

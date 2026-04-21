@@ -19,68 +19,40 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - username
+                - email
+                - password
               properties:
                 username:
                   type: string
-                  description: User ID that will be unique.
+                  description: Unique display name for the user.
                   example: student
+                email:
+                  type: string
+                  description: Email address of the user (unique).
+                  example: student@example.com
                 password:
                   type: string
-                  description: User password that must be at least 8 characters long and contain at least one uppercase letter,one number and no spaces.
+                  description: Password (min 8 chars, at least one uppercase letter and one number, no spaces).
                   example: Password123
       responses:
-        '200':
-          description: User added successfully.
+        '201':
+          description: User created successfully.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  username:
+                  message:
                     type: string
-                    description: User ID
-                    example: student
-                  password:
+                    example: User created
+                  id:
                     type: string
-                    description: Hashed password
-                    example: $2b$10$ZKdNYLWFQxzt5Rei/YTc/OsZNi12YiWz30JeUFHNdAt7MyfmkTuvC
-                  _id:
-                    type: string
-                    description: Identification
+                    description: ID of the newly created user.
                     example: 65f756db3fa22d227a4b7c7d
-                  createdAt:
-                    type: string
-                    description: Creation date.
-                    example: '2024-03-17T20:47:23.935Z'
-                  ___v:
-                    type: integer
-                    example: '0'                                        
         '400':
-          description: Failed to add user due to missing fields, not secure password or invalid username format.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Missing field error.
-                        example: "Missing required field: password"
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Password security error.
-                        example: "Password error content: notSecurePassword"
-                  - type: object
-                    properties:
-                      error:
-                        type: string
-                        description: Username format error.
-                        example: "Invalid username format"
-        '409':
-          description: Username already exists.
+          description: Failed to add user due to missing fields or password not meeting requirements.
           content:
             application/json:
               schema:
@@ -88,8 +60,17 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: Error information.
-                    example: Username already exists
+                    example: "Password does not meet requirements"
+        '409':
+          description: Email or username already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email or username already exists
   /health:
     get:
       summary: Check the health status of the service.
@@ -117,13 +98,13 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                email:
                   type: string
-                  description: User ID from an existing user.
-                  example: student
+                  description: Email of the user.
+                  example: user@example.com
                 password:
                   type: string
-                  description: User password for the username.
+                  description: User password.
                   example: Password123
       responses:
         '200':
@@ -183,63 +164,72 @@ paths:
                     description: Error information.
                     example: Too many requests, please try again later
                   
-  /api/user/editUser:
-    post:
-      summary: Change user password.
-      operationId: changeUserPassword
-      security:
-        - bearerAuth: []  # Requiere autenticación con JWT
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - currentPassword
-                - newPassword
-              properties:
-                currentPassword:
-                  type: string
-                  description: Current password of the user.
-                  example: Password123
-                newPassword:
-                  type: string
-                  description: New password.
-                  example: newSecurePass123
+
+
+
+
+
+
+  /play:
+    get:
+      summary: Request a bot move for a given board position (public, no auth required).
+      description: >
+        Accepts a board position in YEN (Y Exchange Notation) format and returns the
+        move chosen by the specified bot. Used for inter-implementation competitions.
+        The position parameter must be a URL-encoded JSON string.
+      operationId: play
+      parameters:
+        - in: query
+          name: position
+          required: true
+          schema:
+            type: string
+          description: >
+            Board position in YEN JSON format. Fields: size (integer), turn (0 or 1),
+            players (array of two single-char strings, e.g. ["B","R"]),
+            layout (string with rows separated by '/' and cells as player symbol or '.').
+          example: '{"size":3,"turn":0,"players":["B","R"],"layout":"./B./..."}'
+        - in: query
+          name: bot_id
+          required: false
+          schema:
+            type: string
+            enum: [random_bot, intermediate_bot, hard_bot]
+            default: hard_bot
+          description: >
+            Bot identifier to use for the move. Defaults to hard_bot if not specified.
       responses:
         '200':
-          description: Password updated successfully.
+          description: Bot move or action.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: string
-                    example: true
-        '404':
-          description: User not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: User not found
-        '401':
-          description: Unauthorized - Incorrect Password.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Incorrent current password
+                oneOf:
+                  - type: object
+                    description: A placement move with coordinates.
+                    properties:
+                      coords:
+                        type: object
+                        properties:
+                          x:
+                            type: integer
+                            example: 1
+                          y:
+                            type: integer
+                            example: 1
+                          z:
+                            type: integer
+                            example: 0
+                    example: {"coords":{"x":1,"y":1,"z":0}}
+                  - type: object
+                    description: A game action (e.g. resign when no moves available).
+                    properties:
+                      action:
+                        type: string
+                        example: resign
+                    example: {"action":"resign"}
         '400':
-          description: Unauthorized - Missing or invalid token.
+          description: Missing or invalid position parameter.
           content:
             application/json:
               schema:
@@ -247,14 +237,52 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: Cast to ObjectId failed for value \"guestXXXXXXXXXXXX\" (type string) at path \"_id\" for model \"User\"
+                    example: El parámetro position es obligatorio
+        '500':
+          description: Internal bot error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Error procesando jugada del bot
 
-  /api/game/endAndSaveGame:
+  /api/game/bot-modes:
+    get:
+      summary: Get available bot difficulty modes (public, no auth required).
+      operationId: getBotModes
+      responses:
+        '200':
+          description: List of available bot identifiers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  botModes:
+                    type: array
+                    items:
+                      type: string
+                    example: ["random_bot", "intermediate_bot", "hard_bot"]
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Error obteniendo modos de bot
+
+  /api/game/start:
     post:
-      summary: Save the result of a completed game
-      operationId: endAndSaveGame
+      summary: Start a new game session.
+      operationId: startGame
       security:
-        - bearerAuth: []  # Requiere autenticación JWT
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -262,68 +290,183 @@ paths:
             schema:
               type: object
               required:
-                - token
-                - numberOfQuestions
-                - numberOfCorrectAnswers
                 - gameMode
-                - points
-                - questions
               properties:
-                numberOfQuestions:
-                  type: integer
-                  example: 30
-                numberOfCorrectAnswers:
-                  type: integer
-                  example: 18
                 gameMode:
                   type: string
-                  example: normal
-                points:
+                  enum: [vsBot, multiplayer, online]
+                  example: vsBot
+                botMode:
+                  type: string
+                  enum: [random_bot, intermediate_bot, hard_bot]
+                  example: random_bot
+                boardSize:
                   type: integer
-                  example: 500
-                questions:
+                  enum: [8, 11, 15, 19]
+                  default: 11
+                  example: 11
+      responses:
+        '200':
+          description: Game started successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                    example: game_1713000000000_abc123
+                  board:
+                    type: array
+                    items:
+                      type: object
+                  players:
+                    type: array
+                    items:
+                      type: object
+                  turn:
+                    type: string
+                    example: j1
+                  status:
+                    type: string
+                    example: active
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}:
+    get:
+      summary: Get the current state of a game.
+      operationId: getGameState
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      responses:
+        '200':
+          description: Current game state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                    example: game_1713000000000_abc123
+                  board:
+                    type: array
+                    items:
+                      type: object
+                  players:
+                    type: array
+                    items:
+                      type: object
+                  moves:
+                    type: array
+                    items:
+                      type: string
+                  turn:
+                    type: string
+                    example: j1
+                  status:
+                    type: string
+                    example: active
+                  winner:
+                    type: string
+                    nullable: true
+                    example: null
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+        '500':
+          description: Internal server error.
+
+  /api/game/{gameId}/setPlayerName:
+    post:
+      summary: Set the real name of a player in an online game.
+      operationId: setPlayerName
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - name
+              properties:
+                role:
+                  type: string
+                  enum: [j1, j2]
+                  example: j1
+                name:
+                  type: string
+                  example: Jorge
+      responses:
+        '200':
+          description: Player name updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+
+  /api/game/{gameId}/saveForPlayer:
+    post:
+      summary: Save an online game in a specific player's history.
+      operationId: saveForPlayer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  example: 65f756db3fa22d227a4b7c7d
+                winner:
+                  type: string
+                  example: j1
+                playerNames:
                   type: array
                   items:
-                    type: object
-                    required:
-                      - text
-                      - imageUrl
-                      - selectedAnswer
-                      - answers
-                    properties:
-                      text:
-                        type: string
-                        example: Esto es una pregunta
-                      imageUrl:
-                        type: string
-                        format: uri
-                        example: https://example.com/question-image.jpg
-                      selectedAnswer:
-                        type: string
-                        example: Esto es una respuesta1
-                      answers:
-                        type: array
-                        items:
-                          type: object
-                          required:
-                            - text
-                            - isCorrect
-                          properties:
-                            text:
-                              type: string
-                              example: Esto es una respuesta1
-                            isCorrect:
-                              type: boolean
-                              example: true
-                        example:
-                          - text: Esto es una respuesta1
-                            isCorrect: true
-                          - text: Esto es una respuesta2
-                            isCorrect: false
-                          - text: Esto es una respuesta3
-                            isCorrect: false
-                          - text: Esto es una respuesta4
-                            isCorrect: false
+                    type: string
+                  example: ["Jorge", "Rival"]
       responses:
         '200':
           description: Game saved successfully.
@@ -332,52 +475,80 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: Game data saved successfully.
+                  ok:
+                    type: boolean
+                    example: true
         '400':
-          description: Invalid input or missing fields.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Missing fields or invalid format
+          description: Missing userId.
         '401':
-          description: Unauthorized - Invalid or missing token.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+          description: Unauthorized.
         '500':
-          description: Error saving the game.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal server error
+          description: Internal server error.
 
-
-
-  /api/game/history/gameList:
-    get:
-      summary: Get game history for the authenticated user
-      description: Returns a list of stored games for the currently authenticated user.
-      operationId: getGameHistory
+  /api/game/{gameId}/validateMove:
+    post:
+      summary: Make a player move.
+      description: >
+        Applies the human player's move to the game. This is the main endpoint to use during a game turn.
+        After a successful call the turn advances automatically (j1 → j2 or j2 → j1).
+        If `winner` is non-null the game is over.
+      operationId: validateMove
       security:
-        - bearerAuth: []  # Requiere autenticación JWT
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          example: game_1713000000000_abc123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - move
+              properties:
+                move:
+                  type: string
+                  description: Cell position in (x,y,z) format.
+                  example: (1,1,0)
       responses:
         '200':
-          description: List of games retrieved successfully.
+          description: Move applied successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  winner:
+                    type: string
+                    nullable: true
+                    example: null
+                  status:
+                    type: string
+                    example: active
+        '400':
+          description: Invalid move.
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Game not found.
+
+  /api/game/history:
+    get:
+      summary: Get the authenticated user's game history.
+      operationId: getHistory
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of finished games for the user.
           content:
             application/json:
               schema:
@@ -385,193 +556,26 @@ paths:
                 items:
                   type: object
                   properties:
-                    _id:
+                    gameId:
                       type: string
-                      example: 661c8e10f7c1a5c7b0b3d2a4
-                    numberOfQuestions:
-                      type: integer
-                      example: 10
-                    numberOfCorrectAnswers:
-                      type: integer
-                      example: 8
                     gameMode:
                       type: string
-                      example: normal
-                    points:
+                    boardSize:
                       type: integer
-                      example: 800
-                    topics:
-                      type: array
-                      items:
-                        type: string
-                      example: ["art", "history"]
+                    winner:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    finishedAt:
+                      type: string
+                      format: date-time
         '401':
-          description: Unauthorized - Invalid or missing token.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+          description: Unauthorized.
         '500':
           description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal Server Error
-        '404':
-          description: No games found for the user.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: No games found for this user.
-  /api/game/new:
-    post:
-      summary: Configure a new game with selected topics and language
-      operationId: configureNewGame
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - topics
-                - lang
-              properties:
-                topics:
-                  type: array
-                  items:
-                    type: string
-                  example: ["art", "history"]
-                lang:
-                  type: string
-                  enum: [es, en]
-                  example: es
-      responses:
-        '200':
-          description: Game configured successfully. Returns a cacheId to be used in next requests.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cacheId:
-                    type: string
-                    example: abc123def456ghi789
-        '400':
-          description: Bad request - Invalid topics or language.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid topics or language
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal Server Error
 
-  /api/game/question:
-    post:
-      summary: Get a random question for the game using cacheId.
-      operationId: getRandomQuestion
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - cacheId
-              properties:
-                cacheId:
-                  description: This cacheId should be changed with the one '/api/game/new' returns.
-                  type: string
-                  example: abcdef123456
-      responses:
-        '200':
-          description: Random question retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  text:
-                    type: string
-                    example: What is the capital of France?
-                  imageUrl:
-                    type: string
-                    format: uri
-                    example: https://example.com/question-image.jpg
-                  selectedAnswer:
-                    type: string
-                    example: Paris
-                  answers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        text:
-                          type: string
-                          example: Option text
-                        isCorrect:
-                          type: boolean
-                          example: false
-                    example:
-                      - text: Paris
-                        isCorrect: true
-                      - text: Madrid
-                        isCorrect: false
-                      - text: Berlin
-                        isCorrect: false
-                      - text: Rome
-                        isCorrect: false
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal Server Error
-        '400':
-          description: Bad request - Game settings not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Game settings not found.
-
-
-
-
-
-
-# This is the security scheme for JWT authentication. It defines how the authentication should be done in the API. 
+# This is the security scheme for JWT authentication. It defines how the authentication should be done in the API.
 # The bearerAuth scheme is used to indicate that the API uses JWT (JSON Web Token) tokens for authentication.
 components:
   securitySchemes:
