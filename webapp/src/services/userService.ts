@@ -99,6 +99,6 @@ export const logout = async () => {
     },
   });
 
-  if (!res.ok) throw new Error("Error al cerrar sesiÃ³n");
+  if (!res.ok) throw new Error("Error al cerrar sesión");
   return res.json();
 };

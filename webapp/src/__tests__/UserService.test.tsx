@@ -22,69 +22,68 @@ describe("API Service", () => {
 
     test("should return game history when request succeeds", async () => {
 
-      const mockHistory = [
-        {
-          gameId: "game1",
-          userId: "123",
-          gameMode: "vsBot",
-          createdAt: "2024-01-01",
-          players: [],
-          status: "finished",
-          winner: "j1"
+      const mockHistory = {
+        games: [
+          {
+            gameId: "game1",
+            userId: "123",
+            gameMode: "vsBot",
+            createdAt: "2024-01-01",
+            players: [],
+            status: "finished",
+            winner: "j1"
+          }
+        ],
+        pagination: {
+          page: 1,
+          limit: 5,
+          hasPrev: false,
+          hasNext: false,
+        },
+        summary: {
+          totalGames: 1,
+          totalWins: 1,
+          totalDraws: 0,
+          totalLosses: 0,
+          winPercentage: 100,
         }
-      ];
+      };
 
-      (fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => mockHistory
+      (axios.get as any).mockResolvedValue({
+        data: mockHistory
       });
 
       const result = await getHistory("123");
 
-      expect(fetch).toHaveBeenCalled();
+      expect(axios.get).toHaveBeenCalled();
       expect(result).toEqual(mockHistory);
     });
 
-    test("should return empty array when response is not ok", async () => {
-
-      (fetch as any).mockResolvedValue({
-        ok: false,
-        status: 500
+    test("should pass pagination and sorting params", async () => {
+      (axios.get as any).mockResolvedValue({
+        data: { games: [], pagination: {}, summary: {} }
       });
 
-      const result = await getHistory("123");
+      await getHistory("123", 2, "moves", "asc");
 
-      expect(result).toEqual([]);
-    });
-
-    test("should return empty array when response is not an array", async () => {
-
-      (fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({ error: "invalid" })
-      });
-
-      const result = await getHistory("123");
-
-      expect(result).toEqual([]);
-    });
-
-    test("should return empty array and log error if fetch throws", async () => {
-
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      (fetch as any).mockRejectedValue(new Error("Network error"));
-
-      const result = await getHistory("123");
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error fetching game history:",
-        expect.any(Error)
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining("/api/game/history"),
+        expect.objectContaining({
+          params: {
+            userId: "123",
+            page: 2,
+            sortBy: "moves",
+            sortOrder: "asc",
+          },
+          withCredentials: true,
+        })
       );
+    });
 
-      expect(result).toEqual([]);
+    test("should reject if axios throws", async () => {
+      (axios.get as any).mockRejectedValue(new Error("Network error"));
 
-      consoleSpy.mockRestore();
+      await expect(getHistory("123")).rejects.toThrow("Network error");
     });
 
   });
