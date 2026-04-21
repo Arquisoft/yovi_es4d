@@ -117,13 +117,13 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                email:
                   type: string
-                  description: User ID from an existing user.
-                  example: student
+                  description: Email of the user.
+                  example: user@example.com
                 password:
                   type: string
-                  description: User password for the username.
+                  description: User password.
                   example: Password123
       responses:
         '200':
