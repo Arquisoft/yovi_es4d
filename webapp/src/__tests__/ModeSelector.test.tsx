@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import ModeSelector from '../components/game/ModeSelector'
@@ -183,12 +183,14 @@ describe('ModeSelector', () => {
   })
 
   test('navega a /game con intermediate_bot al seleccionarlo y pulsar Jugar', async () => {
-    const user = userEvent.setup()
     renderSelector()
-    await screen.findByText('Aleatorio')
+    await screen.findByText('Intermedio')
 
-    await user.click(screen.getByText('Intermedio').closest('button')!)
-    await user.click(screen.getByRole('button', { name: /^Jugar/ }))
+    const intermediateButton = screen.getByText('Intermedio').closest('button')!
+    fireEvent.click(intermediateButton)
+    expect(intermediateButton).toHaveClass('selected')
+
+    fireEvent.click(screen.getByRole('button', { name: /^Jugar/ }))
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/game', {

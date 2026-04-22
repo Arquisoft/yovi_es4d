@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RegisterForm from '../components/RegisterForm'
 import resources from '../i18n/resources'
@@ -140,12 +140,11 @@ describe('RegisterForm', () => {
 
   test('shows email validation error', async () => {
     renderForm()
-    const user = userEvent.setup()
-    await user.type(screen.getByLabelText(/Nombre de usuario:/i), 'prueba')
-    await user.type(screen.getByLabelText(/Correo electrónico:/i), 'invalidemail')
-    await user.type(screen.getByTestId('password-input'), 'Password1')
-    await user.type(screen.getByTestId('repassword-input'), 'Password1')
-    await user.click(screen.getByRole('button', { name: /registrarse/i }))
+    fireEvent.change(screen.getByLabelText(/Nombre de usuario:/i), { target: { value: 'prueba' } })
+    fireEvent.change(screen.getByLabelText(/Correo electrónico:/i), { target: { value: 'invalidemail' } })
+    fireEvent.change(screen.getByTestId('password-input'), { target: { value: 'Password1' } })
+    fireEvent.change(screen.getByTestId('repassword-input'), { target: { value: 'Password1' } })
+    fireEvent.click(screen.getByRole('button', { name: /registrarse/i }))
 
     expect(
       await screen.findByText(

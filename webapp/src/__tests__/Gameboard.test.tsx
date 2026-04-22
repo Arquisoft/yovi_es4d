@@ -23,6 +23,7 @@ interface MockSocket {
 }
 
 let mockSocket: MockSocket
+const triangle3DPropsSpy = vi.fn()
 
 vi.mock('socket.io-client', () => ({
   io: () => {
@@ -43,6 +44,25 @@ vi.mock('../components/game/Triangle', () => ({
         <button onClick={() => onHexClick('0,0')}>hex-0-0</button>
       </div>
   ),
+}))
+
+vi.mock('../components/game/Triangle3D', () => ({
+  default: ({
+    onHexClick,
+    ...props
+  }: {
+    onHexClick: (p: string) => void
+    hexData: unknown[]
+    scale?: number
+    connectionEdges?: unknown
+  }) => {
+    triangle3DPropsSpy(props)
+    return (
+      <div data-testid="triangle-3d">
+        <button onClick={() => onHexClick('(2,0,0,0)')}>hex-3d-0-0</button>
+      </div>
+    )
+  },
 }))
 
 vi.mock('../components/game/player', () => ({
@@ -83,6 +103,28 @@ const gameStartResponse = {
   winner: null,
 }
 
+const tetraGameStartResponse = {
+  gameId: 'tetra123456',
+  board: [
+    { position: '(2,0,0,0)', player: null },
+    { position: '(1,1,0,0)', player: 'j1' },
+    { position: '(1,0,1,0)', player: 'j2' },
+  ],
+  players: [
+    { id: 'jugador1', name: 'Jugador', points: 0 },
+    { id: 'bot', name: 'Bot', points: 0 },
+  ],
+  turn: 'j1',
+  status: 'active',
+  winner: null,
+  connectedFaces: { j1: ['A', 'C'], j2: ['B'] },
+  connectionEdges: {
+    j1: [{ from: '(2,0,0,0)', to: '(1,1,0,0)' }],
+    j2: [{ from: '(1,0,1,0)', to: '(2,0,0,0)' }],
+  },
+  hasBranch: { j1: true, j2: false },
+}
+
 const mockStartSequence = () =>
     vi.fn()
         .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
@@ -103,6 +145,7 @@ const renderGame = (state = { gameMode: 'vsBot', botMode: 'random_bot', boardSiz
 describe('GameBoard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    triangle3DPropsSpy.mockReset()
     global.fetch = mockStartSequence()
   })
 
@@ -124,6 +167,41 @@ describe('GameBoard', () => {
   test('muestra el tablero tras cargar la partida', async () => {
     renderGame()
     expect(await screen.findByTestId('triangle')).toBeInTheDocument()
+  })
+
+  test('renderiza la variante tetra3d con sus clases y progreso', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => tetraGameStartResponse } as Response)
+
+    const { container } = renderGame({ gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11, boardVariant: 'tetra3d' })
+
+    expect(await screen.findByTestId('triangle-3d')).toBeInTheDocument()
+    expect(container.querySelector('.game-bg-3d')).toBeInTheDocument()
+    expect(container.querySelector('.gb-board-section-3d')).toBeInTheDocument()
+    expect(container.querySelectorAll('.gb-tetra-face-pill.active')).toHaveLength(3)
+    expect(container.querySelector('.gb-tetra-branch.active.violet')).toBeInTheDocument()
+    expect(container.querySelector('.gb-tetra-branch.active.coral')).not.toBeInTheDocument()
+  })
+
+  test('pasa hexData y connectionEdges a Triangle3D', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => meResponse } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => tetraGameStartResponse } as Response)
+
+    renderGame({ gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11, boardVariant: 'tetra3d' })
+
+    await screen.findByTestId('triangle-3d')
+
+    expect(triangle3DPropsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hexData: tetraGameStartResponse.board,
+        scale: 0.98,
+        connectionEdges: tetraGameStartResponse.connectionEdges,
+      })
+    )
   })
 
   test('muestra los nombres de los dos jugadores', async () => {
