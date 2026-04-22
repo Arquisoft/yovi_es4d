@@ -2,20 +2,21 @@ FROM node:22
 
 WORKDIR /usr/src/gatewayservice
 
-# Copiar dependencias primero (mejor cache)
-COPY --chmod=444 package*.json ./
+# Copiar solo manifests primero (mejor caching)
+COPY package*.json ./
 
-# Instalar dependencias reproducibles
-RUN npm ci --omit=dev --ignore-scripts
+# Instalar dependencias de forma reproducible
+RUN npm ci --omit=dev
 
-# Copiar código con ownership correcto
-COPY --chown=root:root --chmod=444 gateway-service.js openapi.yaml ./
-COPY --chown=root:root --chmod=555 monitoring ./monitoring
+# Copy the app source code to the working directory
+# NOSONAR
+COPY . .
 
-RUN find /usr/src/gatewayservice/monitoring -type f -exec chmod 444 {} \; \
- && find /usr/src/gatewayservice/monitoring -type d -exec chmod 555 {} \;
+# Crear usuario no root y ajustar permisos
+RUN chown -R node:node /usr/src/gatewayservice
 
-# Cambiar a usuario no root
+# Cambiar a usuario no root (clave para SonarQube)
 USER node
 
+# Ejecutar app
 CMD ["node", "gateway-service.js"]

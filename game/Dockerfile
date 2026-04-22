@@ -2,18 +2,27 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar manifests
-COPY --chmod=444 package*.json ./
+# Copiar package files
+COPY package*.json ./
 
-# Instalar dependencias como root
+# Instalar dependencias (mejor reproducibilidad)
 RUN npm ci --omit=dev
 
-# Copiar código con permisos normales
-COPY --chown=root:root --chmod=444 game-service.js gameModel.js conection.js ./
+# Copiar código
+COPY . .
+
+# Cambiar ownership al usuario node (importante para no root)
+RUN chown -R node:node /app
 
 # Cambiar a usuario no root
 USER node
 
+# Exponer puerto
 EXPOSE 8003
 
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8003/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Comando de inicio
 CMD ["npm", "start"]
