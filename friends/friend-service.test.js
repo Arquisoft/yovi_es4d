@@ -613,25 +613,26 @@ describe('Friend Service', () => {
 
   
   // POST /notifications/game-invite
-   it('should send game invite notification', async () => {
-    axios.get.mockResolvedValue({
-      data: { email: 'sender@test.com' }
-    });
-    Notification.create.mockResolvedValue({});
-
-   const res = await request(app)
-      .post('/notifications/game-invite')
-      .send({ senderId: USER_1, receiverId: USER_2 });
-
-    expect(res.statusCode).toBe(201);
-    expect(res.body.message).toBe('Game invite sent');
-    expect(Notification.create).toHaveBeenCalledWith({
-      userId: USER_2,
-      type: 'game_invite',
-      relatedUserId: USER_1,
-      relatedUserEmail: 'sender@test.com'
-    });
+  it('should send game invite notification', async () => {
+  axios.post.mockResolvedValue({
+    data: { email: 'sender@test.com' }
   });
+
+  Notification.create.mockResolvedValue({});
+
+  const res = await request(app)
+    .post('/notifications/game-invite')
+    .send({ senderId: USER_1, receiverId: USER_2 });
+
+  expect(res.statusCode).toBe(201);
+  expect(res.body.message).toBe('Game invite sent');
+  expect(Notification.create).toHaveBeenCalledWith({
+    userId: USER_2,
+    type: 'game_invite',
+    relatedUserId: USER_1,
+    relatedUserEmail: 'sender@test.com'
+  });
+});
 
   it('should return 400 if senderId or receiverId missing in game invite', async () => {
     const res = await request(app)

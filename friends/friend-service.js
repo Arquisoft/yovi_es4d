@@ -36,11 +36,12 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   'https://localhost:5173,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
   .split(',')
   .map(origin => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .reduce((origins, origin) => origins.add(origin), new Set());
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -88,7 +89,7 @@ app.get('/friends/explore', async (req, res) => {
     const { userId, search = '', page = 1 } = req.query;
     const limit = 10;
     const batchSize = 50;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
     const startIndex = (pageNum - 1) * limit;
     const endIndex = startIndex + limit;
     if (!userId) return res.status(400).json({ error: 'userId required' });
@@ -181,7 +182,6 @@ app.post('/friends/request', async (req, res) => {
       receiverId: safeReceiverId,
       status: 'pending'
     });
-    //const existing = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
     if (existing) return res.status(400).json({ error: 'Request already exists' });
 
     const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: senderId });
@@ -241,9 +241,6 @@ app.get('/friends/requests', async (req, res) => {
       };
     }
     
-    //if (type === 'received') query = { receiverId: userId, status: 'pending' };
-    //else if (type === 'sent') query = { senderId: userId, status: 'pending' };
-
     const requests = await FriendRequest.find(query);
 
     const enriched = requests.map(r => ({
@@ -415,7 +412,7 @@ app.post('/notifications/game-invite', async (req, res) => {
     const { senderId, receiverId } = req.body;
     if (!senderId || !receiverId) return res.status(400).json({ error: 'senderId and receiverId required' });
 
-    const sender = await axios.get(`${USER_SERVICE_URL}/api/users/${senderId}`);
+    const sender = await axios.post(`${USER_SERVICE_URL}/profile`, { userId: senderId });
 
     await Notification.create({
       userId: receiverId,
@@ -432,7 +429,7 @@ app.post('/notifications/game-invite', async (req, res) => {
 });
 
 
-if (require.main === module) {
+if (!module.parent) {
   app.listen(port, '0.0.0.0', () =>
     console.log(`Friend Service listening on ${port}`)
   );

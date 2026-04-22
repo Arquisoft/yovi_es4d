@@ -364,14 +364,14 @@ it('should return 400 for invalid game mode', async () => {
   expect(res.body.error).toBe('Invalid game mode');
 });
 
-it.skip('should return 400 if move or userId is missing', async () => {
+it('should return 400 if userId is missing', async () => {
   const res = await request(app)
     .post('/api/game/123/move')
-    .set('Cookie', createCookie('user123')) // ← Cookie válida
+    .set('Cookie', createCookieWithoutUserId())
     .send({ mode: 'vsBot' }); // sin move ni userId
 
   expect(res.statusCode).toBe(400);
-  expect(res.body.error).toBe('Move and userId are required');
+  expect(res.body.error).toBe('userId is required');
 });
 
 it('should call multiplayer endpoint for mode=multiplayer', async () => {

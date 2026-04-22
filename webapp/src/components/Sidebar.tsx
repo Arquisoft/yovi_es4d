@@ -2,14 +2,13 @@
 import './StartScreen.css';
 import { useTranslation } from '../i18n';
 import { useNavigate } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.tsx';
 
 export default function Sidebar() {
   const { t, lang, setLang } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleAuthClick = () => {
     if (user) {

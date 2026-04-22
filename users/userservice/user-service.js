@@ -364,13 +364,15 @@ app.get('/api/users', async (req, res) => {
     const { exclude = [], search = '', page = 1, limit = 10 } = req.query;
     const rawExcludeIds = Array.isArray(exclude)
       ? exclude
-      : (exclude ? [exclude] : []);
+      : exclude
+        ? [exclude]
+        : [];
     const excludeIds = rawExcludeIds
       .filter((id) => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id))
       .map((id) => new mongoose.Types.ObjectId(id));
     const safeSearch = typeof search === 'string' ? search : '';
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.min(50, Math.max(parseInt(limit, 10) || 10, 1));
+    const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(50, Math.max(Number.parseInt(limit, 10) || 10, 1));
 
     const users = await User.find({
       _id: { $nin: excludeIds },
@@ -405,7 +407,7 @@ function startServer() {
   return server;
 }
 
-if (require.main === module) {
+if (!module.parent) {
   startServer();
 }
 

@@ -21,10 +21,11 @@ const axios = require('axios');
 const cors = require('cors');
 const promBundle = require('express-prom-bundle');
 const cookieParser = require("cookie-parser");
+const { webcrypto } = require('node:crypto');
 
 // OpenAPI-Swagger Libraries
 const swaggerUi = require('swagger-ui-express');
-const fs = require('fs');
+const fs = require('node:fs');
 const YAML = require('yaml');
 
 // JWT Authentication library
@@ -57,6 +58,80 @@ const userServiceUrl = process.env.USER_SERVICE_URL || `${userServiceProtocol}:/
 const gameServiceUrl = process.env.GAME_SERVICE_URL || `${gameServiceProtocol}://${gameServiceHost}:${gameServicePort}`;
 const friendServiceUrl = process.env.FRIEND_SERVICE_URL || `${friendServiceProtocol}://${friendServiceHost}:${friendServicePort}`;
 
+function parseSafePathSegment(value, fieldName) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return value;
+}
+
+function parseObjectIdSegment(value, fieldName) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return value;
+}
+
+function buildServiceUrl(baseUrl, path) {
+  return new URL(path, `${baseUrl}/`).toString();
+}
+
+function buildGameServiceGameUrl(gameId, suffix = '') {
+  const safeGameId = encodeURIComponent(parseSafePathSegment(gameId, 'gameId'));
+  return buildServiceUrl(gameServiceUrl, `/api/game/${safeGameId}${suffix}`);
+}
+
+function buildFriendRequestUrl(requestId) {
+  const safeRequestId = encodeURIComponent(parseObjectIdSegment(requestId, 'requestId'));
+  return buildServiceUrl(friendServiceUrl, `/friends/request/${safeRequestId}`);
+}
+
+function extractCookieValue(setCookieHeader, cookieName) {
+  const headers = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+
+  for (const header of headers) {
+    if (typeof header !== 'string') {
+      continue;
+    }
+
+    const [cookiePair] = header.split(';');
+    const [name, ...parts] = cookiePair.split('=');
+    if (name === cookieName) {
+      return parts.join('=');
+    }
+  }
+
+  return null;
+}
+
+function setAuthCookie(res, token) {
+  res.cookie('token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: 60 * 60 * 1000
+  });
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false
+  });
+}
+
+function generateCode() {
+  const bytes = new Uint8Array(2);
+  webcrypto.getRandomValues(bytes);
+
+  return Array.from(bytes, b =>
+    b.toString(16).padStart(2, '0')
+  ).join('').toUpperCase();
+}
+
 
 
 // Lista de orígenes permitidos
@@ -64,11 +139,12 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   'https://localhost:5173,https://localhost:8000,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
   .split(',')
   .map(origin => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .reduce((origins, origin) => origins.add(origin), new Set());
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -215,9 +291,9 @@ app.post('/login', async (req, res) => {
     );
 
     // reenviar cookie al frontend
-    const setCookie = authResponse.headers['set-cookie'];
-    if (setCookie) {
-      res.setHeader('Set-Cookie', setCookie);
+    const token = extractCookieValue(authResponse.headers['set-cookie'], 'token');
+    if (token) {
+      setAuthCookie(res, token);
     }
 
     res.json(authResponse.data);
@@ -368,10 +444,7 @@ app.post('/logout', async (req, res) => {
       { withCredentials: true }
     );
 
-    const setCookie = authResponse.headers['set-cookie'];
-    if (setCookie) {
-      res.setHeader('Set-Cookie', setCookie);
-    }
+    clearAuthCookie(res);
 
     res.json(authResponse.data);
 
@@ -508,7 +581,7 @@ app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
     const validateResponse = await axios.post(
-        `${gameServiceUrl}/api/game/${gameId}/validateMove`,
+        buildGameServiceGameUrl(gameId, '/validateMove'),
         { move: req.body.move, userId: req.body.userId }
     );
     res.json(validateResponse.data);
@@ -549,9 +622,9 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 
     let backendEndpoint;
     if (mode === 'vsBot') {
-      backendEndpoint = `${gameServiceUrl}/api/game/${gameId}/vsBot/move`;
+      backendEndpoint = buildGameServiceGameUrl(gameId, '/vsBot/move');
     } else if (mode === 'multiplayer') {
-      backendEndpoint = `${gameServiceUrl}/api/game/${gameId}/multiplayer/move`;
+      backendEndpoint = buildGameServiceGameUrl(gameId, '/multiplayer/move');
     } else {
       return res.status(400).json({ error: 'Invalid game mode' });
     }
@@ -590,7 +663,7 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 app.get('/api/game/:gameId', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const statusResponse = await axios.get(`${gameServiceUrl}/api/game/${gameId}`, {
+    const statusResponse = await axios.get(buildGameServiceGameUrl(gameId), {
       params: { userId: req.body.userId },
     });
     res.json(statusResponse.data);
@@ -604,7 +677,7 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/setPlayerName`, req.body);
+    const response = await axios.post(buildGameServiceGameUrl(gameId, '/setPlayerName'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
@@ -615,7 +688,7 @@ app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(`${gameServiceUrl}/api/game/${gameId}/saveForPlayer`, req.body);
+    const response = await axios.post(buildGameServiceGameUrl(gameId, '/saveForPlayer'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });
@@ -793,7 +866,7 @@ app.patch('/api/friends/reject', verifyToken, async (req, res) => {
 app.delete('/api/friends/request/:id', verifyToken, async (req, res) => {
   try {
     const response = await axios.delete(
-      `${friendServiceUrl}/friends/request/${req.params.id}`,
+      buildFriendRequestUrl(req.params.id),
       {
         data: { senderId: req.body.userId }
       }
@@ -874,22 +947,13 @@ function startServer() {
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: Array.from(allowedOrigins),
     credentials: true,
   },
 });
 
 // rooms: código → { j1: socketId, j2: socketId|null, gameId: string|null, boardSize: number }
 const rooms = new Map();
- 
-function generateCode() {
-  const bytes = new Uint8Array(2);
-  crypto.getRandomValues(bytes);
-
-  return Array.from(bytes, b =>
-    b.toString(16).padStart(2, '0')
-  ).join('').toUpperCase();
-}
  
 io.on('connection', (socket) => {
   console.log(` Socket conectado: ${socket.id}`);
@@ -1020,7 +1084,7 @@ io.on('connection', (socket) => {
   return server;
 }
 
-if (require.main === module) {
+if (process.env.NODE_ENV !== 'test' && !module.parent) {
   startServer();
 }
 

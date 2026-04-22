@@ -59,6 +59,10 @@ function computeSize(hexData: HexData[]) {
   return coords.a + coords.b + coords.c + coords.d + 1;
 }
 
+function buildSegmentKey(playerKey: "j1" | "j2", edge: { start: Point2D; end: Point2D }) {
+  return `${playerKey}-${edge.start.x}-${edge.start.y}-${edge.end.x}-${edge.end.y}`;
+}
+
 function barycentricPoint(a: number, b: number, c: number, d: number, total: number): Point3D {
   const wa = a / total;
   const wb = b / total;
@@ -279,9 +283,9 @@ const Triangle3D: React.FC<Triangle3DProps> = ({
             </g>
           ))}
 
-          {scene.segments.j1.map((segment, index) => (
+          {scene.segments.j1.map((segment) => (
             <line
-              key={`j1-line-${index}`}
+              key={buildSegmentKey("j1", segment)}
               className="tetra-link tetra-link-j1"
               x1={segment.start.x}
               y1={segment.start.y}
@@ -290,9 +294,9 @@ const Triangle3D: React.FC<Triangle3DProps> = ({
             />
           ))}
 
-          {scene.segments.j2.map((segment, index) => (
+          {scene.segments.j2.map((segment) => (
             <line
-              key={`j2-line-${index}`}
+              key={buildSegmentKey("j2", segment)}
               className="tetra-link tetra-link-j2"
               x1={segment.start.x}
               y1={segment.start.y}
@@ -304,7 +308,14 @@ const Triangle3D: React.FC<Triangle3DProps> = ({
 
         <div className="tetra-node-layer">
           {scene.cells.map((cell) => {
-            const sizeMultiplier = cell.isVertex ? 1.08 : cell.isEdge ? 1.02 : cell.isSurface ? 1 : 0.76;
+            let sizeMultiplier = 0.76;
+            if (cell.isVertex) {
+              sizeMultiplier = 1.08;
+            } else if (cell.isEdge) {
+              sizeMultiplier = 1.02;
+            } else if (cell.isSurface) {
+              sizeMultiplier = 1;
+            }
             const finalSize = Math.round(nodeSize * sizeMultiplier);
 
             return (

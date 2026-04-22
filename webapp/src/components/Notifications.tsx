@@ -57,30 +57,6 @@ const Notifications: React.FC = () => {
     loadData();
   }, []);
 
-  const handleAccept = async (notification: Notification) => {
-    if (!notification.requestId) return;
-
-    try {
-      await acceptFriendRequest(notification.requestId);
-      await loadData();
-    } catch (err: any) {
-      console.error(err);
-      setError(t('notifications.errorAccept'));
-    }
-  };
-
-  const handleReject = async (notification: Notification) => {
-    if (!notification.requestId) return;
-
-    try {
-      await rejectFriendRequest(notification.requestId);
-      await loadData();
-    } catch (err: any) {
-      console.error(err);
-      setError(t('notifications.errorReject'));
-    }
-  };
-
   return (
     <>
       <Sidebar />

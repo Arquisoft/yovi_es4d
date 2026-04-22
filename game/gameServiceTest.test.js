@@ -146,6 +146,45 @@ afterEach(() => {
 });
 
 describe('Carga del modulo y conexion mongo', () => {
+  test('no levanta el servidor al importar el modulo en tests', () => {
+    jest.resetModules();
+
+    const listen = jest.fn();
+    const expressApp = {
+      disable: jest.fn(),
+      use: jest.fn(),
+      get: jest.fn(),
+      post: jest.fn(),
+      listen,
+    };
+    const expressFactory = jest.fn(() => expressApp);
+    expressFactory.json = jest.fn(() => 'json-middleware');
+
+    const schemaCtor = function Schema(definition) {
+      this.definition = definition;
+    };
+    schemaCtor.Types = { Mixed: 'Mixed' };
+
+    jest.doMock('express', () => expressFactory);
+    jest.doMock('axios', () => ({ post: jest.fn(), get: jest.fn() }));
+    jest.doMock('cors', () => () => (_req, _res, next) => next());
+    jest.doMock('mongoose', () => ({
+      connect: jest.fn().mockResolvedValue(),
+      Schema: schemaCtor,
+      model: jest.fn(() => ({ find: jest.fn(), findOneAndUpdate: jest.fn() })),
+    }));
+
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+
+    jest.isolateModules(() => {
+      require('./game-service');
+    });
+
+    process.env.NODE_ENV = previousNodeEnv;
+    expect(listen).not.toHaveBeenCalled();
+  });
+
   test('evalua PORT y GAMEY_BOT_URL cuando existen en entorno', () => {
     jest.resetModules();
 

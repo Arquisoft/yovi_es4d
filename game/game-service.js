@@ -12,7 +12,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const crypto = require('crypto');
+const { randomUUID, webcrypto } = require('node:crypto');
 
 const app = express();
 app.disable('x-powered-by');
@@ -74,11 +74,12 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   'https://localhost:5173,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
   .split(',')
   .map(origin => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .reduce((origins, origin) => origins.add(origin), new Set());
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -140,7 +141,7 @@ app.get('/api/game/history', async (req, res) => {
   try {
     const { userId, page = 1, sortBy = 'date', sortOrder = 'desc' } = req.query;
     const limit = 5;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1);
     const startIndex = (pageNum - 1) * limit;
     const endIndex = startIndex + limit;
 
@@ -226,11 +227,12 @@ app.post('/api/game/start', async (req, res) => {
     const ALLOWED_BOARD_SIZES = boardVariant === 'tetra3d'
       ? [3, 4, 5, 6]
       : [8, 11, 15, 19];
+    const defaultBoardSize = boardVariant === 'tetra3d' ? 4 : 11;
     const boardSize = ALLOWED_BOARD_SIZES.includes(Number(rawBoardSize))
       ? Number(rawBoardSize)
-      : (boardVariant === 'tetra3d' ? 4 : 11);
+      : defaultBoardSize;
 
-    const gameId = `game_${crypto.randomUUID()}`;
+    const gameId = `game_${randomUUID()}`;
     
     if (boardVariant === 'tetra3d') {
       await axios.post(`${GAMEY_BOT_URL}/v1/tetra/start`, { size: boardSize }, { timeout: 5000 });
@@ -395,7 +397,6 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
   
   try {
     const { gameId } = req.params;
-    const { role } = req.body; 
     const game = games.get(gameId);
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
@@ -448,7 +449,7 @@ app.post('/api/game/:gameId/vsBot/move', async (req, res) => {
 
    // NOSONAR: uso de Math.random solo para delay UX, no afecta seguridad
 const array = new Uint32Array(1);
-crypto.getRandomValues(array);
+webcrypto.getRandomValues(array);
 
 const delay = (array[0] % 1000) + 1000;
 await sleep(delay);
@@ -471,7 +472,7 @@ await sleep(delay);
     return x === m.x && y === m.y && z === m.z;
   });
 
-  if (cell && cell.player === null) {
+  if (cell?.player === null) {
     cell.player = toLogical[m.player];
 
     game.moves.push({
@@ -683,7 +684,7 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
   // Actualizar nombres reales si el frontend los proporciona
   const players = game.players.map((p, idx) => ({
     ...p,
-    name: (playerNames && playerNames[idx]) ? playerNames[idx] : p.name,
+    name: playerNames?.[idx] || p.name,
   }));
 
   const resolvedWinner = winner || game.winner;
@@ -886,11 +887,16 @@ function sleep(ms) {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'Game Service is running' }));
 
-if (require.main === module) {
-  app.listen(port, "0.0.0.0", () => console.log(`Game Service listening on ${port}`));
+function startServer() {
+  return app.listen(port, '0.0.0.0', () => console.log(`Game Service listening on ${port}`));
+}
+
+if (require.main === module && process.env.NODE_ENV !== 'test') {
+  startServer();
 }
 
 module.exports = app;
+module.exports.startServer = startServer;
 module.exports._test = {
   GameModel,
   BOT_ROUTES,

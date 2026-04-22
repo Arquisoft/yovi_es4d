@@ -50,6 +50,8 @@ const GameOver: React.FC = () => {
     const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
     const p2Name   = isMySlotJ1 ? opponentName                                    : myName;
     const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+    const winnerTitleClass = isJ2Win ? "go-title winner-j2" : "go-title";
+    const boardClassName = boardVariant === "tetra3d" ? "go-board go-board-3d" : "go-board";
 
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 
@@ -67,7 +69,7 @@ const GameOver: React.FC = () => {
             </div>
 
             {/* Título */}
-            <h1 className={`go-title${isJ2Win ? " winner-j2" : ""}`}>
+            <h1 className={winnerTitleClass}>
                 <span className="go-winner-name">{winnerName ?? t('gameOver.winner')}</span>
                 {" "}{t('gameOver.hasWon')}
             </h1>
@@ -86,15 +88,19 @@ const GameOver: React.FC = () => {
                     ].map((p, idx) => {
                         const isWinner = (idx === 0 && winnerId === "j1") || (idx === 1 && winnerId === "j2");
                         const isCoralW = isWinner && idx === 1;
+                        const winnerCardClass = isWinner
+                            ? isCoralW ? "go-player-card winner-card coral-winner" : "go-player-card winner-card"
+                            : "go-player-card";
+                        const showsAvatarImage = p.avatar.includes(".") || p.avatar.includes("/");
                         return (
                             <div
                                 key={p.role}
-                                className={`go-player-card${isWinner ? ` winner-card${isCoralW ? " coral-winner" : ""}` : ""}`}
+                                className={winnerCardClass}
                             >
                                 {isWinner && <span className="go-winner-crown">👑</span>}
 
                                 <div className="go-player-avatar">
-                                    {p.avatar.includes(".") || p.avatar.includes("/")
+                                    {showsAvatarImage
                                         ? <img src={p.avatar} alt={p.name} />
                                         : <span style={{ fontSize: "2.5rem", lineHeight: 1 }}>{p.avatar}</span>
                                     }
@@ -112,7 +118,7 @@ const GameOver: React.FC = () => {
                 </div>
 
                 {/* Tablero de solo lectura */}
-                <div className={`go-board ${boardVariant === "tetra3d" ? "go-board-3d" : ""}`}>
+                <div className={boardClassName}>
                     {boardVariant === "tetra3d" ? (
                         <Triangle3D
                             hexData={gameState.hexData}
