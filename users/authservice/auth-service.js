@@ -133,8 +133,7 @@ app.post('/login', loginLimiter, [
     } else {
       const entry = failedAttempts.get(ip) || { count: 0, lastAttempt: Date.now() };
       failedAttempts.set(ip, { count: entry.count + 1, lastAttempt: Date.now() });
-      console.log(res.status(401).json({ error: 'Invalid credentials' }));
-      
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
   } catch (error) {
