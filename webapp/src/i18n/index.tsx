@@ -11,7 +11,7 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-type Props = { children: ReactNode; defaultLang?: string; resources?: Record<string, Translations> };
+type Props = Readonly<{ children: ReactNode; defaultLang?: string; resources?: Record<string, Translations> }>;
 
 export function I18nProvider({ children, defaultLang = 'en', resources = {} }: Props) {
   const [lang, setLang] = useState(defaultLang);

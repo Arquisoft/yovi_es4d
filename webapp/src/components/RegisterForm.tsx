@@ -25,7 +25,7 @@ const RegisterForm: React.FC = () => {
   const validatePassword = (password: string) => {
     const minLength = 8;
     const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
+    const hasNumber = /\d/.test(password);
     const hasNoSpaces = !/\s/.test(password);
     return hasUpperCase && hasNumber && hasNoSpaces && password.length >= minLength;
   };

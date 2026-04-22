@@ -44,7 +44,7 @@ const FACE_VIEWS: Array<{ id: string; label: string; rotation: Rotation }> = [
 const INITIAL_ROTATION: Rotation = FACE_VIEWS[0].rotation;
 
 function parseTetraPosition(position: string) {
-  const parts = position.replace(/[()]/g, "").split(",").map((value) => Number(value.trim()));
+  const parts = position.replaceAll("(", "").replaceAll(")", "").split(",").map((value) => Number(value.trim()));
   if (parts.length !== 4 || parts.some(Number.isNaN)) {
     throw new Error(`Invalid tetra position: ${position}`);
   }

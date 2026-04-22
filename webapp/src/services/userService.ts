@@ -1,4 +1,3 @@
-import { post } from './api';
 import { API_URL } from '../config';
 import axios from "axios";
 

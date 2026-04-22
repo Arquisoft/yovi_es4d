@@ -10,9 +10,11 @@ import "./game.css";
 import { useTranslation } from "../../i18n";
 import { io, Socket } from "socket.io-client";
 
+type PlayerTurn = "j1" | "j2";
+
 interface HexData {
   position: string;
-  player: "j1" | "j2" | null;
+  player: PlayerTurn | null;
 }
 
 interface PlayerData {
@@ -30,9 +32,9 @@ interface GameState {
   gameId: string | null;
   hexData: HexData[];
   players: PlayerData[];
-  turn: "j1" | "j2" | null;
+  turn: PlayerTurn | null;
   status: "active" | "finished" | null;
-  winner: "j1" | "j2" | null;
+  winner: PlayerTurn | null;
   botPlaying: boolean;
   connectedFaces: {
     j1: string[];
@@ -57,7 +59,7 @@ interface LocationState {
   onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
   roomCode?:    string;
   player2Name?: string;
-  startingPlayer?: "j1" | "j2";
+  startingPlayer?: PlayerTurn;
 }
 
 const TETRA_FACES = ["A", "B", "C", "D"] as const;
@@ -97,9 +99,9 @@ function buildGameStateFromResponse(data: {
   gameId: string | null;
   board: HexData[];
   players: PlayerData[];
-  turn?: "j1" | "j2" | null;
+  turn?: PlayerTurn | null;
   status?: "active" | "finished" | null;
-  winner?: "j1" | "j2" | null;
+  winner?: PlayerTurn | null;
   connectedFaces?: GameState["connectedFaces"];
   connectionEdges?: GameState["connectionEdges"];
   hasBranch?: GameState["hasBranch"];
@@ -118,11 +120,11 @@ function buildGameStateFromResponse(data: {
   };
 }
 
-function getRoleIndex(turn: "j1" | "j2" | null): number {
+function getRoleIndex(turn: PlayerTurn | null): number {
   return turn === "j2" ? 1 : 0;
 }
 
-function addMovePoints(players: PlayerData[], turn: "j1" | "j2" | null): PlayerData[] {
+function addMovePoints(players: PlayerData[], turn: PlayerTurn | null): PlayerData[] {
   const playerId = players[getRoleIndex(turn)]?.id;
 
   return players.map((player) =>
@@ -133,15 +135,15 @@ function addMovePoints(players: PlayerData[], turn: "j1" | "j2" | null): PlayerD
 function applyValidatedMove(
   prev: GameState,
   position: string,
-  currentTurn: "j1" | "j2",
+  currentTurn: PlayerTurn,
   validateData: {
-    winner?: "j1" | "j2" | null;
+    winner?: PlayerTurn | null;
     status?: "active" | "finished" | null;
     connectedFaces?: GameState["connectedFaces"];
     connectionEdges?: GameState["connectionEdges"];
     hasBranch?: GameState["hasBranch"];
   },
-  nextTurn?: "j1" | "j2",
+  nextTurn?: PlayerTurn,
 ): GameState {
   return {
     ...prev,
@@ -163,8 +165,8 @@ function applyServerMove(
   prev: GameState,
   moveData: {
     board: HexData[];
-    turn: "j1" | "j2" | null;
-    winner: "j1" | "j2" | null;
+    turn: PlayerTurn | null;
+    winner: PlayerTurn | null;
     status: "active" | "finished" | null;
     connectedFaces?: GameState["connectedFaces"];
     connectionEdges?: GameState["connectionEdges"];
@@ -481,23 +483,23 @@ const GameBoard: React.FC = () => {
     }
   }
 
-  function handleOpponentMove(position: string, turn: string) {
+  function handleOpponentMove(position: string, turn: PlayerTurn) {
     setGameState((prev) => {
-      const opponentRole = onlineRole === "j1" ? "j2" : "j1";
+      const opponentRole: PlayerTurn = onlineRole === "j1" ? "j2" : "j1";
       return {
-        ...applyValidatedMove(prev, position, opponentRole as "j1" | "j2", {}, turn as "j1" | "j2"),
+        ...applyValidatedMove(prev, position, opponentRole, {}, turn),
         botPlaying: false,
       };
     });
   }
 
-  function handleOnlineGameOver(winner: string, gameId?: string) {
+  function handleOnlineGameOver(winner: PlayerTurn, gameId?: string) {
     setGameState((prev) => {
       const resolvedGameId = gameId ?? prev.gameId;
       if (resolvedGameId && userIdRef.current) {
         void saveGameForPlayer(resolvedGameId, userIdRef.current, winner);
       }
-      return { ...prev, winner: winner as "j1" | "j2", status: "finished" };
+      return { ...prev, winner, status: "finished" };
     });
   }
 
@@ -521,7 +523,7 @@ const GameBoard: React.FC = () => {
       void handleGameJoined(gameId);
     });
 
-    s.on('opponent_move', ({ position, turn }: { position: string; turn: string }) => {
+    s.on('opponent_move', ({ position, turn }: { position: string; turn: PlayerTurn }) => {
       handleOpponentMove(position, turn);
     });
 
@@ -529,7 +531,7 @@ const GameBoard: React.FC = () => {
       setOpponentDisconnected(true);
     });
 
-    s.on('game_over', ({ winner, gameId }: { winner: string; gameId?: string }) => {
+    s.on('game_over', ({ winner, gameId }: { winner: PlayerTurn; gameId?: string }) => {
       handleOnlineGameOver(winner, gameId);
     });
 
@@ -547,7 +549,7 @@ const GameBoard: React.FC = () => {
     }
 
     const meData = await meRes.json();
-    const resolvedUserId = meData.userId as string;
+    const resolvedUserId = String(meData.userId);
     setUserId(resolvedUserId);
     userIdRef.current = resolvedUserId;
     return resolvedUserId;
@@ -750,14 +752,19 @@ const GameBoard: React.FC = () => {
       const currentTurn = gameState.turn; // j1 ó j2 según el turno
 
 
-      setGameState((prev) => applyValidatedMove(prev, position, currentTurn as "j1" | "j2", validateData));
+      if (!currentTurn) {
+        setGameState(prev => ({ ...prev, botPlaying: false }));
+        return;
+      }
+
+      setGameState((prev) => applyValidatedMove(prev, position, currentTurn, validateData));
 
 
       // En modo online emitir movimiento al rival y no llamar al bot
       if (gameMode === "online" && socketRef.current) {
         const nextTurn = currentTurn === "j1" ? "j2" : "j1";
         // Un único setGameState para evitar que el segundo pise los puntos del primero
-        setGameState((prev) => applyValidatedMove(prev, position, currentTurn as "j1" | "j2", validateData, nextTurn as "j1" | "j2"));
+        setGameState((prev) => applyValidatedMove(prev, position, currentTurn, validateData, nextTurn));
         socketRef.current.emit('move_made', { code: roomCode, position, turn: nextTurn });
         if (validateData.winner) {
           socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner, gameId: gameState.gameId });

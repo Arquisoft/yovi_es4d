@@ -4,14 +4,9 @@ WORKDIR /usr/src/friends
 
 # Dependencias primero
 COPY package*.json ./
-RUN npm ci --omit=dev
-
-RUN npm ci --omit=dev
-
-
-RUN chmod -R a-w /usr/src/friends
-
-RUN mkdir -p /usr/src/friends/logs \
+RUN npm ci --omit=dev \
+    && chmod -R a-w /usr/src/friends \
+    && mkdir -p /usr/src/friends/logs \
     && chown -R node:node /usr/src/friends/logs \
     && chmod -R 755 /usr/src/friends/logs
 

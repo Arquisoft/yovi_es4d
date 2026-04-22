@@ -2,20 +2,16 @@ FROM node:22
 
 WORKDIR /usr/src/userservice
 
-# 1. Copiar dependencias primero (caché)
+# 1. Copiar dependencias primero (cachÃ©)
 COPY --chmod=444 package*.json ./
 
-# 2. Instalar dependencias
-RUN npm ci --omit=dev --ignore-scripts
-
-# 3. Copiar código
+# 3. Copiar cÃ³digo
 COPY --chown=root:root --chmod=444 user-service.js user-model.js ./
 
-# 4. Ajustar ownership
-RUN chown -R node:node /usr/src/userservice
-
-# 5. (opcional) hardening permisos
-RUN find /usr/src/userservice -type f -exec chmod 444 {} \; \
+# 4. Instalar dependencias, ajustar ownership y hardening de permisos
+RUN npm ci --omit=dev --ignore-scripts \
+ && chown -R node:node /usr/src/userservice \
+ && find /usr/src/userservice -type f -exec chmod 444 {} \; \
  && find /usr/src/userservice -type d -exec chmod 555 {} \;
 
 # 6. usuario no root

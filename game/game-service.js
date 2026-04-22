@@ -346,7 +346,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
     }
   }
 
-  const [x, y, z] = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  const [x, y, z] = move.replaceAll('(', '').replaceAll(')', '').split(',').map(v => Number(v.trim()));
 
   // Usamos el turno actual del juego para determinar el player
   // (no el userId, que puede variar según el JWT)
@@ -372,7 +372,7 @@ app.post('/api/game/:gameId/validateMove', async (req, res) => {
   }
  rustResponse.data.board.forEach(move => {
   const cell = game.board.find(c => {
-    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    const [x, y, z] = c.position.replaceAll('(', '').replaceAll(')', '').split(',').map(Number);
     return x === move.x && y === move.y && z === move.z;
   });
   if (cell) cell.player = toLogical[move.player];
@@ -469,7 +469,7 @@ await sleep(delay);
     // Actualizar solo la celda correspondiente
     rustResponse.data.board.forEach(m => {
   const cell = game.board.find(c => {
-    const [x, y, z] = c.position.replace(/[()]/g,'').split(',').map(Number);
+    const [x, y, z] = c.position.replaceAll('(', '').replaceAll(')', '').split(',').map(Number);
     return x === m.x && y === m.y && z === m.z;
   });
 
@@ -605,7 +605,7 @@ async function finishGameAndSave(game) {
       { upsert: true, new: true }
     );
 
-    console.log(`Juego ${game.gameId} guardado en DB para userId=${game.userId}`);
+    console.log('Juego guardado en DB para un usuario autenticado');
   } catch (err) {
     console.error('Error guardando juego:', err);
   }
@@ -710,7 +710,7 @@ app.post('/api/game/:gameId/saveForPlayer', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    console.log(`Juego ${gameId} guardado en DB para userId=${userId}`);
+    console.log('Juego guardado en DB para un usuario autenticado');
     res.json({ ok: true });
   } catch (err) {
     console.error('Error guardando juego para jugador:', err);
@@ -752,7 +752,7 @@ function initializeTetraBoard(boardSize) {
 }
 
 function parseTetraPosition(move) {
-  const parts = move.replace(/[()]/g, '').split(',').map(v => Number(v.trim()));
+  const parts = move.replaceAll('(', '').replaceAll(')', '').split(',').map(v => Number(v.trim()));
   if (parts.length !== 4 || parts.some(Number.isNaN)) {
     throw new Error('Invalid tetra position');
   }

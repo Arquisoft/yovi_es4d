@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
-type Props = {
+type Props = Readonly<{
   text: string;
   speed?: number;
   tag?: string;
   className?: string;
-};
+}>;
 
 export default function Typing({ text, speed = 60, tag = 'h2', className = 'typing' }: Props) {
   const [index, setIndex] = useState(0);

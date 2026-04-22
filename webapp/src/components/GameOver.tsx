@@ -10,7 +10,7 @@ const GameOver: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const gameState = location.state as any;
+    const gameState = location.state;
 
     // ── Sin estado ───────────────────────────────────────────
     if (!gameState) {

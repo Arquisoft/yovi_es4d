@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n';
 import Sidebar from './Sidebar';
 import { API_URL } from '../config';
-import { acceptFriendRequest, rejectFriendRequest } from '../services/friendService';
 import './StartScreen.css';
 
 interface RelatedUser {
@@ -68,13 +67,15 @@ const Notifications: React.FC = () => {
             {loading && <p style={{ color: 'white', textAlign: 'center' }}>{t('notifications.loading')}</p>}
             {error && <p style={{ color: 'white', textAlign: 'center' }}>{error}</p>}
 
-            {!loading && !error && (
+            {!loading && (
               <div className="notifications-content rules-content">
-                {notifications.length === 0 ? (
+                {error ? (
+                  <p>{error}</p>
+                ) : notifications.length === 0 ? (
                   <p>{t('notifications.empty')}</p>
                 ) : (
                   notifications.map((n) => (
-                    <div key={n._id} className={`notification-card ${!n.read ? 'unread' : ''}`}>
+                    <div key={n._id} className={`notification-card ${n.read ? '' : 'unread'}`}>
                       <img
                         src={n.relatedUser.avatar || '/default-avatar.png'}
                         alt={n.relatedUser.username}

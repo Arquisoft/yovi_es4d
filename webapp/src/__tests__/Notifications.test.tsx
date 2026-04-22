@@ -101,7 +101,8 @@ describe('Notifications', () => {
 
     renderNotifications()
 
-    expect(await screen.findByText(resources.es.notifications.errorLoading)).toBeInTheDocument()
+    expect(await screen.findAllByText(resources.es.notifications.errorLoading))
+  .toHaveLength(2)
   })
 
   test('renders multiple notifications returned by the api', async () => {

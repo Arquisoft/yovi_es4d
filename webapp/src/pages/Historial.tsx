@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   PieChart,
   Pie,
-  Cell,
   Tooltip,
   Legend,
 } from 'recharts';
@@ -108,9 +107,9 @@ const Historial: React.FC = () => {
   }, [user, currentPage, sortBy, sortOrder, navigate]);
 
   const chartData = [
-    { name: 'Victorias', value: summary.totalWins },
-    { name: 'Derrotas', value: summary.totalLosses },
-    { name: 'Empates', value: summary.totalDraws },
+    { name: 'Victorias', value: summary.totalWins, fill: COLORS[0] },
+    { name: 'Derrotas', value: summary.totalLosses, fill: COLORS[1] },
+    { name: 'Empates', value: summary.totalDraws, fill: COLORS[2] },
   ];
 
   const getOpponentName = (game: BackendGameRecord) => {
@@ -142,10 +141,6 @@ const Historial: React.FC = () => {
   };
 
   if (!user) return null;
-
-  const sortArrow = sortOrder === 'asc' ? '↑' : '↓';
-  const dateSortLabel = sortBy === 'date' ? sortArrow : '';
-  const moveSortLabel = sortBy === 'moves' ? sortArrow : '';
 
   return (
     <>
@@ -220,15 +215,12 @@ const Historial: React.FC = () => {
                     <Pie
                       data={chartData}
                       dataKey="value"
+                      nameKey="name"
                       cx="50%"
                       cy="50%"
                       outerRadius={90}
                       label
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${entry.name}-${index}`} fill={COLORS[index]} />
-                      ))}
-                    </Pie>
+                    />
 
                     <Tooltip />
                     <Legend />

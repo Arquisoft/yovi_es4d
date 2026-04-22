@@ -30,7 +30,7 @@ mongoose.connect(mongoUri);
 
 function parseObjectId(value, fieldName) {
   if (typeof value !== 'string' || !mongoose.Types.ObjectId.isValid(value)) {
-    throw new Error(`Invalid ${fieldName}`);
+    throw new TypeError(`Invalid ${fieldName}`);
   }
 
   return new mongoose.Types.ObjectId(value);
@@ -38,14 +38,14 @@ function parseObjectId(value, fieldName) {
 
 function parseObjectIdArray(values, fieldName) {
   if (!Array.isArray(values)) {
-    throw new Error(`Invalid ${fieldName}`);
+    throw new TypeError(`Invalid ${fieldName}`);
   }
 
   return values.map((value) => parseObjectId(value, fieldName));
 }
 
 function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 
@@ -61,7 +61,7 @@ function escapeRegex(value) {
 function validateRequiredFields(req, fields) {
   for (const field of fields) {
     if (!(field in req.body)) {
-      throw new Error(`Missing field: ${field}`);
+      throw new TypeError(`Missing field: ${field}`);
     }
   }
 }
@@ -82,7 +82,7 @@ function validateRequiredFields(req, fields) {
 function validatePassword(password) {
   const minLength = 8;
   const hasUpperCase = /[A-Z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
+  const hasNumber = /\d/.test(password);
   const hasNoSpaces = !/\s/.test(password);
 
   if (
