@@ -13,6 +13,14 @@ const userServiceHost = process.env.USER_SERVICE_HOST || 'localhost';
 const userServicePort = process.env.USER_SERVICE_PORT || '8001';
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || `${userServiceProtocol}://${userServiceHost}:${userServicePort}`;
 
+function parseObjectId(value, fieldName) {
+  if (typeof value !== 'string' || !mongoose.Types.ObjectId.isValid(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return new mongoose.Types.ObjectId(value);
+}
+
 // ConexiÃ³n a MongoDB
 if (process.env.SKIP_MONGO !== 'true') {
   mongoose.connect(mongoUri)
@@ -46,7 +54,7 @@ app.use(express.json());
 app.get('/friends', async (req, res) => {
   try {
     const { userId } = req.query;
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const userObjectId = parseObjectId(userId, 'userId');
 
     const relations = await FriendRequest.find({
       $or: [
@@ -84,11 +92,12 @@ app.get('/friends/explore', async (req, res) => {
     const startIndex = (pageNum - 1) * limit;
     const endIndex = startIndex + limit;
     if (!userId) return res.status(400).json({ error: 'userId required' });
+    const safeUserId = parseObjectId(userId, 'userId');
 
     const relations = await FriendRequest.find({
       $or: [
-        { senderId: userId, status: 'accepted' },
-        { receiverId: userId, status: 'accepted' }
+        { senderId: safeUserId, status: 'accepted' },
+        { receiverId: safeUserId, status: 'accepted' }
       ]
     });
     const friendIds = new Set(
@@ -101,8 +110,8 @@ app.get('/friends/explore', async (req, res) => {
 
     const pendingRequests = await FriendRequest.find({
       $or: [
-        { senderId: userId, status: 'pending' },
-        { receiverId: userId, status: 'pending' }
+        { senderId: safeUserId, status: 'pending' },
+        { receiverId: safeUserId, status: 'pending' }
       ]
     });
 
@@ -164,8 +173,8 @@ app.post('/friends/request', async (req, res) => {
     const { senderId, receiverId } = req.body;
     if (!senderId || !receiverId)
       return res.status(400).json({ error: 'senderId and receiverId required' });
-    const safeSenderId = new mongoose.Types.ObjectId(senderId);
-    const safeReceiverId = new mongoose.Types.ObjectId(receiverId);
+    const safeSenderId = parseObjectId(senderId, 'senderId');
+    const safeReceiverId = parseObjectId(receiverId, 'receiverId');
 
     const existing = await FriendRequest.findOne({
       senderId: safeSenderId,
@@ -216,11 +225,7 @@ app.get('/friends/requests', async (req, res) => {
       throw new Error('Invalid type');
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
-    }
-
-    const safeUserId = new mongoose.Types.ObjectId(userId);
+    const safeUserId = parseObjectId(userId, 'userId');
 
     let query;
 
@@ -356,7 +361,7 @@ app.get('/notifications', async (req, res) => {
       .skip((safePage - 1) * safeLimit)
       .limit(safeLimit);
 
-    const unreadCount = await Notification.countDocuments({ userId, read: false });
+    const unreadCount = await Notification.countDocuments({ userId: safeUserId, read: false });
 
     const enrichedNotifications = await Promise.all(
       notifications.map(async (n) => {
@@ -395,8 +400,9 @@ app.patch('/notifications/read-all', async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
+    const safeUserId = parseObjectId(userId, 'userId');
 
-    await Notification.updateMany({ userId, read: false }, { read: true });
+    await Notification.updateMany({ userId: safeUserId, read: false }, { read: true });
     res.json({ message: 'All notifications read' });
   } catch (err) {
     console.error(err);

@@ -62,6 +62,14 @@ const gameyBotHost = process.env.GAMEY_BOT_HOST || 'gamey_es4d';
 const gameyBotPort = process.env.GAMEY_BOT_PORT || '3001';
 const GAMEY_BOT_URL = process.env.GAMEY_BOT_URL || `${gameyBotProtocol}://${gameyBotHost}:${gameyBotPort}`;
 
+function parseNonEmptyString(value, fieldName) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return value.trim();
+}
+
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   'https://localhost:5173,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
   .split(',')
@@ -140,18 +148,22 @@ app.get('/api/game/history', async (req, res) => {
       return res.status(400).json({ error: 'Falta userId en la query' });
     }
 
-    const filtro = { userId };
+    const safeUserId = parseNonEmptyString(userId, 'userId');
+    const safeSortBy = sortBy === 'moves' ? 'moves' : 'date';
+    const safeSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const filtro = { userId: safeUserId };
     const allGames = await GameModel.find(filtro).lean();
     const sortedGames = [...allGames].sort((a, b) => {
-      if (sortBy === 'moves') {
+      if (safeSortBy === 'moves') {
         const movesA = a.moves?.length || 0;
         const movesB = b.moves?.length || 0;
-        return sortOrder === 'asc' ? movesA - movesB : movesB - movesA;
+        return safeSortOrder === 'asc' ? movesA - movesB : movesB - movesA;
       }
 
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      return safeSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
 
     const games = sortedGames.slice(startIndex, endIndex);
