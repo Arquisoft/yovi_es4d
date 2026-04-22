@@ -3,27 +3,34 @@ import { chromium } from 'playwright'
 
 setDefaultTimeout(60_000)
 
-
 class CustomWorld {
-  browser = null;
-  page = null;
-  BASE_URL = process.env.BASE_URL || 'https://localhost:5173';
+  browser = null
+  context = null
+  page = null
+  BASE_URL = process.env.BASE_URL || 'https://localhost:5173'
 }
 
 setWorldConstructor(CustomWorld)
 
 Before(async function () {
-  // Allow turning off headless mode and enabling slow motion/devtools via env vars
-  const headless = true
-  const slowMo = 0
-  const devtools = false
 
-  this.browser = await chromium.launch({ headless, slowMo, devtools })
-  const context = await this.browser.newContext({ ignoreHTTPSErrors: true }) // ← new
-  this.page = await context.newPage()                                         // ← changed
+  this.browser = await chromium.launch({
+    headless: true,
+    slowMo: 0,
+    devtools: false
+  })
+
+  // ✅ guardar context
+  this.context = await this.browser.newContext({
+    ignoreHTTPSErrors: true
+  })
+
+  this.page = await this.context.newPage()
+
 })
 
 After(async function () {
-  if (this.page) await this.page.close()
-  if (this.browser) await this.browser.close()
+  await this.page?.close()
+  await this.context?.close()
+  await this.browser?.close()
 })

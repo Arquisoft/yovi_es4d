@@ -3,6 +3,20 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 
+const bypassSpaRoute = (path: string) => ({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  bypass(req: { method?: string; headers?: { accept?: string } }) {
+    const acceptsHtml = req.headers?.accept?.includes('text/html');
+    if (req.method === 'GET' && acceptsHtml) {
+      return '/index.html';
+    }
+
+    return undefined;
+  },
+  rewrite: () => path,
+});
+
 export default defineConfig({
   plugins: [
     react(),
@@ -39,18 +53,9 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
-      '/login': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/logout': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/adduser': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
+      '/login': bypassSpaRoute('/login'),
+      '/logout': bypassSpaRoute('/logout'),
+      '/adduser': bypassSpaRoute('/adduser'),
       '/play': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -62,4 +67,5 @@ export default defineConfig({
       },
     },
   },
+  appType: "spa"
 })

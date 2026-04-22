@@ -223,10 +223,14 @@ app.post('/login', async (req, res) => {
     res.json(authResponse.data);
 
   } catch (error) {
-    res.status(error.response?.status || 500).json({
+    const status = error.response?.status || 500;
+    res.status(status).json({
       error: error.response?.data?.error || 'Login error'
     });
-    console.log(error);
+
+    if (status >= 500) {
+      console.log(error);
+    }
   }
 });
 
