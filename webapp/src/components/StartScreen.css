@@ -1,6 +1,4 @@
 :root {
-  /*-bg: #ffffff; */
-  /*--muted: #f4f6f8; */
   --accent: #0066ff;
   --text: #0a0a0a;
 }
@@ -19,8 +17,6 @@
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-
-  min-height: 100dvh;
 
   position: relative;
   display: flex;
@@ -205,27 +201,18 @@ html, body {
 }
 
 .typing {
-  display: inline-block;
-  white-space: normal; /* allow wrapping */
-  word-break: break-word;
-  font-size: clamp(0.95rem, 2.6vw, 1.2rem);
-  margin: 0;
-  color: rgba(255,255,255,0.95);
-}
-
-/* Typing effect for h2 */
-.typing {
   font-family: 'Courier New', Courier, monospace;
   font-size: clamp(1.1rem, 3vw, 1.6rem);
   margin: 8px 0 14px;
   color: rgba(255,255,255,0.95);
   font-weight: 600;
   display: inline-block;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
   vertical-align: middle;
   position: relative;
   z-index: 3;
+  word-break: break-word;
 }
 
 .typing-cursor {

@@ -89,7 +89,7 @@
 
 .go-subtitle {
   font-size: 1rem;
-  color: #9e9890;
+  color: #5f584f;
   margin: 0 0 40px;
   text-align: center;
   animation: goFadeUp 0s 0s ease both;
@@ -164,7 +164,7 @@
 .go-score-label {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #c4bdb4;
+  color: #6f665c;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   margin-bottom: 2px;
@@ -173,7 +173,7 @@
   font-family: 'DM Mono', monospace;
   font-size: 2rem;
   font-weight: 700;
-  color: #c4bdb4;
+  color: #5f584f;
 }
 .go-player-card.winner-card .go-score       { color: #7c6ff7; }
 .go-player-card.winner-card.coral-winner .go-score { color: #f97058; }
@@ -227,7 +227,7 @@
   border-radius: 14px;
   border: 2px solid #e8e2d9;
   background: #ffffff;
-  color: #9e9890;
+  color: #5f584f;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.05em;

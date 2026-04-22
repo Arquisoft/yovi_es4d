@@ -362,11 +362,12 @@ app.post('/api/users/bulk', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   try {
     const { exclude = [], search = '', page = 1, limit = 10 } = req.query;
-    const rawExcludeIds = Array.isArray(exclude)
-      ? exclude
-      : exclude
-        ? [exclude]
-        : [];
+    let rawExcludeIds = [];
+    if (Array.isArray(exclude)) {
+      rawExcludeIds = exclude;
+    } else if (exclude) {
+      rawExcludeIds = [exclude];
+    }
     const excludeIds = rawExcludeIds
       .filter((id) => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id))
       .map((id) => new mongoose.Types.ObjectId(id));

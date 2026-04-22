@@ -109,7 +109,7 @@
 }
 
 .error-message { color: #ff6b6b; }
-.success-message { color: #00ffae; }
+.success-message { color: #8fffd0; }
 .avatar-container {
   position: relative;
   display: inline-block;
@@ -145,7 +145,6 @@
   cursor: pointer;
 
   padding: 0;
-  width: 28px;
   min-width: 28px;
   max-width: 28px;
 }

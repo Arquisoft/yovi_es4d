@@ -3,8 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 
+const gatewayTarget = process.env.VITE_GATEWAY_TARGET?.trim() || 'http://localhost:8000';
+
 const bypassSpaRoute = (path: string) => ({
-  target: 'https://localhost:8000',
+  target: gatewayTarget,
   changeOrigin: true,
   secure: false,
   bypass(req: { method?: string; headers?: { accept?: string } }) {
@@ -51,7 +53,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://localhost:8000',
+        target: gatewayTarget,
         changeOrigin: true,
         secure: false,
       },
@@ -59,12 +61,12 @@ export default defineConfig({
       '/logout': bypassSpaRoute('/logout'),
       '/adduser': bypassSpaRoute('/adduser'),
       '/play': {
-        target: 'https://localhost:8000',
+        target: gatewayTarget,
         changeOrigin: true,
         secure: false,
       },
       '/socket.io': {
-        target: 'https://localhost:8000',
+        target: gatewayTarget,
         changeOrigin: true,
         secure: false,
         ws: true,

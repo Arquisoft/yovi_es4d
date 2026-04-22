@@ -17,7 +17,7 @@
  */
 
 const express = require('express');
-const https = require('https');
+const https = require('node:https');
 const axios = require('axios');
 const cors = require('cors');
 const promBundle = require('express-prom-bundle');
@@ -41,7 +41,7 @@ app.disable('x-powered-by');
 const port = 8000;
 const gatewayHttpsEnabled = process.env.GATEWAY_HTTPS === 'true';
 const gatewayHttpsPfxPath = process.env.GATEWAY_HTTPS_PFX_PATH || path.join(__dirname, 'certs', 'localhost.pfx');
-const gatewayHttpsPassphrase = process.env.GATEWAY_HTTPS_PFX_PASSPHRASE || 'yovi-es4d-local';
+const gatewayHttpsPassphrase = process.env.GATEWAY_HTTPS_PFX_PASSPHRASE;
 
 
 // Internal service URLs are configurable through env vars.
@@ -72,18 +72,19 @@ function parseSafePathSegment(value, fieldName) {
 }
 
 function parseObjectIdSegment(value, fieldName) {
-  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
-    throw new Error(`Invalid ${fieldName}`);
-  }
-
-  return value;
+  return parseSafePathSegment(value, fieldName);
 }
 
-function buildServiceUrl(baseUrl, path) {
-  return new URL(path, `${baseUrl}/`).toString();
+function buildServiceUrl(baseUrl, pathname) {
+  return new URL(pathname, `${baseUrl}/`).toString();
 }
 
 function buildGameServiceGameUrl(gameId, suffix = '') {
+  const allowedSuffixes = new Set(['', '/validateMove', '/vsBot/move', '/multiplayer/move']);
+  if (!allowedSuffixes.has(suffix)) {
+    throw new Error('Invalid game suffix');
+  }
+
   const safeGameId = encodeURIComponent(parseSafePathSegment(gameId, 'gameId'));
   return buildServiceUrl(gameServiceUrl, `/api/game/${safeGameId}${suffix}`);
 }
@@ -91,6 +92,23 @@ function buildGameServiceGameUrl(gameId, suffix = '') {
 function buildFriendRequestUrl(requestId) {
   const safeRequestId = encodeURIComponent(parseObjectIdSegment(requestId, 'requestId'));
   return buildServiceUrl(friendServiceUrl, `/friends/request/${safeRequestId}`);
+}
+
+function buildAuthServiceUrl(pathname) {
+  return buildServiceUrl(authServiceUrl, pathname);
+}
+
+function buildUserServiceUrl(pathname) {
+  return buildServiceUrl(userServiceUrl, pathname);
+}
+
+function buildGameActionUrl(gameId, action) {
+  const allowedActions = new Set(['setPlayerName', 'saveForPlayer']);
+  if (!allowedActions.has(action)) {
+    throw new Error('Invalid game action');
+  }
+
+  return `${buildGameServiceGameUrl(gameId)}/${action}`;
 }
 
 function extractCookieValue(setCookieHeader, cookieName) {
@@ -290,7 +308,7 @@ app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
 app.post('/login', async (req, res) => {
   try {
     const authResponse = await axios.post(
-      authServiceUrl + '/login',
+      buildAuthServiceUrl('/login'),
       req.body,
       { withCredentials: true }
     );
@@ -330,7 +348,7 @@ app.post('/login', async (req, res) => {
  */
 app.post('/adduser', async (req, res) => {
   try {
-    const userResponse = await axios.post(userServiceUrl + '/adduser', req.body);
+    const userResponse = await axios.post(buildUserServiceUrl('/adduser'), req.body);
     res.json(userResponse.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -686,7 +704,7 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameServiceGameUrl(gameId, '/setPlayerName'), req.body);
+    const response = await axios.post(buildGameActionUrl(gameId, 'setPlayerName'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
@@ -697,7 +715,7 @@ app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameServiceGameUrl(gameId, '/saveForPlayer'), req.body);
+    const response = await axios.post(buildGameActionUrl(gameId, 'saveForPlayer'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });
@@ -957,10 +975,13 @@ function startServer() {
       throw new Error(`HTTPS enabled but certificate not found at ${gatewayHttpsPfxPath}`);
     }
 
-    server = https.createServer({
-      pfx: fs.readFileSync(gatewayHttpsPfxPath),
-      passphrase: gatewayHttpsPassphrase,
-    }, app);
+      const httpsOptions = {
+        pfx: fs.readFileSync(gatewayHttpsPfxPath),
+      };
+      if (gatewayHttpsPassphrase) {
+        httpsOptions.passphrase = gatewayHttpsPassphrase;
+      }
+      server = https.createServer(httpsOptions, app);
 
     server.listen(port, () => {});
   } else {

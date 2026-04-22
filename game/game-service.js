@@ -12,6 +12,7 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('node:path');
 const { randomUUID, webcrypto } = require('node:crypto');
 
 const app = express();
@@ -891,7 +892,11 @@ function startServer() {
   return app.listen(port, '0.0.0.0', () => console.log(`Game Service listening on ${port}`));
 }
 
-if (require.main === module && process.env.NODE_ENV !== 'test') {
+function isExecutedDirectly() {
+  return Boolean(process.argv[1]) && path.resolve(process.argv[1]) === __filename;
+}
+
+if (isExecutedDirectly() && process.env.NODE_ENV !== 'test') {
   startServer();
 }
 

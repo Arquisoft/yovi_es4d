@@ -244,6 +244,24 @@ function buildPlayerMoveBody(gameMode: string, userId: string | null, position: 
     : { userId, move: position, mode: gameMode };
 }
 
+function registerPlayerName(gameId: string, role: "j1" | "j2", name: string) {
+  return fetch(`${API_URL}/api/game/${gameId}/setPlayerName`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, name }),
+  }).catch(() => {});
+}
+
+function saveGameForPlayer(gameId: string, currentUserId: string, winner: string) {
+  return fetch(`${API_URL}/api/game/${gameId}/saveForPlayer`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: currentUserId, winner }),
+  }).catch(() => {});
+}
+
 const ThinkingDots: React.FC<{ size: number; background: string }> = ({
   size,
   background,
@@ -271,24 +289,35 @@ const TetraProgressTrack: React.FC<{
   colorClass: "violet" | "coral";
   connectedFaces: string[];
   hasBranch: boolean;
-}> = ({ name, playerKey, colorClass, connectedFaces, hasBranch }) => (
-  <div className="gb-tetra-track">
-    <span className="gb-tetra-track-label">{name}</span>
-    <div className="gb-tetra-face-row">
-      {TETRA_FACES.map((face) => (
-        <span
-          key={`${playerKey}-${face}`}
-          className={`gb-tetra-face-pill ${connectedFaces.includes(face) ? `active ${colorClass}` : ""}`}
-        >
-          {face}
-        </span>
-      ))}
+}> = ({ name, playerKey, colorClass, connectedFaces, hasBranch }) => {
+  const branchClassName = hasBranch ? `gb-tetra-branch active ${colorClass}` : "gb-tetra-branch";
+
+  return (
+    <div className="gb-tetra-track">
+      <span className="gb-tetra-track-label">{name}</span>
+      <div className="gb-tetra-face-row">
+        {TETRA_FACES.map((face) => {
+          const isActive = connectedFaces.includes(face);
+          const faceClassName = isActive
+            ? `gb-tetra-face-pill active ${colorClass}`
+            : "gb-tetra-face-pill";
+
+          return (
+            <span
+              key={`${playerKey}-${face}`}
+              className={faceClassName}
+            >
+              {face}
+            </span>
+          );
+        })}
+      </div>
+      <span className={branchClassName}>
+        {hasBranch ? "Bifurcacion" : "Sin bifurcacion"}
+      </span>
     </div>
-    <span className={`gb-tetra-branch ${hasBranch ? `active ${colorClass}` : ""}`}>
-      {hasBranch ? "Bifurcacion" : "Sin bifurcacion"}
-    </span>
-  </div>
-);
+  );
+};
 
 const OpponentDisconnectedView: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <div className="game-bg min-h-screen flex flex-col items-center justify-center">
@@ -377,6 +406,7 @@ const GameBoard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const hasLocationState = Boolean(location.state);
 
 
   const {
@@ -392,10 +422,10 @@ const GameBoard: React.FC = () => {
   } = (location.state as LocationState) ?? {};
 
   useEffect(() => {
-    if (!location.state) navigate("/select", { replace: true });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!location.state) return null;
+    if (!hasLocationState) {
+      navigate("/select", { replace: true });
+    }
+  }, [hasLocationState, navigate]);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [userProfile, setUserProfile]         = useState<UserProfileData | null>(null);
@@ -422,24 +452,6 @@ const GameBoard: React.FC = () => {
       navigate("/gameover", { state: { ...gameState, userProfile, opponentProfile, gameMode, boardVariant, onlineRole, player2Name } });
     }
   }, [gameState.status, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function registerPlayerName(gameId: string, role: "j1" | "j2", name: string) {
-    return fetch(`${API_URL}/api/game/${gameId}/setPlayerName`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, name }),
-    }).catch(() => {});
-  }
-
-  function saveGameForPlayer(gameId: string, currentUserId: string, winner: string) {
-    return fetch(`${API_URL}/api/game/${gameId}/saveForPlayer`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUserId, winner }),
-    }).catch(() => {});
-  }
 
   async function loadOnlineGame(gameId: string) {
     const response = await fetch(`${API_URL}/api/game/${gameId}`, { credentials: "include" });
@@ -628,7 +640,7 @@ const GameBoard: React.FC = () => {
       if (gameMode === "online") {
         socketRef.current?.emit('game_started', { code: roomCode, gameId: data.gameId });
         if (profilesRef.current.my) {
-          registerPlayerName(data.gameId, "j1", profilesRef.current.my);
+          void registerPlayerName(data.gameId, "j1", profilesRef.current.my);
         }
       }
     } catch (error) {
@@ -751,7 +763,7 @@ const GameBoard: React.FC = () => {
           socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner, gameId: gameState.gameId });
           // j1 guarda su propio registro al ganar
           if (gameState.gameId && userId) {
-            saveGameForPlayer(gameState.gameId, userId, validateData.winner);
+            void saveGameForPlayer(gameState.gameId, userId, validateData.winner);
           }
         }
         return;
@@ -770,11 +782,7 @@ const GameBoard: React.FC = () => {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-            gameMode === "vsBot"
-                ? { userId, mode: gameMode }
-                : { userId, move: position, mode: gameMode }
-        ),
+        body: JSON.stringify(buildPlayerMoveBody(gameMode, userId, position)),
       });
       const moveData = await moveRes.json();
 
@@ -797,15 +805,22 @@ const GameBoard: React.FC = () => {
   handleHexClickRef.current = handleHexClick;
 
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
-  const player2 = gameState.players[1] || { id: gameMode === 'multiplayer' || gameMode === 'online' ? 'jugador2' : 'bot', name: gameMode === 'multiplayer' || gameMode === 'online' ? t('gameBoard.player2') : 'Bot', points: 0 };
+  const isHumanOpponentMode = gameMode === "multiplayer" || gameMode === "online";
+  const player2Fallback = isHumanOpponentMode
+    ? { id: "jugador2", name: t('gameBoard.player2'), points: 0 }
+    : { id: "bot", name: "Bot", points: 0 };
+  const player2 = gameState.players[1] || player2Fallback;
 
   // Nombre e imagen del usuario logueado y del rival (online)
   const myName         = userProfile?.username     || t('gameBoard.player1');
   const myAvatar       = userProfile?.avatar       || "logo.png";
-  const opponentName   = opponentProfile?.username
-      || (gameMode === "multiplayer" ? player2Name : undefined)
-      || gameState.players[1]?.name
-      || t('gameBoard.player2');
+  let opponentName = opponentProfile?.username;
+  if (!opponentName && gameMode === "multiplayer") {
+    opponentName = player2Name;
+  }
+  if (!opponentName) {
+    opponentName = gameState.players[1]?.name || t('gameBoard.player2');
+  }
   const opponentAvatar = opponentProfile?.avatar   || "logo.png";
 
   // En online el usuario puede ser j1 o j2; en los demás modos siempre es j1
@@ -815,6 +830,13 @@ const GameBoard: React.FC = () => {
   const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
   const p2Name   = isMySlotJ1 ? opponentName                              : myName;
   const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+  const headerMeta = `${boardSize}x · #${gameState.gameId?.slice(-6) ?? "------"}`;
+  const footerText = `${botMode.replace("_", " ")} · ${t('gameBoard.board')} ${boardSize}x · ${gameMode}`;
+
+  if (!hasLocationState) {
+    return null;
+  }
+
   if (opponentDisconnected) {
     return <OpponentDisconnectedView onBack={() => navigate("/select")} />;
   }

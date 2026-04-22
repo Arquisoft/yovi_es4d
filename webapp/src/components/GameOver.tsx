@@ -52,6 +52,15 @@ const GameOver: React.FC = () => {
     const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
     const winnerTitleClass = isJ2Win ? "go-title winner-j2" : "go-title";
     const boardClassName = boardVariant === "tetra3d" ? "go-board go-board-3d" : "go-board";
+    const winnerCardClassName = (isWinner: boolean, isCoralWinner: boolean) => {
+        if (!isWinner) {
+            return "go-player-card";
+        }
+
+        return isCoralWinner
+            ? "go-player-card winner-card coral-winner"
+            : "go-player-card winner-card";
+    };
 
     const winnerName = winnerId === "j1" ? p1Name : p2Name;
 
@@ -88,9 +97,7 @@ const GameOver: React.FC = () => {
                     ].map((p, idx) => {
                         const isWinner = (idx === 0 && winnerId === "j1") || (idx === 1 && winnerId === "j2");
                         const isCoralW = isWinner && idx === 1;
-                        const winnerCardClass = isWinner
-                            ? isCoralW ? "go-player-card winner-card coral-winner" : "go-player-card winner-card"
-                            : "go-player-card";
+                        const winnerCardClass = winnerCardClassName(isWinner, isCoralW);
                         const showsAvatarImage = p.avatar.includes(".") || p.avatar.includes("/");
                         return (
                             <div
