@@ -22,6 +22,7 @@ const axios = require('axios');
 const cors = require('cors');
 const promBundle = require('express-prom-bundle');
 const cookieParser = require("cookie-parser");
+const path = require('node:path');
 const { webcrypto } = require('node:crypto');
 
 // OpenAPI-Swagger Libraries
