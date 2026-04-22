@@ -7,7 +7,7 @@ setDefaultTimeout(60_000)
 class CustomWorld {
   browser = null;
   page = null;
-  BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
+  BASE_URL = process.env.BASE_URL || 'https://localhost:5173';
 }
 
 setWorldConstructor(CustomWorld)
@@ -19,7 +19,8 @@ Before(async function () {
   const devtools = false
 
   this.browser = await chromium.launch({ headless, slowMo, devtools })
-  this.page = await this.browser.newPage()
+  const context = await this.browser.newContext({ ignoreHTTPSErrors: true }) // ← new
+  this.page = await context.newPage()                                         // ← changed
 })
 
 After(async function () {

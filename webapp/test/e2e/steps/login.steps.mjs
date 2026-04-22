@@ -19,6 +19,7 @@ Given('the login page is open', async function () {
   if (!page) throw new Error('Page not initialized')
   const BASE_URL = this.BASE_URL;
   await page.goto(`${BASE_URL}/login`)
+  await page.waitForSelector('#email', { timeout: 10000 }) // ← add this
 })
 
 When('I enter a valid email and password', async function () {
