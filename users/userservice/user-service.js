@@ -28,6 +28,26 @@ const mongoUri =
 
 mongoose.connect(mongoUri);
 
+function parseObjectId(value, fieldName) {
+  if (typeof value !== 'string' || !mongoose.Types.ObjectId.isValid(value)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return new mongoose.Types.ObjectId(value);
+}
+
+function parseObjectIdArray(values, fieldName) {
+  if (!Array.isArray(values)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return values.map((value) => parseObjectId(value, fieldName));
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
 /**
  * Valida que los campos requeridos estén presentes en el cuerpo de la solicitud.
@@ -324,22 +344,37 @@ app.post('/changePassword', async (req, res) => {
 
 });
 app.post('/api/users/bulk', async (req, res) => {
-  const { ids } = req.body;
-  const users = await User.find({ _id: { $in: ids } });
-  res.json(users);
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: 'ids must be an array' });
+    }
+
+    const safeIds = parseObjectIdArray(ids, 'ids');
+    const users = await User.find({ _id: { $in: safeIds } });
+    res.json(users);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error: error.message });
+  }
 });
 app.get('/api/users', async (req, res) => {
   try {
     const { exclude = [], search = '', page = 1, limit = 10 } = req.query;
-
-    const excludeIds = Array.isArray(exclude) ? exclude : [exclude];
-
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
+    const rawExcludeIds = Array.isArray(exclude)
+      ? exclude
+      : (exclude ? [exclude] : []);
+    const excludeIds = rawExcludeIds
+      .filter((id) => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    const safeSearch = typeof search === 'string' ? search : '';
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(50, Math.max(parseInt(limit, 10) || 10, 1));
 
     const users = await User.find({
       _id: { $nin: excludeIds },
-      username: { $regex: search, $options: 'i' }
+      username: { $regex: escapeRegex(safeSearch), $options: 'i' }
     })
       .select('-password')
       .skip((pageNum - 1) * limitNum)

@@ -2,6 +2,21 @@ const request = require('supertest');
 
 jest.mock('mongoose', () => ({
   connect: jest.fn(),
+  Types: {
+    ObjectId: class MockObjectId {
+      constructor(value) {
+        this.value = value;
+      }
+
+      toString() {
+        return this.value;
+      }
+
+      static isValid(value) {
+        return typeof value === 'string' && /^[a-fA-F0-9]{24}$/.test(value);
+      }
+    },
+  },
   connection: {
     close: jest.fn(),
   },
@@ -306,37 +321,68 @@ describe('User Service', () => {
     expect(response.body.error).toBe('DB fail');
   });
 
-  it('returns users in bulk on POST /api/users/bulk', async () => {
-    const users = [{ _id: 'user-1' }, { _id: 'user-2' }];
-    User.find.mockResolvedValue(users);
+ it('returns users in bulk on POST /api/users/bulk', async () => {
+  const id1 = '507f1f77bcf86cd799439011';
+  const id2 = '507f1f77bcf86cd799439012';
 
-    const response = await request(app)
-      .post('/api/users/bulk')
-      .send({ ids: ['user-1', 'user-2'] });
+  const users = [{ _id: id1 }, { _id: id2 }];
+  User.find.mockResolvedValue(users);
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(users);
-    expect(User.find).toHaveBeenCalledWith({ _id: { $in: ['user-1', 'user-2'] } });
+  const response = await request(app)
+    .post('/api/users/bulk')
+    .send({ ids: [id1, id2] });
+
+  expect(response.status).toBe(200);
+  expect(response.body).toEqual(users);
+
+  // Verifica que se llamó correctamente
+  expect(User.find).toHaveBeenCalledWith({
+    _id: { $in: expect.any(Array) }
   });
 
-  it('returns filtered users on GET /api/users', async () => {
-    const chain = createQueryChain([{ _id: 'user-2', username: 'alice' }]);
-    User.find.mockReturnValue(chain);
+  // Verifica que los ObjectId son correctos
+  const calledIds = User.find.mock.calls[0][0]._id.$in;
+  expect(calledIds.map(id => id.toString())).toEqual([id1, id2]);
+});
 
-    const response = await request(app)
-      .get('/api/users')
-      .query({ exclude: ['user-1'], search: 'ali', page: 2, limit: 5 });
+ it('returns filtered users on GET /api/users', async () => {
+  const id1 = '507f1f77bcf86cd799439011';
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual([{ _id: 'user-2', username: 'alice' }]);
-    expect(User.find).toHaveBeenCalledWith({
-      _id: { $nin: ['user-1'] },
-      username: { $regex: 'ali', $options: 'i' },
+  const chain = createQueryChain([
+    { _id: 'user-2', username: 'alice' }
+  ]);
+
+  User.find.mockReturnValue(chain);
+
+  const response = await request(app)
+    .get('/api/users')
+    .query({
+      exclude: [id1],
+      search: 'ali',
+      page: 2,
+      limit: 5
     });
-    expect(chain.select).toHaveBeenCalledWith('-password');
-    expect(chain.skip).toHaveBeenCalledWith(5);
-    expect(chain.limit).toHaveBeenCalledWith(5);
+
+  expect(response.status).toBe(200);
+  expect(response.body).toEqual([
+    { _id: 'user-2', username: 'alice' }
+  ]);
+
+  // Verifica llamada base
+  expect(User.find).toHaveBeenCalledWith({
+    _id: { $nin: expect.any(Array) },
+    username: { $regex: 'ali', $options: 'i' },
   });
+
+  // Verifica ObjectId real
+  const calledExclude = User.find.mock.calls[0][0]._id.$nin;
+  expect(calledExclude[0].toString()).toBe(id1);
+
+  // Verifica paginación
+  expect(chain.select).toHaveBeenCalledWith('-password');
+  expect(chain.skip).toHaveBeenCalledWith(5); // (page 2 - 1) * limit 5
+  expect(chain.limit).toHaveBeenCalledWith(5);
+});
 
   it('returns 500 if GET /api/users fails', async () => {
     User.find.mockImplementation(() => {
