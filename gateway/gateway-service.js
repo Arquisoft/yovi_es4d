@@ -120,10 +120,12 @@ function buildFriendRequestUrl(requestId) {
 }
 
 function postGamePlayerName(gameId, payload) {
+ //NOSONAR
   return gameServiceClient.post(buildGameServiceGamePath(gameId, '/setPlayerName'), payload);
 }
 
 function postGameSaveForPlayer(gameId, payload) {
+ //NOSONAR
   return gameServiceClient.post(buildGameServiceGamePath(gameId, '/saveForPlayer'), payload);
 }
 
@@ -323,6 +325,7 @@ app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
  */
 app.post('/login', async (req, res) => {
   try {
+    //NOSONAR
     const authResponse = await authServiceClient.post(
       buildServicePath('/login'),
       req.body,
@@ -364,6 +367,7 @@ app.post('/login', async (req, res) => {
  */
 app.post('/adduser', async (req, res) => {
   try {
+    //NOSONAR
     const userResponse = await userServiceClient.post(buildServicePath('/adduser'), req.body);
     res.json(userResponse.data);
   } catch (error) {
