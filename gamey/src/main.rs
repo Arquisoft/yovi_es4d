@@ -90,6 +90,112 @@ struct TetraGame {
 }
 
 impl TetraGame {
+    fn collect_moves_for_prefix(
+        &self,
+        total: u32,
+        a: u32,
+        b: u32,
+        moves: &mut Vec<(u32, u32, u32, u32)>,
+    ) {
+        for c in 0..=total - a - b {
+            let d = total - a - b - c;
+            let coord = (a, b, c, d);
+            if !self.cells.contains_key(&coord) {
+                moves.push(coord);
+            }
+        }
+    }
+
+    fn collect_moves_for_a(
+        &self,
+        total: u32,
+        a: u32,
+        moves: &mut Vec<(u32, u32, u32, u32)>,
+    ) {
+        for b in 0..=total - a {
+            self.collect_moves_for_prefix(total, a, b, moves);
+        }
+    }
+
+    fn merge_faces(into: &mut [bool; 4], from: [bool; 4]) {
+        for idx in 0..4 {
+            into[idx] = into[idx] || from[idx];
+        }
+    }
+
+    fn collect_component_nodes(
+        &self,
+        start: (u32, u32, u32, u32),
+        player: u32,
+        global_visited: &mut HashSet<(u32, u32, u32, u32)>,
+    ) -> (Vec<(u32, u32, u32, u32)>, [bool; 4]) {
+        let mut stack = vec![start];
+        let mut component_nodes = Vec::new();
+        let mut faces = [false, false, false, false];
+
+        global_visited.insert(start);
+
+        while let Some(current) = stack.pop() {
+            component_nodes.push(current);
+            Self::merge_faces(&mut faces, Self::touched_faces(current));
+
+            for neighbor in self.neighbors(current) {
+                if global_visited.contains(&neighbor) {
+                    continue;
+                }
+
+                if self.cells.get(&neighbor) == Some(&player) {
+                    global_visited.insert(neighbor);
+                    stack.push(neighbor);
+                }
+            }
+        }
+
+        (component_nodes, faces)
+    }
+
+    fn normalized_edge(
+        node_a: (u32, u32, u32, u32),
+        node_b: (u32, u32, u32, u32),
+    ) -> ((u32, u32, u32, u32), (u32, u32, u32, u32)) {
+        if node_a <= node_b {
+            (node_a, node_b)
+        } else {
+            (node_b, node_a)
+        }
+    }
+
+    fn build_component_edges(
+        &self,
+        component_nodes: &[(u32, u32, u32, u32)],
+    ) -> (bool, Vec<((u32, u32, u32, u32), (u32, u32, u32, u32))>) {
+        let node_set = component_nodes.iter().copied().collect::<HashSet<_>>();
+        let mut has_branch = false;
+        let mut path_edges = Vec::new();
+        let mut seen_edges = HashSet::new();
+
+        for node in component_nodes {
+            let player_neighbors = self
+                .neighbors(*node)
+                .into_iter()
+                .filter(|neighbor| node_set.contains(neighbor))
+                .collect::<Vec<_>>();
+
+            if player_neighbors.len() >= 3 {
+                has_branch = true;
+            }
+
+            for neighbor in player_neighbors {
+                let edge = Self::normalized_edge(*node, neighbor);
+                if seen_edges.insert(edge) {
+                    path_edges.push(edge);
+                }
+            }
+        }
+
+        (has_branch, path_edges)
+    }
+
     fn new(size: u32) -> Self {
         Self {
             size: size.max(2),
@@ -107,15 +213,7 @@ impl TetraGame {
         let mut moves = Vec::new();
         let total = self.size.saturating_sub(1);
         for a in 0..=total {
-            for b in 0..=total - a {
-                for c in 0..=total - a - b {
-                    let d = total - a - b - c;
-                    let coord = (a, b, c, d);
-                    if !self.cells.contains_key(&coord) {
-                        moves.push(coord);
-                    }
-                }
-            }
+            self.collect_moves_for_a(total, a, &mut moves);
         }
         moves
     }
@@ -183,60 +281,9 @@ impl TetraGame {
         player: u32,
         global_visited: &mut HashSet<(u32, u32, u32, u32)>,
     ) -> TetraComponentInfo {
-        let mut stack = vec![start];
-        let mut component_nodes = Vec::new();
-        let mut faces = [false, false, false, false];
-
-        global_visited.insert(start);
-
-        while let Some(current) = stack.pop() {
-            component_nodes.push(current);
-
-            let current_faces = Self::touched_faces(current);
-            for idx in 0..4 {
-                faces[idx] = faces[idx] || current_faces[idx];
-            }
-
-            for neighbor in self.neighbors(current) {
-                if global_visited.contains(&neighbor) {
-                    continue;
-                }
-
-                if self.cells.get(&neighbor) == Some(&player) {
-                    global_visited.insert(neighbor);
-                    stack.push(neighbor);
-                }
-            }
-        }
-
-        let node_set = component_nodes.iter().copied().collect::<HashSet<_>>();
-        let mut has_branch = false;
-        let mut path_edges = Vec::new();
-        let mut seen_edges = HashSet::new();
-
-        for node in &component_nodes {
-            let player_neighbors = self
-                .neighbors(*node)
-                .into_iter()
-                .filter(|neighbor| node_set.contains(neighbor))
-                .collect::<Vec<_>>();
-
-            if player_neighbors.len() >= 3 {
-                has_branch = true;
-            }
-
-            for neighbor in player_neighbors {
-                let edge = if node <= &neighbor {
-                    (*node, neighbor)
-                } else {
-                    (neighbor, *node)
-                };
-
-                if seen_edges.insert(edge) {
-                    path_edges.push(edge);
-                }
-            }
-        }
+        let (component_nodes, faces) =
+            self.collect_component_nodes(start, player, global_visited);
+        let (has_branch, path_edges) = self.build_component_edges(&component_nodes);
 
         TetraComponentInfo {
             nodes: component_nodes,

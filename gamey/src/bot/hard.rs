@@ -55,7 +55,118 @@ pub struct HardBot;
 
 
 impl HardBot {
+    fn merge_component_sides(
+        board: &GameY,
+        player: PlayerId,
+        size: u32,
+        neighbor: &Coordinates,
+        seen: &mut HashSet<usize>,
+        mask: &mut u8,
+    ) {
+        if board.player_at(neighbor) != Some(player) {
+            return;
+        }
 
+        let root = neighbor.to_index(size) as usize;
+        if seen.contains(&root) {
+            return;
+        }
+
+        let (cells, sides) = Self::flood_fill(neighbor, board, player);
+        *mask |= sides;
+        seen.extend(cells);
+    }
+
+    fn seed_side_cell(
+        board: &GameY,
+        player: PlayerId,
+        idx: usize,
+        coords: &Coordinates,
+        side: u8,
+        dist: &mut [u32],
+        queue: &mut VecDeque<usize>,
+    ) {
+        if Self::side_mask(coords) & side == 0 {
+            return;
+        }
+
+        match board.player_at(coords) {
+            Some(p) if p == player => {
+                dist[idx] = 0;
+                queue.push_front(idx);
+            }
+            None => {
+                dist[idx] = 1;
+                queue.push_back(idx);
+            }
+            _ => {}
+        }
+    }
+
+    fn traversal_cost(board: &GameY, coords: &Coordinates, player: PlayerId) -> Option<u32> {
+        match board.player_at(coords) {
+            Some(p) if p == player => Some(0),
+            None => Some(1),
+            _ => None,
+        }
+    }
+
+    fn extend_distance(
+        dist: &mut [u32],
+        queue: &mut VecDeque<usize>,
+        idx: usize,
+        next_idx: usize,
+        cost: u32,
+    ) {
+        let next_distance = dist[idx].saturating_add(cost);
+        if next_distance >= dist[next_idx] {
+            return;
+        }
+
+        dist[next_idx] = next_distance;
+        if cost == 0 {
+            queue.push_front(next_idx);
+        } else {
+            queue.push_back(next_idx);
+        }
+    }
+
+    fn accumulate_connected_sides(
+        candidate: &Coordinates,
+        board: &GameY,
+        player: PlayerId,
+    ) -> u8 {
+        let size = board.board_size();
+        let mut mask = Self::side_mask(candidate);
+        let mut seen: HashSet<usize> = HashSet::new();
+
+        for nb in Self::neighbors(candidate) {
+            Self::merge_component_sides(board, player, size, &nb, &mut seen, &mut mask);
+        }
+
+        mask
+    }
+
+    fn completes_three_sides_with_follow_up(
+        candidate: &Coordinates,
+        follow_up: &Coordinates,
+        board: &GameY,
+        player: PlayerId,
+        base_mask: u8,
+    ) -> bool {
+        let mut combined = base_mask | Self::side_mask(follow_up);
+
+        for nb in Self::neighbors(follow_up) {
+            if nb == *candidate || board.player_at(&nb) != Some(player) {
+                continue;
+            }
+
+            let (_, sides) = Self::flood_fill(&nb, board, player);
+            combined |= sides;
+        }
+
+        combined == 0b111
+    }
 
     /// Returns the up-to-6 neighbours of `coords` in barycentric space.
     fn neighbors(coords: &Coordinates) -> Vec<Coordinates> {
@@ -104,31 +215,17 @@ impl HardBot {
         // Seed the queue with all cells on the target side.
         for idx in 0..total {
             let c = Coordinates::from_index(idx as u32, size);
-            if Self::side_mask(&c) & side == 0 {
-                continue;
-            }
-            match board.player_at(&c) {
-                Some(p) if p == player => { dist[idx] = 0; queue.push_front(idx); }
-                None                   => { dist[idx] = 1; queue.push_back(idx); }
-                _                      => {} // blocked by opponent
-            }
+            Self::seed_side_cell(board, player, idx, &c, side, &mut dist, &mut queue);
         }
 
         while let Some(idx) = queue.pop_front() {
-            let d = dist[idx];
             let c = Coordinates::from_index(idx as u32, size);
             for nb in Self::neighbors(&c) {
                 let nidx = nb.to_index(size) as usize;
-                let cost = match board.player_at(&nb) {
-                    Some(p) if p == player => 0,
-                    None                   => 1,
-                    _                      => continue, // opponent blocks
+                let Some(cost) = Self::traversal_cost(board, &nb, player) else {
+                    continue;
                 };
-                let nd = d.saturating_add(cost);
-                if nd < dist[nidx] {
-                    dist[nidx] = nd;
-                    if cost == 0 { queue.push_front(nidx); } else { queue.push_back(nidx); }
-                }
+                Self::extend_distance(&mut dist, &mut queue, idx, nidx, cost);
             }
         }
         dist
@@ -186,19 +283,34 @@ impl HardBot {
         let size = board.board_size();
 
         for nb in Self::neighbors(candidate) {
-            if board.player_at(&nb) == Some(player) {
-                let root_idx = nb.to_index(size) as usize;
-                if seen_roots.contains(&root_idx) {
-                    continue;
-                }
-                let (cells, s) = Self::flood_fill(&nb, board, player);
-                sides |= s;
-                for c in cells {
-                    seen_roots.insert(c);
-                }
-            }
+            Self::merge_component_sides(board, player, size, &nb, &mut seen_roots, &mut sides);
         }
         sides.count_ones() as u8
+    }
+
+    fn shared_empty_neighbors(
+        candidate: &Coordinates,
+        board: &GameY,
+        p1: &Coordinates,
+        p2: &Coordinates,
+    ) -> usize {
+        let p1_empty: HashSet<Coordinates> = Self::neighbors(p1)
+            .into_iter()
+            .filter(|c| c != candidate && board.player_at(c).is_none())
+            .collect();
+
+        Self::neighbors(p2)
+            .into_iter()
+            .filter(|c| c != candidate && p1_empty.contains(c))
+            .count()
+    }
+
+    fn bridge_pair_bonus(shared_empty_count: usize) -> f64 {
+        match shared_empty_count {
+            1 => 6.0,
+            0 => 2.0,
+            _ => 0.0,
+        }
     }
 
     /// Returns a bonus if `candidate` is a carrier of a virtual connection
@@ -215,21 +327,8 @@ impl HardBot {
             for j in (i + 1)..friendly_nbs.len() {
                 let p1 = &friendly_nbs[i];
                 let p2 = &friendly_nbs[j];
-
-                let p1_empty: HashSet<Coordinates> = Self::neighbors(p1)
-                    .into_iter()
-                    .filter(|c| c != candidate && board.player_at(c).is_none())
-                    .collect();
-                let shared_empty: Vec<_> = Self::neighbors(p2)
-                    .into_iter()
-                    .filter(|c| c != candidate && p1_empty.contains(c))
-                    .collect();
-
-                if shared_empty.len() == 1 {
-                    bonus += 6.0;
-                } else if shared_empty.is_empty() {
-                    bonus += 2.0;
-                }
+                let shared_empty_count = Self::shared_empty_neighbors(candidate, board, p1, p2);
+                bonus += Self::bridge_pair_bonus(shared_empty_count);
             }
         }
         bonus
@@ -285,42 +384,129 @@ impl HardBot {
 
     /// Returns true if `player` can win in at most 2 moves from `candidate`.
     fn is_near_win(candidate: &Coordinates, board: &GameY, player: PlayerId) -> bool {
-        let size = board.board_size();
-
-        let mut mask_after_candidate = Self::side_mask(candidate);
-        let mut seen: HashSet<usize> = HashSet::new();
-        for nb in Self::neighbors(candidate) {
-            if board.player_at(&nb) == Some(player) {
-                let root = nb.to_index(size) as usize;
-                if !seen.contains(&root) {
-                    let (cells, s) = Self::flood_fill(&nb, board, player);
-                    mask_after_candidate |= s;
-                    for c in cells { seen.insert(c); }
-                }
-            }
-        }
+        let mask_after_candidate = Self::accumulate_connected_sides(candidate, board, player);
 
         if mask_after_candidate.count_ones() < 2 {
             return false;
         }
 
         for nb in Self::neighbors(candidate) {
-            if board.player_at(&nb).is_some() { continue; }
-
-            let mut combined = mask_after_candidate | Self::side_mask(&nb);
-            for nb2 in Self::neighbors(&nb) {
-                if nb2 == *candidate { continue; }
-                if board.player_at(&nb2) == Some(player) {
-                    let (_, s) = Self::flood_fill(&nb2, board, player);
-                    combined |= s;
-                }
-            }
-
-            if combined == 0b111 {
+            if board.player_at(&nb).is_none()
+                && Self::completes_three_sides_with_follow_up(
+                    candidate,
+                    &nb,
+                    board,
+                    player,
+                    mask_after_candidate,
+                )
+            {
                 return true;
             }
         }
         false
+    }
+
+    fn immediate_score(
+        candidate: &Coordinates,
+        board: &GameY,
+        my_id: PlayerId,
+        opp_id: PlayerId,
+    ) -> Option<f64> {
+        if Self::is_winning_move(candidate, board, my_id) {
+            return Some(1_000_000.0);
+        }
+        if Self::is_winning_move(candidate, board, opp_id) {
+            return Some(900_000.0);
+        }
+
+        None
+    }
+
+    fn capped_side_distances(
+        idx: usize,
+        size: u32,
+        da: &[u32],
+        db: &[u32],
+        dc: &[u32],
+    ) -> (f64, f64, f64) {
+        (
+            da[idx].min(size * 2) as f64,
+            db[idx].min(size * 2) as f64,
+            dc[idx].min(size * 2) as f64,
+        )
+    }
+
+    fn own_path_scores(
+        size: u32,
+        idx: usize,
+        da_me: &[u32],
+        db_me: &[u32],
+        dc_me: &[u32],
+    ) -> (f64, f64) {
+        let cap = (size * 3) as f64;
+        let (my_a, my_b, my_c) = Self::capped_side_distances(idx, size, da_me, db_me, dc_me);
+        let my_combined = my_a + my_b + my_c;
+        let my_worst = my_a.max(my_b).max(my_c);
+        let my_path_score = (cap - my_combined).max(0.0)
+            + 2.0 * (cap / 3.0 - my_worst).max(0.0);
+
+        let side_thresh = (size as f64 * 0.6).max(3.0);
+        let all_paths_bonus = if my_a <= side_thresh && my_b <= side_thresh && my_c <= side_thresh {
+            30.0 * (side_thresh * 2.0 - (my_a + my_b + my_c) / 3.0).max(0.0) / side_thresh
+        } else {
+            0.0
+        };
+
+        (my_path_score, all_paths_bonus)
+    }
+
+    fn blocking_urgency(opp_combined: f64) -> f64 {
+        if opp_combined <= 1.0 {
+            80.0
+        } else if opp_combined <= 3.0 {
+            25.0
+        } else if opp_combined <= 5.0 {
+            8.0
+        } else if opp_combined <= 8.0 {
+            3.0
+        } else {
+            1.0
+        }
+    }
+
+    fn blocking_score(size: u32, idx: usize, da_opp: &[u32], db_opp: &[u32], dc_opp: &[u32]) -> f64 {
+        let cap = (size * 3) as f64;
+        let (opp_a, opp_b, opp_c) = Self::capped_side_distances(idx, size, da_opp, db_opp, dc_opp);
+        let opp_combined = opp_a + opp_b + opp_c;
+        let urgency = Self::blocking_urgency(opp_combined);
+
+        (cap - opp_combined).max(0.0) * urgency
+    }
+
+    fn junction_score(candidate: &Coordinates, board: &GameY, player: PlayerId) -> f64 {
+        match Self::sides_after_placement(candidate, board, player) {
+            3 => 120.0,
+            2 => 30.0,
+            1 => 2.0,
+            _ => 0.0,
+        }
+    }
+
+    fn near_win_bonus(candidate: &Coordinates, board: &GameY, player: PlayerId) -> f64 {
+        if Self::is_near_win(candidate, board, player) {
+            40.0
+        } else {
+            0.0
+        }
+    }
+
+    fn centrality_score(candidate: &Coordinates, size: u32) -> f64 {
+        let max_centrality = ((size - 1) as f64) / 3.0;
+        if max_centrality <= 0.0 {
+            return 0.0;
+        }
+
+        candidate.x().min(candidate.y()).min(candidate.z()) as f64 / max_centrality
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -338,90 +524,20 @@ impl HardBot {
     ) -> f64 {
         let size = board.board_size();
         let idx = candidate.to_index(size) as usize;
-        let (x, y, z) = (candidate.x(), candidate.y(), candidate.z());
+        if let Some(score) = Self::immediate_score(candidate, board, my_id, opp_id) {
+            return score;
+        }
 
-        // Layer 1 & 2: immediate win / block
-        if Self::is_winning_move(candidate, board, my_id)  { return  1_000_000.0; }
-        if Self::is_winning_move(candidate, board, opp_id) { return    900_000.0; }
-
-        // Layer 3: own win-path score
-        let cap = (size * 3) as f64;
-        let my_a = da_me[idx].min(size * 2) as f64;
-        let my_b = db_me[idx].min(size * 2) as f64;
-        let my_c = dc_me[idx].min(size * 2) as f64;
-        let my_combined = my_a + my_b + my_c;
-
-        // Minimax term: reward shrinking the worst-case side distance.
-        let my_worst = my_a.max(my_b).max(my_c);
-        let my_path_score = (cap - my_combined).max(0.0)
-            + 2.0 * (cap / 3.0 - my_worst).max(0.0);
-
-        let side_thresh = (size as f64 * 0.6).max(3.0);
-        let all_paths_bonus = if my_a <= side_thresh && my_b <= side_thresh && my_c <= side_thresh {
-            30.0 * (side_thresh * 2.0 - (my_a + my_b + my_c) / 3.0).max(0.0)
-                / side_thresh
-        } else {
-            0.0
-        };
-
-        //Layer 4: opponent blocking score
-        let opp_a  = da_opp[idx].min(size * 2) as f64;
-        let opp_b  = db_opp[idx].min(size * 2) as f64;
-        let opp_c  = dc_opp[idx].min(size * 2) as f64;
-        let opp_combined = opp_a + opp_b + opp_c;
-
-        let urgency = if opp_combined <= 1.0 {
-            80.0
-        } else if opp_combined <= 3.0 {
-            25.0
-        } else if opp_combined <= 5.0 {
-            8.0
-        } else if opp_combined <= 8.0 {
-            3.0
-        } else {
-            1.0
-        };
-        let blocking_score = (cap - opp_combined).max(0.0) * urgency;
-
-        //Layer 5: junction / side-count bonus
-        let sides = Self::sides_after_placement(candidate, board, my_id);
-        let junction_score = match sides {
-            3 => 120.0,
-            2 => 30.0,  // raised: connecting two sides is strategically decisive
-            1 => 2.0,
-            _ => 0.0,
-        };
-
-        //Layer 6: virtual connection (bridge) bonus
+        let (my_path_score, all_paths_bonus) = Self::own_path_scores(size, idx, da_me, db_me, dc_me);
+        let blocking_score = Self::blocking_score(size, idx, da_opp, db_opp, dc_opp);
+        let junction_score = Self::junction_score(candidate, board, my_id);
         let bridge = Self::bridge_bonus(candidate, board, my_id);
-
-        //Layer 6b: skip-bridge bonus
         let skip = Self::skip_bridge_bonus(candidate, board, my_id);
-
-        //Layer 6c: near-win bonus
-        let near_win_bonus = if Self::is_near_win(candidate, board, my_id) { 40.0 } else { 0.0 };
-
-        //Layer 7: chain-size weighted adjacency
+        let near_win_bonus = Self::near_win_bonus(candidate, board, my_id);
         let chain_len = Self::largest_adjacent_chain(candidate, board, my_id) as f64;
         let chain_score = (chain_len + 1.0).ln() * 1.5;
+        let centrality = Self::centrality_score(candidate, size);
 
-        //Layer 8: centrality
-        let max_centrality = ((size - 1) as f64) / 3.0;
-        let centrality = if max_centrality > 0.0 {
-            x.min(y).min(z) as f64 / max_centrality
-        } else {
-            0.0
-        };
-
-        // Weight rationale
-        //   • my_path_score
-        //   • all_paths_bonus
-        //   • blocking_score
-        //   • junction_score
-        //   • skip/bridge
-        //   • near_win_bonus
-        //   • chain_score
-        //   • centrality
         4.0 * my_path_score
             + 2.0 * all_paths_bonus
             + 4.0 * blocking_score
