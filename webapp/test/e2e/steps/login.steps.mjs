@@ -3,6 +3,8 @@ import https from 'https';
 import { Given, When, Then } from '@cucumber/cucumber'
 import assert from 'assert'
 
+const GATEWAY_URL = process.env.E2E_GATEWAY_URL || 'https://localhost:8000';
+
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
 });
@@ -10,7 +12,7 @@ const httpsAgent = new https.Agent({
 Given('a test user exists', async function () {
   // Intenta registrar el usuario, ignora si ya existe
   try {
-    await axios.post('https://localhost:8000/adduser', {
+    await axios.post(`${GATEWAY_URL}/adduser`, {
       username: 'TestUserCucumber',
       email: 'testcucumber@example.com',
       password: 'Password123'

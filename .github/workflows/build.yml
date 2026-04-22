@@ -116,15 +116,19 @@ jobs:
 
       - name: Start backend stack for E2E
         run: docker compose up -d --build mongodb authservice userservice friends gamey game gateway
+        env:
+          GATEWAY_HTTPS: "false"
 
       - name: Wait for gateway to be ready
         run: |
           for i in {1..30}; do
-            if curl -k -fsS https://localhost:8000/health > /dev/null; then
+            if curl -fsS http://127.0.0.1:8000/health > /dev/null; then
               exit 0
             fi
             sleep 5
           done
+          docker compose ps
+          docker compose logs gateway
           exit 1
 
       - name: Install Playwright browsers
@@ -135,7 +139,8 @@ jobs:
         run: npx start-server-and-test "npm run dev -- --host 127.0.0.1 --strictPort" https-get://127.0.0.1:5173 "npm run test:e2e:run"
         working-directory: webapp
         env:
-          VITE_API_URL: https://localhost:8000
+          VITE_GATEWAY_TARGET: http://127.0.0.1:8000
+          E2E_GATEWAY_URL: http://127.0.0.1:8000
           BASE_URL: https://127.0.0.1:5173
 
       - name: Stop backend stack
