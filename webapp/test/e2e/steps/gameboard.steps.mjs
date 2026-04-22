@@ -3,7 +3,7 @@ import { Given, Then } from '@cucumber/cucumber'
 import assert from 'assert'
 
 const BASE_URL = process.env.BASE_URL || 'https://localhost:5173'
-const API_URL  = process.env.REACT_APP_API_URL || 'http://localhost:8000'
+const API_URL = BASE_URL
 
 // ── Helpers de mock ───────────────────────────────────────────
 
