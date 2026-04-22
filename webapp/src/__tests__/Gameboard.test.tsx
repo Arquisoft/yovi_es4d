@@ -131,7 +131,15 @@ const mockStartSequence = () =>
         .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'TestUser', avatar: 'avatar.png' }) } as Response)
         .mockResolvedValueOnce({ ok: true, json: async () => gameStartResponse } as Response)
 
-const renderGame = (state = { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11 }, lang = 'es') =>
+const renderGame = (
+  state: {
+    gameMode?: string
+    botMode?: string
+    boardSize?: number
+    boardVariant?: string
+  } = { gameMode: 'vsBot', botMode: 'random_bot', boardSize: 11 },
+  lang = 'es'
+) =>
     render(
         <I18nProvider defaultLang={lang} resources={translations}>
           <MemoryRouter initialEntries={[{ pathname: '/game', state }]}>
