@@ -143,6 +143,10 @@ const Historial: React.FC = () => {
 
   if (!user) return null;
 
+  const sortArrow = sortOrder === 'asc' ? '↑' : '↓';
+  const dateSortLabel = sortBy === 'date' ? sortArrow : '';
+  const moveSortLabel = sortBy === 'moves' ? sortArrow : '';
+
   return (
     <>
       <Sidebar />

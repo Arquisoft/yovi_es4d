@@ -69,7 +69,7 @@
   border-radius: 1vh;
   border: none;
   outline: none;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(10, 26, 76, 0.72);
   color: white;
   font-size: clamp(0.9rem, 1.2vw, 1rem);
 }
@@ -81,7 +81,7 @@
   border-radius: 1vh;
   border: none;
   cursor: pointer;
-  background: linear-gradient(90deg, #0095ff, #0004ff);
+  background: linear-gradient(90deg, #0070cc, #1225b8);
   color: white;
   font-size: clamp(1rem, 1.5vw, 1.1rem);
   font-weight: 600;
@@ -133,7 +133,7 @@
   border-radius: 50%;
   border: 2px solid white;
 
-  background: #0095ff;
+  background: #0070cc;
   color: white;
 
   font-size: 14px;

@@ -124,7 +124,7 @@ html, body {
   padding-right: 36px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08)),
+    linear-gradient(180deg, rgba(9, 29, 95, 0.86), rgba(17, 40, 112, 0.82)),
     linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.95) 50%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.95) 50%, transparent 50%);
   background-repeat: no-repeat, no-repeat, no-repeat;
@@ -141,7 +141,7 @@ html, body {
 
 .navbar-select:hover,
 .navbar-select:focus {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(18, 48, 143, 0.95);
   color: #ffffff;
   outline: none;
 }
@@ -261,7 +261,7 @@ html, body {
   display: inline-block; /* isolates background to the text area */
   padding: 6px 10px; /* vertical + horizontal padding avoids clipping */
   overflow: visible; /* allow gradient to render outside if needed */
-  background: linear-gradient(90deg,#ffffff 0%, #0095ff 45%, #0004ff 100%);
+  background: linear-gradient(90deg, #f3fbff 0%, #62d1ff 45%, #5b7dff 100%);
   background-size: 180% 140%; /* larger area so gradient covers even when scaled */
   background-position: center;
   background-repeat: no-repeat;
@@ -448,7 +448,7 @@ html, body {
   border: none;
   outline: none;
 
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(10, 26, 76, 0.72);
   color: white;
   font-size: 0.95rem;
 
@@ -475,7 +475,7 @@ html, body {
   border: none;
   cursor: pointer;
 
-  background: linear-gradient(90deg, #0095ff, #0004ff);
+  background: linear-gradient(90deg, #0070cc, #1225b8);
   color: white;
   font-size: 1rem;
   font-weight: 600;
@@ -585,7 +585,7 @@ html, body {
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(90deg, #0095ff, #0004ff);
+  background: linear-gradient(90deg, #0070cc, #1225b8);
   color: white;
   font-weight: 600;
   transition: all 0.3s ease;

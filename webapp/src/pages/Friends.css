@@ -28,7 +28,7 @@
   padding: 10px 16px;
   border-radius: 10px;
   border: none;
-  background: rgba(255,255,255,0.08);
+  background: rgba(10,26,76,0.72);
   color: white;
   cursor: pointer;
 }
@@ -42,7 +42,7 @@ input {
   padding: 10px;
   border-radius: 10px;
   border: none;
-  background: rgba(255,255,255,0.08);
+  background: rgba(10,26,76,0.72);
   color: white;
 }
 
@@ -72,7 +72,7 @@ button {
 }
 
 .friends-list button {
-  background: rgba(0,149,255,0.6);
+  background: rgba(0,112,204,0.9);
   border: none;
   padding: 8px 12px;
   border-radius: 8px;

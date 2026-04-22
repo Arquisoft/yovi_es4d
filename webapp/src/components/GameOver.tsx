@@ -49,7 +49,10 @@ const GameOver: React.FC = () => {
     const p1Name   = isMySlotJ1 ? myName         : opponentName;
     const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
     const p2Name   = isMySlotJ1 ? opponentName                                    : myName;
-    const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+    let p2Avatar = myAvatar;
+    if (isMySlotJ1) {
+        p2Avatar = gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar;
+    }
     const winnerTitleClass = isJ2Win ? "go-title winner-j2" : "go-title";
     const boardClassName = boardVariant === "tetra3d" ? "go-board go-board-3d" : "go-board";
     const winnerCardClassName = (isWinner: boolean, isCoralWinner: boolean) => {

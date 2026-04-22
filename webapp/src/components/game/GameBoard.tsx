@@ -664,10 +664,10 @@ const GameBoard: React.FC = () => {
         if (prev <= 1) {
           stopActiveTimer(timerRef);
           const gs = gameStateRef.current;
-          if (gs && gs.status === "active" && gs.turn === "j1") {
+          if (gs?.status === "active" && gs.turn === "j1") {
             const nextPosition = getRandomAvailablePosition(gs);
             if (nextPosition) {
-              handleHexClickRef.current(nextPosition);
+              void handleHexClickRef.current(nextPosition);
             }
           }
           return 0;
@@ -678,7 +678,7 @@ const GameBoard: React.FC = () => {
   }, [timeLimit, gameMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // handleHexClick necesita ser accesible desde el closure del timer
-  const handleHexClickRef = useRef<(pos: string) => void>(() => {});
+  const handleHexClickRef = useRef<(pos: string) => Promise<void> | void>(() => {});
 
   async function validatePlayerMove(position: string) {
     return fetchJson(`${API_URL}/api/game/${gameState.gameId}/validateMove`, {
@@ -802,7 +802,9 @@ const GameBoard: React.FC = () => {
   };
 
   // Mantener el ref actualizado en cada render para que el timer siempre llame a la versión actual
-  handleHexClickRef.current = handleHexClick;
+  handleHexClickRef.current = (position) => {
+    void handleHexClick(position);
+  };
 
   const player1 = gameState.players[0] || { id: "jugador1", name: t('gameBoard.player1'), points: 0 };
   const isHumanOpponentMode = gameMode === "multiplayer" || gameMode === "online";
@@ -829,7 +831,10 @@ const GameBoard: React.FC = () => {
   const p1Name   = isMySlotJ1 ? myName         : opponentName;
   const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
   const p2Name   = isMySlotJ1 ? opponentName                              : myName;
-  const p2Avatar = isMySlotJ1 ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar) : myAvatar;
+  let p2Avatar = myAvatar;
+  if (isMySlotJ1) {
+    p2Avatar = gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar;
+  }
   const headerMeta = `${boardSize}x · #${gameState.gameId?.slice(-6) ?? "------"}`;
   const footerText = `${botMode.replace("_", " ")} · ${t('gameBoard.board')} ${boardSize}x · ${gameMode}`;
 
@@ -917,25 +922,14 @@ const GameBoard: React.FC = () => {
                 />
               </div>
             )}
-            {gameState.gameId ? (
-                boardVariant === "tetra3d"
-                  ? (
-                    <Triangle3D
-                      hexData={gameState.hexData}
-                      onHexClick={handleHexClick}
-                      scale={0.98}
-                      connectionEdges={gameState.connectionEdges}
-                    />
-                  )
-                  : <Triangle hexData={gameState.hexData} onHexClick={handleHexClick} scale={0.85} />
-            ) : (
-                <div className="gb-loading">
-                  <div className="gb-loading-dots">
-                    <ThinkingDots size={10} background="rgba(124,111,247,0.3)" />
-                  </div>
-                  <span className="gb-loading-text">{t('gameBoard.gameStart')}</span>
-                </div>
-            )}
+            <GameBoardContent
+              gameId={gameState.gameId}
+              boardVariant={boardVariant}
+              hexData={gameState.hexData}
+              connectionEdges={gameState.connectionEdges}
+              onHexClick={handleHexClick}
+              t={t}
+            />
           </section>
 
           <aside className="gb-player-aside">

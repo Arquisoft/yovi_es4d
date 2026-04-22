@@ -111,6 +111,9 @@ function buildGameActionUrl(gameId, action) {
   return `${buildGameServiceGameUrl(gameId)}/${action}`;
 }
 
+const AUTH_LOGIN_URL = buildAuthServiceUrl('/login');
+const USER_ADDUSER_URL = buildUserServiceUrl('/adduser');
+
 function extractCookieValue(setCookieHeader, cookieName) {
   const headers = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
 
@@ -308,7 +311,7 @@ app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
 app.post('/login', async (req, res) => {
   try {
     const authResponse = await axios.post(
-      buildAuthServiceUrl('/login'),
+      AUTH_LOGIN_URL,
       req.body,
       { withCredentials: true }
     );
@@ -348,7 +351,7 @@ app.post('/login', async (req, res) => {
  */
 app.post('/adduser', async (req, res) => {
   try {
-    const userResponse = await axios.post(buildUserServiceUrl('/adduser'), req.body);
+    const userResponse = await axios.post(USER_ADDUSER_URL, req.body);
     res.json(userResponse.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -704,7 +707,8 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameActionUrl(gameId, 'setPlayerName'), req.body);
+    const safeGameId = parseSafePathSegment(gameId, 'gameId');
+    const response = await axios.post(buildGameActionUrl(safeGameId, 'setPlayerName'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
@@ -715,7 +719,8 @@ app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameActionUrl(gameId, 'saveForPlayer'), req.body);
+    const safeGameId = parseSafePathSegment(gameId, 'gameId');
+    const response = await axios.post(buildGameActionUrl(safeGameId, 'saveForPlayer'), req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });
