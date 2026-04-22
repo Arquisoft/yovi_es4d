@@ -11,6 +11,20 @@ import { useTranslation } from "../../i18n";
 import { io, Socket } from "socket.io-client";
 
 type PlayerTurn = "j1" | "j2";
+type GameStatus = "active" | "finished";
+type ConnectionEdge = { from: string; to: string };
+type ConnectionMap = {
+  j1: ConnectionEdge[];
+  j2: ConnectionEdge[];
+};
+type BranchMap = {
+  j1: boolean;
+  j2: boolean;
+};
+type ConnectedFacesMap = {
+  j1: string[];
+  j2: string[];
+};
 
 interface HexData {
   position: string;
@@ -33,21 +47,12 @@ interface GameState {
   hexData: HexData[];
   players: PlayerData[];
   turn: PlayerTurn | null;
-  status: "active" | "finished" | null;
+  status: GameStatus | null;
   winner: PlayerTurn | null;
   botPlaying: boolean;
-  connectedFaces: {
-    j1: string[];
-    j2: string[];
-  };
-  connectionEdges: {
-    j1: Array<{ from: string; to: string }>;
-    j2: Array<{ from: string; to: string }>;
-  };
-  hasBranch: {
-    j1: boolean;
-    j2: boolean;
-  };
+  connectedFaces: ConnectedFacesMap;
+  connectionEdges: ConnectionMap;
+  hasBranch: BranchMap;
 }
 
 interface LocationState {
@@ -56,7 +61,7 @@ interface LocationState {
   boardVariant?: string;
   boardSize?:   number;
   timeLimit?:   number;
-  onlineRole?:  string;  // 'j1' | 'j2' — asignado por el servidor en modo online
+  onlineRole?:  string;  // 'j1' | 'j2' â€” asignado por el servidor en modo online
   roomCode?:    string;
   player2Name?: string;
   startingPlayer?: PlayerTurn;
@@ -100,7 +105,7 @@ function buildGameStateFromResponse(data: {
   board: HexData[];
   players: PlayerData[];
   turn?: PlayerTurn | null;
-  status?: "active" | "finished" | null;
+  status?: GameStatus | null;
   winner?: PlayerTurn | null;
   connectedFaces?: GameState["connectedFaces"];
   connectionEdges?: GameState["connectionEdges"];
@@ -138,7 +143,7 @@ function applyValidatedMove(
   currentTurn: PlayerTurn,
   validateData: {
     winner?: PlayerTurn | null;
-    status?: "active" | "finished" | null;
+    status?: GameStatus | null;
     connectedFaces?: GameState["connectedFaces"];
     connectionEdges?: GameState["connectionEdges"];
     hasBranch?: GameState["hasBranch"];
@@ -167,7 +172,7 @@ function applyServerMove(
     board: HexData[];
     turn: PlayerTurn | null;
     winner: PlayerTurn | null;
-    status: "active" | "finished" | null;
+    status: GameStatus | null;
     connectedFaces?: GameState["connectedFaces"];
     connectionEdges?: GameState["connectionEdges"];
     hasBranch?: GameState["hasBranch"];
@@ -244,6 +249,47 @@ function buildPlayerMoveBody(gameMode: string, userId: string | null, position: 
   return gameMode === "vsBot"
     ? { userId, mode: gameMode }
     : { userId, move: position, mode: gameMode };
+}
+
+function getPlayerDisplayData(params: {
+  gameMode: string;
+  onlineRole: string;
+  player2Name?: string;
+  userProfile: UserProfileData | null;
+  opponentProfile: UserProfileData | null;
+  gameState: GameState;
+  t: ReturnType<typeof useTranslation>["t"];
+}) {
+  const { gameMode, onlineRole, player2Name, userProfile, opponentProfile, gameState, t } = params;
+  const myName = userProfile?.username || t('gameBoard.player1');
+  const myAvatar = userProfile?.avatar || "logo.png";
+
+  let opponentName = opponentProfile?.username;
+  if (!opponentName && gameMode === "multiplayer") {
+    opponentName = player2Name;
+  }
+  if (!opponentName) {
+    opponentName = gameState.players[1]?.name || t('gameBoard.player2');
+  }
+
+  const opponentAvatar = opponentProfile?.avatar || "logo.png";
+  const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
+
+  return {
+    p1Name: isMySlotJ1 ? myName : opponentName,
+    p1Avatar: isMySlotJ1 ? myAvatar : opponentAvatar,
+    p2Name: isMySlotJ1 ? opponentName : myName,
+    p2Avatar: isMySlotJ1
+      ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar)
+      : myAvatar,
+  };
+}
+
+function shouldResetBotState(validateData: {
+  winner?: PlayerTurn | null;
+  status?: GameStatus | null;
+}) {
+  return Boolean(validateData.winner) || validateData.status === "finished";
 }
 
 function registerPlayerName(gameId: string, role: "j1" | "j2", name: string) {
@@ -342,10 +388,14 @@ const GameHeaderStatus: React.FC<{
   p2Name: string;
   t: ReturnType<typeof useTranslation>["t"];
 }> = ({ gameState, gameMode, p1Name, p2Name, t }) => {
+  const thinkingLabel = gameMode === "multiplayer"
+    ? t("gameBoard.thinking") || "Procesando..."
+    : t("gameBoard.botPlaying");
+
   if (gameState.status === "finished") {
     return (
       <span className="gb-status-winner">
-        🏆 {gameState.winner === "j1" ? p1Name : p2Name} {t("gameBoard.won")}
+        ðŸ† {gameState.winner === "j1" ? p1Name : p2Name} {t("gameBoard.won")}
       </span>
     );
   }
@@ -353,7 +403,7 @@ const GameHeaderStatus: React.FC<{
   if (gameState.botPlaying) {
     return (
       <span className="gb-status-thinking">
-        <span>{gameMode === "multiplayer" ? t("gameBoard.thinking") || "Procesando..." : t("gameBoard.botPlaying")}</span>
+        <span>{thinkingLabel}</span>
         <span className="gb-thinking-dots">
           <ThinkingDots size={6} background="var(--coral)" />
         </span>
@@ -503,7 +553,7 @@ const GameBoard: React.FC = () => {
     });
   }
 
-  // ── Socket online ────────────────────────────────────────
+  // â”€â”€ Socket online â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (gameMode !== "online") return;
 
@@ -698,10 +748,10 @@ const GameBoard: React.FC = () => {
 
   function emitOnlineMoveResult(
     position: string,
-    currentTurn: "j1" | "j2",
+    currentTurn: PlayerTurn,
     validateData: {
-      winner?: "j1" | "j2" | null;
-      status?: "active" | "finished" | null;
+      winner?: PlayerTurn | null;
+      status?: GameStatus | null;
       connectedFaces?: GameState["connectedFaces"];
       connectionEdges?: GameState["connectionEdges"];
       hasBranch?: GameState["hasBranch"];
@@ -728,87 +778,60 @@ const GameBoard: React.FC = () => {
     });
   }
 
-  // Mantener el ref siempre apuntando a la versión más reciente de handleHexClick
-  // (se asigna justo después de definir la función)
+  // Mantener el ref siempre apuntando a la versiÃ³n mÃ¡s reciente de handleHexClick
+  // (se asigna justo despuÃ©s de definir la funciÃ³n)
 
   const handleHexClick = async (position: string) => {
     if (!canPlayCurrentTurn({ gameState, gameMode, onlineRole })) return;
 
     stopActiveTimer(timerRef);
-
-    setGameState(prev => ({ ...prev, botPlaying: true }));
+    setGameState((prev) => ({ ...prev, botPlaying: true }));
 
     try {
-      // userId real — el gateway lo sobreescribe desde el JWT de todas formas,
-      // pero lo mandamos para que game-service pueda identificar al jugador 1
       const { response: validateRes, data: validateData } = await validatePlayerMove(position);
 
       if (!validateRes.ok || !validateData.valid) {
-        alert(validateData.error || "Movimiento inválido");
-        setGameState(prev => ({ ...prev, botPlaying: false }));
+        rejectInvalidMove(validateData.error);
         return;
       }
 
-      const currentTurn = gameState.turn; // j1 ó j2 según el turno
-
-
+      const currentTurn = gameState.turn;
       if (!currentTurn) {
-        setGameState(prev => ({ ...prev, botPlaying: false }));
+        setGameState((prev) => ({ ...prev, botPlaying: false }));
         return;
       }
 
       setGameState((prev) => applyValidatedMove(prev, position, currentTurn, validateData));
 
-
-      // En modo online emitir movimiento al rival y no llamar al bot
       if (gameMode === "online" && socketRef.current) {
-        const nextTurn = currentTurn === "j1" ? "j2" : "j1";
-        // Un único setGameState para evitar que el segundo pise los puntos del primero
-        setGameState((prev) => applyValidatedMove(prev, position, currentTurn, validateData, nextTurn));
-        socketRef.current.emit('move_made', { code: roomCode, position, turn: nextTurn });
-        if (validateData.winner) {
-          socketRef.current.emit('game_over', { code: roomCode, winner: validateData.winner, gameId: gameState.gameId });
-          // j1 guarda su propio registro al ganar
-          if (gameState.gameId && userId) {
-            void saveGameForPlayer(gameState.gameId, userId, validateData.winner);
-          }
-        }
+        emitOnlineMoveResult(position, currentTurn, validateData);
         return;
       }
 
-      const playerEndedGame = Boolean(validateData.winner) || validateData.status === "finished";
-      if (playerEndedGame) {
-        setGameState(prev => ({
+      if (shouldResetBotState(validateData)) {
+        setGameState((prev) => ({
           ...prev,
           botPlaying: false,
         }));
         return;
       }
 
-      const moveRes = await fetch(`${API_URL}/api/game/${gameState.gameId}/move`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPlayerMoveBody(gameMode, userId, position)),
-      });
-      const moveData = await moveRes.json();
-
+      const { response: moveRes, data: moveData } = await requestBotOrServerMove(position);
       if (!moveRes.ok) {
         throw new Error(moveData.error || moveData.message || "Error procesando movimiento");
       }
 
       setGameState((prev) => applyServerMove(prev, moveData, gameMode));
-
-      // Reiniciar timer cuando vuelve el turno al jugador (j1) en vsBot
-      if (moveData.turn === "j1" && moveData.status !== "finished") startTimer();
-
+      if (moveData.turn === "j1" && moveData.status !== "finished") {
+        startTimer();
+      }
     } catch (error) {
       console.error("Error during move:", error);
-      setGameState(prev => ({ ...prev, botPlaying: false }));
+      setGameState((prev) => ({ ...prev, botPlaying: false }));
     }
   };
 
-  // Mantener el ref actualizado en cada render para que el timer siempre llame a la versión actual
+  // Mantener el ref actualizado en cada render para que el timer siempre llame a la versiÃ³n actual
   handleHexClickRef.current = (position) => {
     void handleHexClick(position);
   };
@@ -820,34 +843,17 @@ const GameBoard: React.FC = () => {
     : { id: "bot", name: "Bot", points: 0 };
   const player2 = gameState.players[1] || player2Fallback;
 
-  // Nombre e imagen del usuario logueado y del rival (online)
-  const myName         = userProfile?.username     || t('gameBoard.player1');
-  const myAvatar       = userProfile?.avatar       || "logo.png";
-  let opponentName = opponentProfile?.username;
-  if (!opponentName && gameMode === "multiplayer") {
-    opponentName = player2Name;
-  }
-  if (!opponentName) {
-    opponentName = gameState.players[1]?.name || t('gameBoard.player2');
-  }
-  const opponentAvatar = opponentProfile?.avatar   || "logo.png";
-
-  // En online el usuario puede ser j1 o j2; en los demás modos siempre es j1
-  const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
-
-  const p1Name   = isMySlotJ1 ? myName         : opponentName;
-  const p1Avatar = isMySlotJ1 ? myAvatar        : opponentAvatar;
-  const p2Name   = isMySlotJ1 ? opponentName                              : myName;
-  let p2Avatar = myAvatar;
-  if (isMySlotJ1) {
-    p2Avatar = gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar;
-  }
+  const { p1Name, p1Avatar, p2Name, p2Avatar } = getPlayerDisplayData({
+    gameMode,
+    onlineRole,
+    player2Name,
+    userProfile,
+    opponentProfile,
+    gameState,
+    t,
+  });
   const headerMeta = `${boardSize}x · #${gameState.gameId?.slice(-6) ?? "------"}`;
-  const footerText = `${botMode.replace("_", " ")} · ${t('gameBoard.board')} ${boardSize}x · ${gameMode}`;
-
-  const statusLabel = gameMode === 'multiplayer'
-    ? t('gameBoard.thinking') || 'Procesando...'
-    : t('gameBoard.botPlaying');
+  const footerText = `${botMode.replaceAll("_", " ")} · ${t('gameBoard.board')} ${boardSize}x · ${gameMode}`;
 
   if (!hasLocationState) {
     return null;
@@ -861,30 +867,18 @@ const GameBoard: React.FC = () => {
       <div className={`game-bg min-h-screen flex flex-col ${boardVariant === "tetra3d" ? "game-bg-3d" : ""}`}>
         <UserHeader />
 
-        {/* ── Header ─────────────────────────────────────── */}
+        {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <header className="gb-header">
           <span className="gb-header-logo">YOVI_ES4D</span>
 
           <div className="gb-header-status">
-            {gameState.status === "finished" ? (
-                <span className="gb-status-winner">
-              🏆 {gameState.winner === "j1" ? p1Name : p2Name} {t('gameBoard.won')}
-            </span>
-            ) : gameState.botPlaying ? (
-                <span className="gb-status-thinking">
-              <span>{statusLabel}</span>
-              <span className="gb-thinking-dots">
-                <ThinkingDots size={6} background="var(--coral)" />
-              </span>
-            </span>
-            ) : (
-                <span className="gb-status-turn">
-              {t('gameBoard.turn')}{" "}
-                  <span className={gameState.turn === "j1" ? "gb-turn-j1" : "gb-turn-j2"}>
-                {gameState.turn === "j1" ? p1Name : p2Name}
-              </span>
-            </span>
-            )}
+            <GameHeaderStatus
+              gameState={gameState}
+              gameMode={gameMode}
+              p1Name={p1Name}
+              p2Name={p2Name}
+              t={t}
+            />
           </div>
 
           <div className="gb-header-right" aria-label={headerMeta}>
@@ -895,12 +889,12 @@ const GameBoard: React.FC = () => {
               </div>
             )}
             <span className="gb-header-meta">
-              {boardSize}× · #{gameState.gameId?.slice(-6) ?? "------"}
+              {headerMeta}
             </span>
           </div>
         </header>
 
-        {/* ── Área principal ─────────────────────────────── */}
+        {/* â”€â”€ Ãrea principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <main className="gb-main">
 
           <aside className="gb-player-aside">
@@ -956,10 +950,10 @@ const GameBoard: React.FC = () => {
 
         </main>
 
-        {/* ── Footer ─────────────────────────────────────── */}
+        {/* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <footer className="gb-footer" data-summary={footerText}>
         <span className="gb-footer-text">
-          {botMode.replace("_", " ")} · {t('gameBoard.board')} {boardSize}× · {gameMode}
+          {footerText}
         </span>
         </footer>
       </div>

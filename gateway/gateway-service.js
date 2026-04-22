@@ -62,6 +62,8 @@ const authServiceUrl = process.env.AUTH_SERVICE_URL || `${authServiceProtocol}:/
 const userServiceUrl = process.env.USER_SERVICE_URL || `${userServiceProtocol}://${userServiceHost}:${userServicePort}`;
 const gameServiceUrl = process.env.GAME_SERVICE_URL || `${gameServiceProtocol}://${gameServiceHost}:${gameServicePort}`;
 const friendServiceUrl = process.env.FRIEND_SERVICE_URL || `${friendServiceProtocol}://${friendServiceHost}:${friendServicePort}`;
+const AUTH_LOGIN_URL = buildAuthServiceUrl('/login');
+const USER_ADDUSER_URL = buildUserServiceUrl('/adduser');
 
 function parseSafePathSegment(value, fieldName) {
   if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
@@ -100,6 +102,14 @@ function buildAuthServiceUrl(pathname) {
 
 function buildUserServiceUrl(pathname) {
   return buildServiceUrl(userServiceUrl, pathname);
+}
+
+function postGamePlayerName(gameId, payload) {
+  return axios.post(buildGameServiceGameUrl(gameId, '/setPlayerName'), payload);
+}
+
+function postGameSaveForPlayer(gameId, payload) {
+  return axios.post(buildGameServiceGameUrl(gameId, '/saveForPlayer'), payload);
 }
 
 function extractCookieValue(setCookieHeader, cookieName) {
@@ -299,7 +309,7 @@ app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
 app.post('/login', async (req, res) => {
   try {
     const authResponse = await axios.post(
-      buildAuthServiceUrl('/login'),
+      AUTH_LOGIN_URL,
       req.body,
       { withCredentials: true }
     );
@@ -339,7 +349,7 @@ app.post('/login', async (req, res) => {
  */
 app.post('/adduser', async (req, res) => {
   try {
-    const userResponse = await axios.post(buildUserServiceUrl('/adduser'), req.body);
+    const userResponse = await axios.post(USER_ADDUSER_URL, req.body);
     res.json(userResponse.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -695,7 +705,7 @@ app.get('/api/game/:gameId', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameServiceGameUrl(gameId, '/setPlayerName'), req.body);
+    const response = await postGamePlayerName(gameId, req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error actualizando nombre' });
@@ -706,7 +716,7 @@ app.post('/api/game/:gameId/setPlayerName', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/saveForPlayer', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const response = await axios.post(buildGameServiceGameUrl(gameId, '/saveForPlayer'), req.body);
+    const response = await postGameSaveForPlayer(gameId, req.body);
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: 'Error guardando partida' });

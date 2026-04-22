@@ -124,7 +124,7 @@ html, body {
   padding-right: 36px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background:
-    linear-gradient(180deg, rgba(9, 29, 95, 0.86), rgba(17, 40, 112, 0.82)),
+    linear-gradient(180deg, rgba(6, 18, 63, 0.96), rgba(13, 32, 92, 0.94)),
     linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.95) 50%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.95) 50%, transparent 50%);
   background-repeat: no-repeat, no-repeat, no-repeat;
@@ -136,7 +136,7 @@ html, body {
     100% 100%,
     6px 6px,
     6px 6px;
-  color: #ffffff;
+  color: #f8fbff;
 }
 
 .navbar-select:hover,
@@ -261,13 +261,7 @@ html, body {
   display: inline-block; /* isolates background to the text area */
   padding: 6px 10px; /* vertical + horizontal padding avoids clipping */
   overflow: visible; /* allow gradient to render outside if needed */
-  background: linear-gradient(90deg, #ffffff 0%, #bff0ff 42%, #7fb6ff 100%);
-  background-size: 180% 140%; /* larger area so gradient covers even when scaled */
-  background-position: center;
-  background-repeat: no-repeat;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #f4fbff;
 
   animation: hero-move 4.5s ease-in-out infinite;
   transform-origin: center;
