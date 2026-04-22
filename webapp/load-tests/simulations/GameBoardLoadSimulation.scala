@@ -14,7 +14,7 @@ class GameBoardLoadSimulation extends Simulation {
   private val boardSize = Integer.getInteger("boardSize", 11).toInt
   private val botMode = sys.env.getOrElse("BOT_MODE", "random_bot")
   private val loadUserEmail = "tu_usuario@correo.com"
-  private val loadUserPassword = "tu_password"
+  private val loadUserPassword = "Y@m1yug0"
 
   if (loadUserEmail.isEmpty || loadUserPassword.isEmpty) {
     throw new IllegalArgumentException(

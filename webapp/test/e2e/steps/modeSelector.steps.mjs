@@ -1,8 +1,8 @@
 import { Given, When, Then } from '@cucumber/cucumber'
 import assert from 'assert'
 
-const BASE_URL = 'http://localhost:5173'
-const API_URL  = process.env.REACT_APP_API_URL || 'http://localhost:8000'
+const BASE_URL = process.env.BASE_URL || 'https://localhost:5173'
+const API_URL = BASE_URL
 
 const esc = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const accentPattern = (value) => esc(value.normalize('NFD').replace(/\p{Diacritic}/gu, ''))
