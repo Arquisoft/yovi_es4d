@@ -845,6 +845,10 @@ const GameBoard: React.FC = () => {
   const headerMeta = `${boardSize}x · #${gameState.gameId?.slice(-6) ?? "------"}`;
   const footerText = `${botMode.replace("_", " ")} · ${t('gameBoard.board')} ${boardSize}x · ${gameMode}`;
 
+  const statusLabel = gameMode === 'multiplayer'
+    ? t('gameBoard.thinking') || 'Procesando...'
+    : t('gameBoard.botPlaying');
+
   if (!hasLocationState) {
     return null;
   }
@@ -868,7 +872,7 @@ const GameBoard: React.FC = () => {
             </span>
             ) : gameState.botPlaying ? (
                 <span className="gb-status-thinking">
-              <span>{gameMode === 'multiplayer' ? t('gameBoard.thinking') || 'Procesando...' : t('gameBoard.botPlaying')}</span>
+              <span>{statusLabel}</span>
               <span className="gb-thinking-dots">
                 <ThinkingDots size={6} background="var(--coral)" />
               </span>
@@ -883,7 +887,7 @@ const GameBoard: React.FC = () => {
             )}
           </div>
 
-          <div className="gb-header-right">
+          <div className="gb-header-right" aria-label={headerMeta}>
             {timeLimit > 0 && gameState.status === "active" && (
               <div className="gb-timer" data-urgent={timeLeft <= 5 && gameState.turn === "j1" && !gameState.botPlaying}>
                 <span className="gb-timer-value">{timeLeft}</span>
@@ -953,7 +957,7 @@ const GameBoard: React.FC = () => {
         </main>
 
         {/* ── Footer ─────────────────────────────────────── */}
-        <footer className="gb-footer">
+        <footer className="gb-footer" data-summary={footerText}>
         <span className="gb-footer-text">
           {botMode.replace("_", " ")} · {t('gameBoard.board')} {boardSize}× · {gameMode}
         </span>

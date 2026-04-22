@@ -56,6 +56,29 @@ const Notifications: React.FC = () => {
     loadData();
   }, []);
 
+  let content: React.ReactNode;
+  if (error) {
+    content = <p>{error}</p>;
+  } else if (notifications.length === 0) {
+    content = <p>{t('notifications.empty')}</p>;
+  } else {
+    content = notifications.map((n) => (
+      <div key={n._id} className={`notification-card ${n.read ? '' : 'unread'}`}>
+        <img
+          src={n.relatedUser.avatar || '/default-avatar.png'}
+          alt={n.relatedUser.username}
+          className="avatar"
+        />
+        <div className="notification-text">
+          <p>
+            <strong>{n.relatedUser.username}</strong> {t('notifications.friendRequest')}
+          </p>
+          <small>{new Date(n.createdAt).toLocaleString()}</small>
+        </div>
+      </div>
+    ));
+  }
+
   return (
     <>
       <Sidebar />
@@ -69,28 +92,7 @@ const Notifications: React.FC = () => {
 
             {!loading && (
               <div className="notifications-content rules-content">
-                {error ? (
-                  <p>{error}</p>
-                ) : notifications.length === 0 ? (
-                  <p>{t('notifications.empty')}</p>
-                ) : (
-                  notifications.map((n) => (
-                    <div key={n._id} className={`notification-card ${n.read ? '' : 'unread'}`}>
-                      <img
-                        src={n.relatedUser.avatar || '/default-avatar.png'}
-                        alt={n.relatedUser.username}
-                        className="avatar"
-                      />
-                      <div className="notification-text">
-                        <p>
-                          <strong>{n.relatedUser.username}</strong> {t('notifications.friendRequest')}
-                        </p>
-                        <small>{new Date(n.createdAt).toLocaleString()}</small>
-                      </div>
-                      
-                    </div>
-                  ))
-                )}
+                {content}
               </div>
             )}
 

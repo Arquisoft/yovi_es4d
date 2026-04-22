@@ -142,6 +142,16 @@ const Historial: React.FC = () => {
 
   if (!user) return null;
 
+  let dateSortIndicator = '';
+  if (sortBy === 'date') {
+    dateSortIndicator = sortOrder === 'asc' ? '↑' : '↓';
+  }
+
+  let moveSortIndicator = '';
+  if (sortBy === 'moves') {
+    moveSortIndicator = sortOrder === 'asc' ? '↑' : '↓';
+  }
+
   return (
     <>
       <Sidebar />
@@ -155,11 +165,11 @@ const Historial: React.FC = () => {
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
           <button onClick={() => handleSort('date')}>
-            Fecha {sortBy === 'date' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+            Fecha {dateSortIndicator}
           </button>
 
           <button onClick={() => handleSort('moves')}>
-            Nº de Movimientos {sortBy === 'moves' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+            N° de Movimientos {moveSortIndicator}
           </button>
         </div>
 
