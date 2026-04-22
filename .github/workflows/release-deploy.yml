@@ -126,7 +126,7 @@ jobs:
       - name: Wait for gateway to be ready
         run: |
           for i in {1..30}; do
-            if curl -fsS https://localhost:8000/health > /dev/null; then
+            if curl -k -fsS https://localhost:8000/health > /dev/null; then
               exit 0
             fi
             sleep 5

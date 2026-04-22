@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start:services": "concurrently \"npm --prefix ../users/authservice start\" \"npm --prefix ../users start\" \"npm --prefix ../game start\" \"npm --prefix ../friends start\" \"npm --prefix ../gateway start\"",
+    "start:services": "concurrently \"npm --prefix ../users/authservice start\" \"npm --prefix ../users start\" \"npm --prefix ../game start\" \"npm --prefix ../friends start\" \"npm --prefix ../gateway run start:https\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

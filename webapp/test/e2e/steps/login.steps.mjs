@@ -1,4 +1,12 @@
 import axios from 'axios';
+import https from 'https';
+import { Given, When, Then } from '@cucumber/cucumber'
+import assert from 'assert'
+
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
 Given('a test user exists', async function () {
   // Intenta registrar el usuario, ignora si ya existe
   try {
@@ -6,13 +14,13 @@ Given('a test user exists', async function () {
       username: 'TestUserCucumber',
       email: 'testcucumber@example.com',
       password: 'Password123'
+    }, {
+      httpsAgent,
     });
   } catch (e) {
     // Si ya existe, ignorar
   }
 });
-import { Given, When, Then } from '@cucumber/cucumber'
-import assert from 'assert'
 
 Given('the login page is open', async function () {
   const page = this.page

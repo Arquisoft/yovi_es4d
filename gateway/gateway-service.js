@@ -17,10 +17,12 @@
  */
 
 const express = require('express');
+const https = require('https');
 const axios = require('axios');
 const cors = require('cors');
 const promBundle = require('express-prom-bundle');
 const cookieParser = require("cookie-parser");
+const path = require('path');
 
 // OpenAPI-Swagger Libraries
 const swaggerUi = require('swagger-ui-express');
@@ -36,6 +38,9 @@ const { Server } = require('socket.io'); //Para partidas online (WebSockets)
 const app = express();
 app.disable('x-powered-by');
 const port = 8000;
+const gatewayHttpsEnabled = process.env.GATEWAY_HTTPS === 'true';
+const gatewayHttpsPfxPath = process.env.GATEWAY_HTTPS_PFX_PATH || path.join(__dirname, 'certs', 'localhost.pfx');
+const gatewayHttpsPassphrase = process.env.GATEWAY_HTTPS_PFX_PASSPHRASE || 'yovi-es4d-local';
 
 
 // Internal service URLs are configurable through env vars.
@@ -868,11 +873,26 @@ if (fs.existsSync(openapiPath)) {
 }
 
 /**
- * Iniciar el servidor HTTP en el puerto especificado.
+ * Iniciar el servidor HTTP o HTTPS en el puerto especificado.
  * @type {Server}
  */
 function startServer() {
-  const server = app.listen(port, () => {});
+  let server;
+
+  if (gatewayHttpsEnabled) {
+    if (!fs.existsSync(gatewayHttpsPfxPath)) {
+      throw new Error(`HTTPS enabled but certificate not found at ${gatewayHttpsPfxPath}`);
+    }
+
+    server = https.createServer({
+      pfx: fs.readFileSync(gatewayHttpsPfxPath),
+      passphrase: gatewayHttpsPassphrase,
+    }, app);
+
+    server.listen(port, () => {});
+  } else {
+    server = app.listen(port, () => {});
+  }
 
 // ================= WEBSOCKETS (Online mode) =================
 

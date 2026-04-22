@@ -5,6 +5,7 @@
     "main": "gateway-service.js",
     "scripts": {
         "start": "node gateway-service.js",
+        "start:https": "node -e \"process.env.GATEWAY_HTTPS='true'; require('./gateway-service').startServer()\"",
         "test": "jest --detectOpenHandles --coverage"
     },
     "repository": {
