@@ -274,14 +274,13 @@ function getPlayerDisplayData(params: {
 
   const opponentAvatar = opponentProfile?.avatar || "logo.png";
   const isMySlotJ1 = gameMode !== "online" || onlineRole === "j1";
+  const secondPlayerAvatar = gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar;
 
   return {
     p1Name: isMySlotJ1 ? myName : opponentName,
     p1Avatar: isMySlotJ1 ? myAvatar : opponentAvatar,
     p2Name: isMySlotJ1 ? opponentName : myName,
-    p2Avatar: isMySlotJ1
-      ? (gameMode === "vsBot" ? "bot_icon.png" : opponentAvatar)
-      : myAvatar,
+    p2Avatar: isMySlotJ1 ? secondPlayerAvatar : myAvatar,
   };
 }
 

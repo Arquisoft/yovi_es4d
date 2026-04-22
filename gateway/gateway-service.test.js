@@ -1,12 +1,23 @@
 const request = require('supertest');
-const axios = require('axios');
 const jwt = require('jsonwebtoken');
-
-const app = require('./gateway-service');
 
 const privateKey = process.env.TOKEN_SECRET_KEY ||  'mi_clave_secreta';
 
-jest.mock('axios');
+jest.mock('axios', () => {
+  const mockAxios = {
+    get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  mockAxios.create = jest.fn(() => mockAxios);
+
+  return mockAxios;
+});
+
+const axios = require('axios');
+const app = require('./gateway-service');
 
 describe('Gateway Service', () => {
 
@@ -975,12 +986,18 @@ function createCookieExtra(userId = 'testUser') {
 function loadGatewayWithMocks() {
   jest.resetModules();
 
-  jest.doMock('axios', () => ({
-    get: jest.fn(),
-    post: jest.fn(),
-    patch: jest.fn(),
-    delete: jest.fn(),
-  }));
+  jest.doMock('axios', () => {
+    const mockAxios = {
+      get: jest.fn(),
+      post: jest.fn(),
+      patch: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    mockAxios.create = jest.fn(() => mockAxios);
+
+    return mockAxios;
+  });
 
   jest.doMock('socket.io', () => ({
     Server: jest.fn(),

@@ -124,7 +124,7 @@ html, body {
   padding-right: 36px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background:
-    linear-gradient(180deg, rgba(6, 18, 63, 0.96), rgba(13, 32, 92, 0.94)),
+    linear-gradient(180deg, rgba(4, 12, 46, 0.98), rgba(8, 22, 72, 0.96)),
     linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.95) 50%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.95) 50%, transparent 50%);
   background-repeat: no-repeat, no-repeat, no-repeat;
@@ -136,13 +136,13 @@ html, body {
     100% 100%,
     6px 6px,
     6px 6px;
-  color: #f8fbff;
+  color: #ffffff;
 }
 
 .navbar-select:hover,
 .navbar-select:focus {
-  background-color: rgba(18, 48, 143, 0.95);
-  color: #f8fbff;
+  background-color: rgba(10, 26, 84, 0.98);
+  color: #ffffff;
   outline: none;
 }
 
@@ -251,7 +251,6 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.6px;
   line-height: 1.12; /* more vertical space for descenders */
-  color: #fff;
   text-shadow: 0 10px 22px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.04);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

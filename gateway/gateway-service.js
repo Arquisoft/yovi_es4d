@@ -62,8 +62,6 @@ const authServiceUrl = process.env.AUTH_SERVICE_URL || `${authServiceProtocol}:/
 const userServiceUrl = process.env.USER_SERVICE_URL || `${userServiceProtocol}://${userServiceHost}:${userServicePort}`;
 const gameServiceUrl = process.env.GAME_SERVICE_URL || `${gameServiceProtocol}://${gameServiceHost}:${gameServicePort}`;
 const friendServiceUrl = process.env.FRIEND_SERVICE_URL || `${friendServiceProtocol}://${friendServiceHost}:${friendServicePort}`;
-const AUTH_LOGIN_URL = buildAuthServiceUrl('/login');
-const USER_ADDUSER_URL = buildUserServiceUrl('/adduser');
 
 function parseSafePathSegment(value, fieldName) {
   if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) {
@@ -77,39 +75,56 @@ function parseObjectIdSegment(value, fieldName) {
   return parseSafePathSegment(value, fieldName);
 }
 
-function buildServiceUrl(baseUrl, pathname) {
-  return new URL(pathname, `${baseUrl}/`).toString();
+function normalizeServiceBaseUrl(baseUrl, serviceName) {
+  const parsedUrl = new URL(baseUrl);
+  const allowedProtocols = new Set(['http:', 'https:']);
+
+  if (!allowedProtocols.has(parsedUrl.protocol)) {
+    throw new Error(`Invalid protocol for ${serviceName}`);
+  }
+
+  parsedUrl.pathname = '/';
+  parsedUrl.search = '';
+  parsedUrl.hash = '';
+
+  return parsedUrl.toString();
 }
 
-function buildGameServiceGameUrl(gameId, suffix = '') {
+function createServiceClient(baseUrl, serviceName) {
+  return axios.create({
+    baseURL: normalizeServiceBaseUrl(baseUrl, serviceName),
+  });
+}
+
+function buildServicePath(pathname) {
+  return new URL(pathname, 'http://internal-service').pathname;
+}
+
+const authServiceClient = createServiceClient(authServiceUrl, 'auth service');
+const userServiceClient = createServiceClient(userServiceUrl, 'user service');
+const gameServiceClient = createServiceClient(gameServiceUrl, 'game service');
+
+function buildGameServiceGamePath(gameId, suffix = '') {
   const allowedSuffixes = new Set(['', '/validateMove', '/vsBot/move', '/multiplayer/move', '/setPlayerName', '/saveForPlayer']);
   if (!allowedSuffixes.has(suffix)) {
     throw new Error('Invalid game suffix');
   }
 
   const safeGameId = encodeURIComponent(parseSafePathSegment(gameId, 'gameId'));
-  return buildServiceUrl(gameServiceUrl, `/api/game/${safeGameId}${suffix}`);
+  return `/api/game/${safeGameId}${suffix}`;
 }
 
 function buildFriendRequestUrl(requestId) {
   const safeRequestId = encodeURIComponent(parseObjectIdSegment(requestId, 'requestId'));
-  return buildServiceUrl(friendServiceUrl, `/friends/request/${safeRequestId}`);
-}
-
-function buildAuthServiceUrl(pathname) {
-  return buildServiceUrl(authServiceUrl, pathname);
-}
-
-function buildUserServiceUrl(pathname) {
-  return buildServiceUrl(userServiceUrl, pathname);
+  return new URL(`/friends/request/${safeRequestId}`, `${friendServiceUrl}/`).toString();
 }
 
 function postGamePlayerName(gameId, payload) {
-  return axios.post(buildGameServiceGameUrl(gameId, '/setPlayerName'), payload);
+  return gameServiceClient.post(buildGameServiceGamePath(gameId, '/setPlayerName'), payload);
 }
 
 function postGameSaveForPlayer(gameId, payload) {
-  return axios.post(buildGameServiceGameUrl(gameId, '/saveForPlayer'), payload);
+  return gameServiceClient.post(buildGameServiceGamePath(gameId, '/saveForPlayer'), payload);
 }
 
 function extractCookieValue(setCookieHeader, cookieName) {
@@ -308,8 +323,8 @@ app.post('/api/user/updateAvatar', verifyToken, async (req, res) => {
  */
 app.post('/login', async (req, res) => {
   try {
-    const authResponse = await axios.post(
-      AUTH_LOGIN_URL,
+    const authResponse = await authServiceClient.post(
+      buildServicePath('/login'),
       req.body,
       { withCredentials: true }
     );
@@ -349,7 +364,7 @@ app.post('/login', async (req, res) => {
  */
 app.post('/adduser', async (req, res) => {
   try {
-    const userResponse = await axios.post(USER_ADDUSER_URL, req.body);
+    const userResponse = await userServiceClient.post(buildServicePath('/adduser'), req.body);
     res.json(userResponse.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -608,8 +623,8 @@ app.post('/api/game/start', verifyToken, async (req, res) => {
 app.post('/api/game/:gameId/validateMove', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const validateResponse = await axios.post(
-        buildGameServiceGameUrl(gameId, '/validateMove'),
+    const validateResponse = await gameServiceClient.post(
+        buildGameServiceGamePath(gameId, '/validateMove'),
         { move: req.body.move, userId: req.body.userId }
     );
     res.json(validateResponse.data);
@@ -650,9 +665,9 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 
     let backendEndpoint;
     if (mode === 'vsBot') {
-      backendEndpoint = buildGameServiceGameUrl(gameId, '/vsBot/move');
+      backendEndpoint = buildGameServiceGamePath(gameId, '/vsBot/move');
     } else if (mode === 'multiplayer') {
-      backendEndpoint = buildGameServiceGameUrl(gameId, '/multiplayer/move');
+      backendEndpoint = buildGameServiceGamePath(gameId, '/multiplayer/move');
     } else {
       return res.status(400).json({ error: 'Invalid game mode' });
     }
@@ -664,7 +679,7 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
       ...(mode === 'vsBot' ? { role: 'j2' } : {}),
     };
 
-    const moveResponse = await axios.post(backendEndpoint, payload);
+    const moveResponse = await gameServiceClient.post(backendEndpoint, payload);
 
     res.json(moveResponse.data);
   } catch (error) {
@@ -691,7 +706,7 @@ app.post('/api/game/:gameId/move', verifyToken,  async (req, res) => {
 app.get('/api/game/:gameId', verifyToken, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const statusResponse = await axios.get(buildGameServiceGameUrl(gameId), {
+    const statusResponse = await gameServiceClient.get(buildGameServiceGamePath(gameId), {
       params: { userId: req.body.userId },
     });
     res.json(statusResponse.data);
