@@ -26,6 +26,18 @@ const OnlineLobby: React.FC = () => {
   const [startingPlayer, setStartingPlayer] = useState<"j1" | "j2">("j1");
 
   useEffect(() => {
+    fetch(`${API_URL}/api/auth/me`, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) {
+          navigate("/login");
+        }
+      })
+      .catch(() => {
+        navigate("/login");
+      });
+  }, [navigate]);
+
+  useEffect(() => {
     const s = io(API_URL, { withCredentials: true });
     setSocket(s);
 
