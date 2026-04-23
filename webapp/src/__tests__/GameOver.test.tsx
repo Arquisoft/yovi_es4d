@@ -12,6 +12,9 @@ vi.mock('react-router-dom', async () => ({
   ...(await vi.importActual<typeof reactRouter>('react-router-dom')),
   useNavigate: () => mockNavigate,
   useLocation: () => ({ state: null }),
+  Navigate: ({ to, replace }: { to: string; replace?: boolean }) => (
+    <div data-testid="redirect" data-to={to} data-replace={String(Boolean(replace))} />
+  ),
 }))
 
 vi.mock('../components/game/Triangle', () => ({
@@ -57,20 +60,18 @@ const baseState = {
 
 describe('GameOver', () => {
 
-  test('muestra mensaje de no hay partida cuando no hay state', () => {
+  test('redirige a login cuando no hay state', () => {
     renderWithProviders(<GameOver />)
 
-    expect(screen.getByText(/no hay partida/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /volver al inicio/i })).toBeInTheDocument()
+    const redirect = screen.getByTestId('redirect')
+    expect(redirect).toBeInTheDocument()
+    expect(redirect).toHaveAttribute('data-to', '/login')
   })
 
-  test('botón volver al inicio navega a / cuando no hay state', async () => {
-    const user = userEvent.setup()
-
+  test('usa replace al redirigir a login cuando no hay state', () => {
     renderWithProviders(<GameOver />)
 
-    await user.click(screen.getByRole('button', { name: /volver al inicio/i }))
-    expect(mockNavigate).toHaveBeenCalledWith('/')
+    expect(screen.getByTestId('redirect')).toHaveAttribute('data-replace', 'true')
   })
 
   test('muestra el nombre del ganador j1 en el título', () => {
