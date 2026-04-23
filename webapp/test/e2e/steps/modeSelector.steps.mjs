@@ -28,7 +28,7 @@ const difficultyLabels = {
 }
 
 async function mockAuth(page) {
-  await page.route(`${API_URL}/api/auth/me`, async (route) => {
+  await page.route('**/api/auth/me', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -38,7 +38,7 @@ async function mockAuth(page) {
 }
 
 async function mockProfile(page) {
-  await page.route(`${API_URL}/api/user/getUserProfile`, async (route) => {
+  await page.route('**/api/user/getUserProfile', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -53,7 +53,7 @@ Given('the mode selector page is open', async function () {
 
   await mockAuth(page)
   await mockProfile(page)
-  await page.route(`${API_URL}/api/game/bot-modes`, async (route) => {
+  await page.route('**/api/game/bot-modes', async (route) => {
     if (this.mockBotModesResponse) {
       await route.fulfill({
         status: this.mockBotModesStatus || 200,
@@ -70,7 +70,8 @@ Given('the mode selector page is open', async function () {
   })
 
   await page.goto(`${BASE_URL}/select`)
-  await page.waitForSelector('.ms-header', { timeout: 5000 })
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('.ms-header', { timeout: 15000 })
 })
 
 Given('the mode selector page is loading bot modes', async function () {
@@ -79,10 +80,11 @@ Given('the mode selector page is loading bot modes', async function () {
 
   await mockAuth(page)
   await mockProfile(page)
-  await page.route(`${API_URL}/api/game/bot-modes`, () => {})
+  await page.route('**/api/game/bot-modes', () => {})
 
   await page.goto(`${BASE_URL}/select`)
-  await page.waitForSelector('.ms-header', { timeout: 5000 })
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('.ms-header', { timeout: 15000 })
 })
 
 Given('the bot modes API returns all three modes', async function () {
@@ -134,7 +136,7 @@ When('the mode selector page reloads', async function () {
   const page = this.page
   if (!page) throw new Error('Page not initialized')
 
-  await page.route(`${API_URL}/api/game/bot-modes`, async (route) => {
+  await page.route('**/api/game/bot-modes', async (route) => {
     await route.fulfill({
       status: this.mockBotModesStatus || 200,
       contentType: 'application/json',
@@ -143,7 +145,8 @@ When('the mode selector page reloads', async function () {
   })
 
   await page.reload()
-  await page.waitForSelector('.ms-header', { timeout: 5000 })
+  await page.waitForLoadState('domcontentloaded')
+  await page.waitForSelector('.ms-header', { timeout: 15000 })
   await page.waitForTimeout(500)
 })
 

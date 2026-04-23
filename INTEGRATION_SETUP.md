@@ -139,8 +139,13 @@ GAMEY_BOT_URL=http://localhost:3001
 
 ### Frontend (.env)
 ```
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=
 ```
+
+#### Despliegue en MV (IP pÃºblica)
+- Acceso recomendado: `https://20.188.62.231` (o el puerto externo que mapees).
+- El contenedor `webapp` (nginx) hace proxy de `/api` y `/socket.io` hacia `gateway` dentro de Docker, asÃ­ que en producciÃ³n conviene dejar `VITE_API_URL` vacÃ­o.
+- Configura `WEBAPP_PUBLIC_IP` para que el certificado autofirmado incluya la IP como SAN.
 
 ## 🎮 Cómo Usar desde GameBoard.tsx
 

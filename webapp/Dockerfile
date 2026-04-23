@@ -18,13 +18,10 @@ FROM nginx:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN apk add --no-cache openssl \
- && mkdir -p /etc/nginx/certs \
- && openssl req -x509 -nodes -newkey rsa:2048 \
-    -keyout /etc/nginx/certs/localhost.key \
-    -out /etc/nginx/certs/localhost.crt \
-    -days 3650 \
-    -subj "/CN=localhost"
+RUN apk add --no-cache openssl
+
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80 443
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

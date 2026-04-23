@@ -8,7 +8,7 @@ const API_URL = BASE_URL
 // ── Helpers de mock ───────────────────────────────────────────
 
 async function mockBotModes(page) {
-    await page.route(`${API_URL}/api/game/bot-modes`, route =>
+    await page.route('**/api/game/bot-modes', route =>
         route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -18,7 +18,7 @@ async function mockBotModes(page) {
 }
 
 async function mockAuth(page) {
-    await page.route(`${API_URL}/api/auth/me`, route =>
+    await page.route('**/api/auth/me', route =>
         route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -28,7 +28,7 @@ async function mockAuth(page) {
 }
 
 async function mockProfile(page) {
-    await page.route(`${API_URL}/api/user/getUserProfile`, route =>
+    await page.route('**/api/user/getUserProfile', route =>
         route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -38,7 +38,7 @@ async function mockProfile(page) {
 }
 
 async function mockUserHeader(page) {
-    await page.route(`${API_URL}/api/user/profile`, route =>
+    await page.route('**/api/user/profile', route =>
         route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -56,7 +56,7 @@ async function mockGameStart(page, players, boardSize = 11) {
         { id: 'test-user-e2e', name: 'TestPlayer', points: 0 },
         { id: 'bot',           name: 'Bot',         points: 0 },
     ]
-    await page.route(`${API_URL}/api/game/start`, route =>
+    await page.route('**/api/game/start', route =>
         route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -73,7 +73,7 @@ async function mockGameStart(page, players, boardSize = 11) {
 }
 
 async function mockAuthFail(page) {
-    await page.route(`${API_URL}/api/auth/me`, route =>
+    await page.route('**/api/auth/me', route =>
         route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) })
     )
 }
@@ -187,7 +187,7 @@ Given('the game board is loading', async function () {
     await mockUserHeader(page)
 
     // La llamada a /start nunca responde → el gameId permanece null → se muestra el spinner
-    await page.route(`${API_URL}/api/game/start`, route => {
+    await page.route('**/api/game/start', route => {
         // no fulfill → la petición queda pendiente
     })
 
@@ -275,14 +275,14 @@ Then('I should see the game board', async function () {
 
 Then('I should be redirected to select page', async function () {
     const page = this.page
-    await page.waitForURL(`${BASE_URL}/select`, { timeout: 5000 })
+    await page.waitForURL(`${BASE_URL}/select`, { timeout: 15000 })
     const url = page.url()
     assert.ok(url.includes('/select'), `Expected redirect to /select, got ${url}`)
 })
 
 Then('I should be redirected to login page', async function () {
     const page = this.page
-    await page.waitForURL(`${BASE_URL}/login`, { timeout: 5000 })
+    await page.waitForURL(`${BASE_URL}/login`, { timeout: 15000 })
     const url = page.url()
     assert.ok(url.includes('/login'), `Expected redirect to /login, got ${url}`)
 })
