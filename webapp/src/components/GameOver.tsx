@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import Triangle from "./game/Triangle";
 import Triangle3D from "./game/Triangle3D";
 import UserHeader from "./UserHeader";
@@ -12,17 +12,9 @@ const GameOver: React.FC = () => {
     const { t } = useTranslation();
     const gameState = location.state;
 
-    // ── Sin estado ───────────────────────────────────────────
+    // Redirect to login if no game state was provided.
     if (!gameState) {
-        return (
-            <div className="go-empty">
-                <span style={{ fontSize: "2rem" }}>◈</span>
-                <p>{t('gameOver.noGame')}</p>
-                <button className="go-btn-primary" onClick={() => navigate("/")}>
-                    {t('gameOver.goHome')}
-                </button>
-            </div>
-        );
+        return <Navigate to="/login" replace />;
     }
 
     const player1   = gameState.players[0];
