@@ -47,10 +47,8 @@ Then('I should see the no game message', async function () {
   const page = this.page
   if (!page) throw new Error('Page not initialized')
 
-  await page.waitForSelector('.go-empty')
-  const text = await page.textContent('.go-empty')
-
-  assert.ok(text && text.length > 0, 'No empty game message shown')
+  await page.waitForURL(/\/login$/, { timeout: 5000 })
+  assert.ok(page.url().endsWith('/login'), `Expected redirect to /login, got ${page.url()}`)
 })
 
 

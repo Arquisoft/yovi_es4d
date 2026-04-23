@@ -27,10 +27,32 @@ const difficultyLabels = {
   hard_bot: 'Dif�cil',
 }
 
+async function mockAuth(page) {
+  await page.route(`${API_URL}/api/auth/me`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ userId: 'test-user-e2e' }),
+    })
+  })
+}
+
+async function mockProfile(page) {
+  await page.route(`${API_URL}/api/user/getUserProfile`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ username: 'TestPlayer', avatar: 'logo.png' }),
+    })
+  })
+}
+
 Given('the mode selector page is open', async function () {
   const page = this.page
   if (!page) throw new Error('Page not initialized')
 
+  await mockAuth(page)
+  await mockProfile(page)
   await page.route(`${API_URL}/api/game/bot-modes`, async (route) => {
     if (this.mockBotModesResponse) {
       await route.fulfill({
@@ -55,6 +77,8 @@ Given('the mode selector page is loading bot modes', async function () {
   const page = this.page
   if (!page) throw new Error('Page not initialized')
 
+  await mockAuth(page)
+  await mockProfile(page)
   await page.route(`${API_URL}/api/game/bot-modes`, () => {})
 
   await page.goto(`${BASE_URL}/select`)

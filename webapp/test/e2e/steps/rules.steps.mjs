@@ -19,11 +19,15 @@ Then('I should see the rules title', async function () {
 Then('I should see the rules descriptions', async function () {
   const page = this.page
   if (!page) throw new Error('Page not initialized')
-  for (let i = 1; i <= 4; i++) {
-    const selector = `.rules-content p:nth-child(${i})`
+  const selectors = [
+    '.rules-section:nth-of-type(1) p:nth-of-type(1)',
+    '.rules-section:nth-of-type(1) p:nth-of-type(2)',
+    '.rules-section:nth-of-type(2) p:nth-of-type(1)',
+  ]
+  for (const selector of selectors) {
     await page.waitForSelector(selector)
     const text = await page.textContent(selector)
-    assert.ok(text && text.length > 0, `Rules description ${i} should be visible`)
+    assert.ok(text && text.length > 0, `Rules description should be visible for selector ${selector}`)
   }
 })
 

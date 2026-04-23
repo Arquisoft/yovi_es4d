@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 
-const gatewayTarget = process.env.VITE_GATEWAY_TARGET?.trim() || 'http://localhost:8000';
+const gatewayTarget = process.env.VITE_GATEWAY_TARGET?.trim() || 'https://localhost:8000';
 
 const bypassSpaRoute = (path: string) => ({
   target: gatewayTarget,

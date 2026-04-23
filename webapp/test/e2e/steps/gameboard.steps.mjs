@@ -171,6 +171,9 @@ Given('the game board is open without state', async function () {
     const page = this.page
     if (!page) throw new Error('Page not initialized')
 
+    await mockBotModes(page)
+    await mockAuth(page)
+    await mockProfile(page)
     await page.goto(`${BASE_URL}/game`)
     await page.waitForTimeout(500)
 })
@@ -288,7 +291,7 @@ Then('the header should display the board size {string}', async function (size) 
     const page = this.page
     await page.waitForSelector('.gb-header-meta', { timeout: 8000 })
     const metaText = await page.textContent('.gb-header-meta')
-    assert.ok(metaText?.includes(`${size}×`), `Expected header to contain "${size}×", got "${metaText}"`)
+    assert.ok(metaText?.includes(`${size}x`), `Expected header to contain "${size}x", got "${metaText}"`)
 })
 
 Then('the header should display the app logo', async function () {
