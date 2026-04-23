@@ -1,35 +1,22 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import LoginForm from '../components/LoginForm'
 import resources from '../i18n/resources'
 import { I18nProvider } from '../i18n'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import '@testing-library/jest-dom'
-import * as userService from '../services/userService'
-import { AuthContext } from '../context/AuthContext'
 import Rules from '../components/Rules'
+import { AuthContext } from '../context/AuthContext'
 
-// mock navigation
 const mockNavigate = vi.fn()
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
 }))
 
-// mock login service
-vi.mock('../services/userService', () => ({
-  login: vi.fn(),
-}))
-
-const mockedLogin = userService.login as unknown as ReturnType<typeof vi.fn>
-
-// mock auth context
-const mockCheckAuth = vi.fn()
-
-const renderForm = () =>
+const renderRules = () =>
   render(
     <I18nProvider defaultLang="es" resources={resources}>
-      <AuthContext.Provider value={{ checkAuth: mockCheckAuth } as any}>
+      <AuthContext.Provider value={{ user: null, logout: vi.fn() } as any}>
         <Rules />
       </AuthContext.Provider>
     </I18nProvider>
@@ -40,73 +27,54 @@ describe('Rules', () => {
     vi.clearAllMocks()
   })
 
-test('go back button works', () => {
-    renderForm()
+  test('renderiza las secciones de reglas clasicas y 3D', () => {
+    renderRules()
 
     const t = resources.es
 
     expect(
-  screen.getByRole('heading', { name: t.menu.rules })
-).toBeInTheDocument()
+      screen.getByRole('heading', { name: t.menu.rules })
+    ).toBeInTheDocument()
 
-expect(screen.getByText(t.rules.description1)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description2)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description3)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description4)).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: t.rules.classicTitle })
+    ).toBeInTheDocument()
+    expect(screen.getByText(t.rules.description1)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.description2)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.classicRule1)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.classicRule2)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.classicRule3)).toBeInTheDocument()
 
-expect(
-  screen.getByRole('link', { name: /wikipedia/i })
-).toBeInTheDocument()
-
-expect(
-  screen.getByRole('link', { name: /wikipedia/i })
-).toHaveAttribute(
-  'href',
-  'https://en.wikipedia.org/wiki/Y_(board_game)'
-)
-
-expect(
-  screen.getByRole('button', { name: t.startScreen.goback })
-).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: t.rules.tetraTitle })
+    ).toBeInTheDocument()
+    expect(screen.getByText(t.rules.tetraIntro)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.tetraRule1)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.tetraRule2)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.tetraRule3)).toBeInTheDocument()
+    expect(screen.getByText(t.rules.tetraRule4)).toBeInTheDocument()
   })
 
-})
-
-test('renders rules correctly', () => {
-    renderForm()
+  test('renderiza el enlace a Wikipedia y el boton de volver', () => {
+    renderRules()
 
     const t = resources.es
 
     expect(
-  screen.getByRole('heading', { name: t.menu.rules })
-).toBeInTheDocument()
+      screen.getByRole('link', { name: /wikipedia/i })
+    ).toHaveAttribute(
+      'href',
+      'https://en.wikipedia.org/wiki/Y_(board_game)'
+    )
 
-expect(screen.getByText(t.rules.description1)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description2)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description3)).toBeInTheDocument()
-expect(screen.getByText(t.rules.description4)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: t.startScreen.goback })
+    ).toBeInTheDocument()
+  })
 
-expect(
-  screen.getByRole('link', { name: /wikipedia/i })
-).toBeInTheDocument()
-
-expect(
-  screen.getByRole('link', { name: /wikipedia/i })
-).toHaveAttribute(
-  'href',
-  'https://en.wikipedia.org/wiki/Y_(board_game)'
-)
-
-expect(
-  screen.getByRole('button', { name: t.startScreen.goback })
-).toBeInTheDocument()
-
-
-})
-
-test('goBack button navigates to home', async () => {
+  test('el boton volver navega al inicio', async () => {
     const user = userEvent.setup()
-    renderForm()
+    renderRules()
 
     const t = resources.es
 
@@ -118,4 +86,5 @@ test('goBack button navigates to home', async () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/')
   })
+})
 

@@ -15,10 +15,28 @@ export default function Rules() {
           <div className="content-inner">
             <h1>{t('menu.rules')}</h1>
             <div className="rules-content">
-              <p>{t('rules.description1')}</p>
-              <p>{t('rules.description2')}</p>
-              <p>{t('rules.description3')}</p>
-              <p>{t('rules.description4')}</p>
+              <section className="rules-section">
+                <h2>{t('rules.classicTitle')}</h2>
+                <p>{t('rules.description1')}</p>
+                <p>{t('rules.description2')}</p>
+                <ul className="rules-list">
+                  <li>{t('rules.classicRule1')}</li>
+                  <li>{t('rules.classicRule2')}</li>
+                  <li>{t('rules.classicRule3')}</li>
+                </ul>
+              </section>
+
+              <section className="rules-section">
+                <h2>{t('rules.tetraTitle')}</h2>
+                <p>{t('rules.tetraIntro')}</p>
+                <ul className="rules-list">
+                  <li>{t('rules.tetraRule1')}</li>
+                  <li>{t('rules.tetraRule2')}</li>
+                  <li>{t('rules.tetraRule3')}</li>
+                  <li>{t('rules.tetraRule4')}</li>
+                </ul>
+              </section>
+
               <p>{t('rules.wikipedia')}<a href="https://en.wikipedia.org/wiki/Y_(board_game)">{t('rules.wikipediaLink')}</a></p>
             </div>
             <div className="action-row">
