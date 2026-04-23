@@ -10,9 +10,10 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
 
-  const handleAuthClick = () => {
+  const handleAuthClick = async () => {
     if (user) {
-      logout();
+      await logout();
+      navigate('/');
       console.log('Sesión cerrada');
     } else {
       navigate('/login');
