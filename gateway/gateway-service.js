@@ -38,6 +38,7 @@ const { Server } = require('socket.io'); //Para partidas online (WebSockets)
 
 const app = express();
 app.disable('x-powered-by');
+app.disable('etag');
 const port = 8000;
 const gatewayHttpsEnabled = process.env.GATEWAY_HTTPS === 'true';
 const gatewayHttpsPfxPath = process.env.GATEWAY_HTTPS_PFX_PATH || path.join(__dirname, 'certs', 'localhost.pfx');
@@ -151,7 +152,7 @@ function setAuthCookie(res, token) {
   res.cookie('token', token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: false,
+    secure: gatewayHttpsEnabled,
     maxAge: 60 * 60 * 1000
   });
 }
@@ -160,7 +161,7 @@ function clearAuthCookie(res) {
   res.clearCookie('token', {
     httpOnly: true,
     sameSite: 'lax',
-    secure: false
+    secure: gatewayHttpsEnabled
   });
 }
 
@@ -177,7 +178,7 @@ function generateCode() {
 
 // Lista de orígenes permitidos
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
-  'https://localhost:5173,https://localhost:8000,https://20.188.62.231:5173,https://20.188.62.231:8000,https://20.188.62.231')
+  'https://localhost:5173,http://localhost:5173,https://localhost:8000,http://localhost:8000,https://20.188.62.231:5173,http://20.188.62.231:5173,https://20.188.62.231:8000,http://20.188.62.231:8000,https://20.188.62.231,http://20.188.62.231')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean)
@@ -227,6 +228,7 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({ message: "Token inválido" });
     }
 
+    req.body = req.body || {};
     req.body.userId = decoded.userId;
     next();
   });
@@ -1003,9 +1005,13 @@ function startServer() {
       }
       server = https.createServer(httpsOptions, app);
 
-    server.listen(port, () => {});
+    server.listen(port, () => {
+      console.log(`Gateway service listening on https://0.0.0.0:${port}`);
+    });
   } else {
-    server = app.listen(port, () => {});
+    server = app.listen(port, () => {
+      console.log(`Gateway service listening on http://0.0.0.0:${port}`);
+    });
   }
 
 // ================= WEBSOCKETS (Online mode) =================

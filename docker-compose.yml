@@ -120,6 +120,7 @@ services:
       - es4d-net
     environment:
       GATEWAY_HTTPS: ${GATEWAY_HTTPS:-true}
+      GATEWAY_HTTPS_PFX_PASSPHRASE: ${GATEWAY_HTTPS_PFX_PASSPHRASE:-yovi-es4d-dev}
       AUTH_SERVICE_URL: http://authservice:8002
       USER_SERVICE_URL: http://userservice:8001
       GAME_SERVICE_URL: http://game:8003
@@ -132,12 +133,12 @@ services:
       context: ./webapp
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ""
+        VITE_API_URL: "${WEBAPP_VITE_API_URL:-}"
     depends_on:
       gateway:
         condition: service_started
     ports:
-      - "5173:80"
+      - "5173:443"
     networks:
       - es4d-net
 

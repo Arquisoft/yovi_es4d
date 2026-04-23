@@ -1,24 +1,25 @@
 FROM node:22
 
-WORKDIR /usr/src/userservice
+WORKDIR /usr/src/authservice
 
-# Copiar solo dependencias primero (mejor caching)
-COPY package*.json ./
+# Copiar dependencias primero (mejor caché)
+COPY --chmod=444 package*.json ./
 
-# Instalar dependencias de forma reproducible
-RUN npm ci --omit=dev
+# bcrypt puede requerir compilación: instalamos toolchain solo durante el build
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && npm ci --omit=dev \
+ && apt-get purge -y --auto-remove python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copiar código fuente
-COPY . .
+# Copiar código de runtime
+COPY --chown=root:root --chmod=444 auth-service.js auth-model.js ./
 
-# Cambiar ownership al usuario node
-RUN chown -R node:node /usr/src/userservice
+# Ajustar ownership (ejecutamos como usuario no root)
+RUN chown -R node:node /usr/src/authservice
 
-# Ejecutar como usuario no root (clave para SonarQube)
 USER node
 
-# Exponer puerto
-EXPOSE 8001
+EXPOSE 8002
 
-# Comando de arranque
-CMD ["node", "user-service.js"]
+CMD ["node", "auth-service.js"]

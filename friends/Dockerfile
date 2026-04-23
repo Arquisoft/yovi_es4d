@@ -10,6 +10,12 @@ RUN npm ci --omit=dev \
     && chown -R node:node /usr/src/friends/logs \
     && chmod -R 755 /usr/src/friends/logs
 
+# Código fuente de la aplicación
+COPY . .
+
+# Ajustar permisos para el usuario no root
+RUN chown -R node:node /usr/src/friends
+
 USER node
 
 EXPOSE 8004
