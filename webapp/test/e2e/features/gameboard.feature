@@ -7,9 +7,9 @@ Feature: GameBoard - Partida en curso
     Given the game board is open in vsBot mode
     Then I should see the home button in header
 
-  Scenario: Redirige a login si no hay state
+  Scenario: Redirige a select si no hay state
     Given the game board is open without state
-    Then I should be redirected to login page
+    Then I should be redirected to select page
 
   Scenario: Se muestran los dos paneles de jugador
     Given the game board is open in vsBot mode
