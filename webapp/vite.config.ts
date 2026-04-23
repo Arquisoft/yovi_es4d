@@ -3,7 +3,13 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 
-const gatewayTarget = process.env.VITE_GATEWAY_TARGET?.trim() || 'https://localhost:8000';
+// Vite proxy target for the gateway.
+// The gateway runs over HTTP by default when started locally (GATEWAY_HTTPS is false unless explicitly set),
+// so we default to http://localhost:8000 to avoid TLS-to-plain-HTTP errors (EPROTO wrong version number).
+const gatewayTarget =
+  process.env.VITE_GATEWAY_TARGET?.trim() ||
+  process.env.VITE_API_URL?.trim() ||
+  'http://localhost:8000';
 
 const bypassSpaRoute = (path: string) => ({
   target: gatewayTarget,
