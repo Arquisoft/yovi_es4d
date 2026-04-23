@@ -523,11 +523,12 @@
     .gb-header-meta {
         display: none;
     }
-    min-height: 68vh;
-    position: relative;
 }
 
 .gb-board-section-3d {
+    position: relative;
+    min-height: 68vh;
+    padding-top: 90px;
     overflow: hidden;
     border-radius: 30px;
     border: 1px solid rgba(132, 116, 87, 0.18);
@@ -541,13 +542,13 @@
 
 .gb-tetra-progress {
     position: absolute;
-    top: 14px;
+    top: 10px;
     left: 14px;
     right: 14px;
     z-index: 3;
     display: grid;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 8px;
+    padding: 8px 12px;
     border-radius: 18px;
     background: rgba(255,255,255,0.76);
     backdrop-filter: blur(8px);
@@ -565,7 +566,7 @@
 
 .gb-tetra-track-label {
     font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--subtle);
@@ -579,7 +580,7 @@
 
 .gb-tetra-face-pill {
     min-width: 34px;
-    padding: 6px 10px;
+    padding: 5px 8px;
     border-radius: 999px;
     text-align: center;
     font-family: 'DM Mono', monospace;
@@ -604,14 +605,14 @@
 
 .gb-tetra-branch {
     font-family: 'DM Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
     background: rgba(241, 235, 226, 0.95);
     border: 1px solid rgba(168, 149, 121, 0.2);
     border-radius: 999px;
-    padding: 6px 10px;
+    padding: 5px 8px;
 }
 
 .gb-tetra-branch.active.violet {
@@ -819,6 +820,11 @@
         margin-bottom: 14px;
     }
 
+    .gb-board-section-3d {
+        min-height: 54vh;
+        padding-top: 0;
+    }
+
     .gb-header {
         padding: 12px 16px;
         gap: 10px;
@@ -857,5 +863,9 @@
 
     .gb-board-section {
         flex-direction: column;
+    }
+
+    .gb-board-section-3d {
+        min-height: 0;
     }
 }

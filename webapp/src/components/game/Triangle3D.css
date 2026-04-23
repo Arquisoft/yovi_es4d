@@ -1,18 +1,18 @@
 .tetra-stage {
-  width: min(82vw, 920px);
-  height: min(74vh, 800px);
+  width: min(88vw, 980px);
+  height: min(72vh, 760px);
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 16px;
+  gap: 10px;
   align-items: stretch;
   justify-items: stretch;
 }
 
 .tetra-controls {
   display: grid;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 22px;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(126, 103, 66, 0.16);
   box-shadow: 0 16px 36px rgba(90, 63, 28, 0.1);
@@ -27,11 +27,11 @@
 }
 
 .tetra-controls-row {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .tetra-controls-title {
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -40,7 +40,7 @@
 
 .tetra-face-pills {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .tetra-pill {
-  padding: 9px 14px;
+  padding: 7px 11px;
   border-radius: 999px;
   background: rgba(244, 238, 229, 0.95);
   color: #635647;
@@ -74,29 +74,29 @@
 
 .tetra-nav,
 .tetra-reset {
-  min-width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.92);
   color: #554836;
   box-shadow: 0 8px 20px rgba(74, 52, 21, 0.08);
 }
 
 .tetra-nav {
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 700;
 }
 
 .tetra-reset {
-  padding: 0 16px;
-  font-size: 0.86rem;
+  padding: 0 12px;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
 .tetra-hint {
   justify-content: space-between;
   color: #8e816f;
-  font-size: 0.84rem;
+  font-size: 0.74rem;
 }
 
 .tetra-scene {
@@ -244,7 +244,7 @@
 @media (max-width: 920px) {
   .tetra-stage {
     width: 100%;
-    height: min(72vh, 760px);
+    height: min(70vh, 720px);
   }
 
   .tetra-hint {
@@ -256,7 +256,7 @@
 
 @media (max-width: 640px) {
   .tetra-stage {
-    height: min(76vh, 780px);
+    height: min(68vh, 680px);
   }
 
   .tetra-controls {

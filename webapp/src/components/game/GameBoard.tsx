@@ -444,7 +444,7 @@ const GameBoardContent: React.FC<{
       <Triangle3D
         hexData={hexData}
         onHexClick={onHexClick}
-        scale={0.98}
+        scale={0.67}
         connectionEdges={connectionEdges}
       />
     );

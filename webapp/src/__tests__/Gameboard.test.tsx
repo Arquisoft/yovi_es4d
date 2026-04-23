@@ -206,7 +206,7 @@ describe('GameBoard', () => {
     expect(triangle3DPropsSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         hexData: tetraGameStartResponse.board,
-        scale: 0.98,
+        scale: 0.67,
         connectionEdges: tetraGameStartResponse.connectionEdges,
       })
     )
