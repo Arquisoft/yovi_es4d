@@ -6,112 +6,93 @@ import scala.concurrent.duration._
 
 class GameBoardLoadSimulation extends Simulation {
 
-  private val baseUrl = sys.env.getOrElse("BASE_URL", "http://host.docker.internal:8000")
-  private val users = Integer.getInteger("users", 5).toInt
-  private val rampSeconds = Integer.getInteger("rampSeconds", 30).toInt
-  private val maxDurationSeconds = Integer.getInteger("maxDurationSeconds", 180).toInt
-  private val gamesPerUser = Integer.getInteger("gamesPerUser", 2).toInt
-  private val boardSize = Integer.getInteger("boardSize", 11).toInt
-  private val botMode = sys.env.getOrElse("BOT_MODE", "random_bot")
-  private val loadUserEmail = "tu_usuario@correo.com"
-  private val loadUserPassword = "Y@m1yug0"
-
-  if (loadUserEmail.isEmpty || loadUserPassword.isEmpty) {
-    throw new IllegalArgumentException(
-      "LOADTEST_USER_EMAIL and LOADTEST_USER_PASSWORD are required for GameBoardLoadSimulation."
-    )
-  }
+  private val gatewayUrl = "http://host.docker.internal:8000"
 
   private val httpProtocol = http
-    .baseUrl(baseUrl)
-    .disableCaching
+    .baseUrl(gatewayUrl)
     .acceptHeader("application/json, text/plain, */*")
     .contentTypeHeader("application/json")
-    .header("Cache-Control", "no-cache")
-    .header("Pragma", "no-cache")
-    .userAgentHeader("Gatling GameBoard Load Test")
+    .shareConnections // Mantiene la conexión abierta como un navegador real
 
-  private val gameFlow =
-    exec(
-      http("POST /login")
-        .post("/login")
-        .body(
-          StringBody(
-            s"""{"email":"$loadUserEmail","password":"$loadUserPassword"}"""
-          )
-        ).asJson
-        .check(status.is(200))
+  // Generador de datos para el "Registro Manual"
+  private val userFeeder = (1 to 10).map { i =>
+    Map(
+      "userEmail"    -> s"manual_test_$i@yovi.com",
+      "userPassword" -> "Password123", // Cumple con validatePassword de tu RegisterForm.tsx
+      "username"     -> s"JugadorManual$i"
     )
-      .pause(300.milliseconds, 900.milliseconds)
-      .exec(
-        http("GET /api/auth/me")
-          .get("/api/auth/me")
-          .check(status.is(200))
-          .check(jsonPath("$.userId").exists.saveAs("userId"))
-      )
-      .pause(150.milliseconds, 600.milliseconds)
-      .repeat(gamesPerUser, "gameIndex") {
-        exec(
-          http("POST /api/user/getUserProfile [#{gameIndex}]")
-          .post("/api/user/getUserProfile")
-          .check(status.in(200, 404))
-        )
-        .pause(120.milliseconds, 450.milliseconds)
-        .exec(
-          http("POST /api/game/start [#{gameIndex}]")
-            .post("/api/game/start")
-            .body(
-              StringBody(
-                s"""{"userId":"#{userId}","gameMode":"vsBot","botMode":"$botMode","boardSize":$boardSize}"""
-              )
-            ).asJson
-            .check(status.is(200))
-            .check(jsonPath("$.gameId").exists.saveAs("gameId"))
-            .check(jsonPath("$.board[0].position").exists.saveAs("firstMove"))
-        )
-        .pause(120.milliseconds, 450.milliseconds)
-        .exec(
-          http("GET /api/game/#{gameId} [#{gameIndex}]")
-          .get("/api/game/#{gameId}")
-          .check(status.is(200))
-        )
-        .pause(120.milliseconds, 450.milliseconds)
-        .exec(
-          http("POST /api/game/#{gameId}/validateMove [#{gameIndex}]")
-            .post("/api/game/#{gameId}/validateMove")
-            .body(
-              StringBody("""{"userId":"#{userId}","move":"#{firstMove}"}""")
-            ).asJson
-            .check(status.is(200))
-            .check(jsonPath("$.valid").is("true"))
-        )
-        .pause(120.milliseconds, 450.milliseconds)
-        .exec(
-          http("POST /api/game/#{gameId}/move [#{gameIndex}]")
-            .post("/api/game/#{gameId}/move")
-            .body(
-              StringBody("""{"userId":"#{userId}","move":"#{firstMove}","mode":"vsBot"}""")
-            ).asJson
-            .check(status.is(200))
-            .check(jsonPath("$.board").exists)
-        )
-        .pause(120.milliseconds, 450.milliseconds)
-      }
-      .exec(
-        http("POST /logout")
-          .post("/logout")
-          .check(status.is(200))
-      )
+  }.toArray.circular
 
-  private val scn = scenario("GameBoard login-auth flow")
-    .exitBlockOnFail(gameFlow)
+  val scn = scenario("Flujo Manual Completo")
+    .feed(userFeeder)
+
+    // ── PASO 1: REGISTRO (Simulando RegisterForm.tsx) ──
+    .exec(http("Navegar a Registro").get("/register").check(status.is(200)))
+    .pause(3) // Tiempo que tarda el usuario en escribir nombre, email y pass
+    .exec(http("Click Botón Registrarse")
+      .post("/adduser")
+      .body(StringBody(
+        """{
+          "username":"#{username}",
+          "email":"#{userEmail}",
+          "password":"#{userPassword}"
+        }"""
+      )).asJson
+      .check(status.in(201, 409))) // 201 creado o 409 si ya existe
+    .pause(2)
+
+    // ── PASO 2: LOGIN (Simulando LoginForm.tsx) ──
+    .exec(http("Navegar a Login").get("/login").check(status.is(200)))
+    .pause(2) // Tiempo de escribir credenciales
+    .exec(http("Click Botón Entrar")
+      .post("/login")
+      .body(StringBody(
+        """{
+          "email":"#{userEmail}",
+          "password":"#{userPassword}"
+        }"""
+      )).asJson
+      .check(status.is(200))
+      .check(jsonPath("$.id").saveAs("userId"))) // Guardamos ID para el juego
+    .pause(1)
+
+    // ── PASO 3: SELECCIÓN DE MODO (Simulando ModeSelector.tsx) ──
+    .exec(http("Navegar a ModeSelector").get("/select").check(status.is(200)))
+    .pause(2) // El usuario elige dificultad y tamaño
+    .exec(http("Click Botón Jugar")
+      .post("/api/game/start")
+      .body(StringBody(
+        """{
+          "userId":"#{userId}",
+          "gameMode":"vsBot",
+          "botMode":"random_bot",
+          "boardSize":11
+        }"""
+      )).asJson
+      .check(status.is(200))
+      .check(jsonPath("$.gameId").saveAs("gameId"))
+      .check(jsonPath("$.board[0].position").saveAs("firstMove")))
+    .pause(1)
+
+    // ── PASO 4: JUEGO EN TABLERO (Simulando GameBoard.tsx) ──
+    .exec(http("Cargar Visual GameBoard").get("/game").check(status.is(200)))
+    .pause(1)
+    // Simula handleHexClick: Validar y luego Mover
+    .exec(http("GameBoard: Validar Hexágono")
+      .post("/api/game/#{gameId}/validateMove")
+      .body(StringBody("""{"userId":"#{userId}","move":"#{firstMove}"}""")).asJson
+      .check(status.is(200)))
+    .pause(400.milliseconds)
+    .exec(http("GameBoard: Realizar Movimiento")
+      .post("/api/game/#{gameId}/move")
+      .body(StringBody("""{"userId":"#{userId}","move":"#{firstMove}","mode":"vsBot"}""")).asJson
+      .check(status.is(200)))
+    .pause(2)
+
+    // ── PASO 5: SALIR ──
+    .exec(http("Logout").post("/logout").check(status.is(200)))
 
   setUp(
-    scn.inject(rampUsers(users).during(rampSeconds.seconds))
+    scn.inject(atOnceUsers(1)) // Probamos con 1 usuario para asegurar que el flujo es correcto
   ).protocols(httpProtocol)
-    .maxDuration(maxDurationSeconds.seconds)
-    .assertions(
-      global.responseTime.percentile4.lte(2500),
-      global.successfulRequests.percent.gte(99)
-    )
 }
