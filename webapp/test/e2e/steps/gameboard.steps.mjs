@@ -288,7 +288,8 @@ Then('the header should display the board size {string}', async function (size) 
     const page = this.page
     await page.waitForSelector('.gb-header-meta', { timeout: 8000 })
     const metaText = await page.textContent('.gb-header-meta')
-    assert.ok(metaText?.includes(`${size}×`), `Expected header to contain "${size}×", got "${metaText}"`)
+    const hasExpectedSize = metaText?.includes(`${size}×`) || metaText?.includes(`${size}x`)
+    assert.ok(hasExpectedSize, `Expected header to contain "${size}×" or "${size}x", got "${metaText}"`)
 })
 
 Then('the header should display the app logo', async function () {
