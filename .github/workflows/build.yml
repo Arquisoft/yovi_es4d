@@ -139,6 +139,7 @@ jobs:
         run: npx start-server-and-test "npm run dev -- --host 127.0.0.1 --strictPort" https-get://127.0.0.1:5173 "npm run test:e2e:run"
         working-directory: webapp
         env:
+          START_SERVER_AND_TEST_INSECURE: "1"
           VITE_GATEWAY_TARGET: http://127.0.0.1:8000
           E2E_GATEWAY_URL: http://127.0.0.1:8000
           BASE_URL: https://127.0.0.1:5173
