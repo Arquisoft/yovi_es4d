@@ -42,7 +42,7 @@ app.disable('etag');
 const port = 8000;
 const gatewayHttpsEnabled = process.env.GATEWAY_HTTPS === 'true';
 const gatewayHttpsPfxPath = process.env.GATEWAY_HTTPS_PFX_PATH || path.join(__dirname, 'certs', 'localhost.pfx');
-const gatewayHttpsPassphrase = process.env.GATEWAY_HTTPS_PFX_PASSPHRASE;
+const gatewayHttpsPassphrase = process.env.GATEWAY_HTTPS_PFX_PASSPHRASE ?? 'yovi-es4d-dev';
 
 
 // Internal service URLs are configurable through env vars.
