@@ -31,64 +31,29 @@ Consulta https://docs.arc42.org/section-6/[Runtime View] en la documentación de
 endif::arc42help[]
 
 === Escenario 1: Registro de usuario
-[plantuml,"Diagrama de secuencia:Registro",png]
-----
-@startuml
-actor Usuario
-database UserDB
-participant UserService
 
-Usuario -> UserService: Registro con nombre de usuario, correo y contraseña
-UserService -> UserService: Comprobación de datos
-UserService -> UserDB: Almacenamiento de datos de usuario
-UserDB --> UserService: Confirmación de datos almacenados
-UserService --> Usuario: Confirmación de registro exitoso
-@enduml
-----
+image::06_Registro_Usuario.png["PlantUML del escenario de registro de usuario de yovi"]
+
 
 === Escenario 2: Inicio de sesión
-[plantuml,"Diagrama de secuencia:Inicio de sesión",png]
-----
-@startuml
-actor Usuario
-database UserDB
-participant UserService
 
-Usuario -> UserService: Inicio de sesión con nombre de usuario y contraseña
-UserService -> UserService: Comprobación de datos
-UserService -> UserDB: Comprobación de datos de usuario
-UserDB --> UserService: Confirmación de la existencia de los datos almacenados
-UserService --> Usuario: Confirmación de inicio de sesión exitoso
-@enduml
-----
+image::06_Inicio_Sesión_usuario.png["PlantUML del escenario de inicio de sesión de yovi"]
+
 
 === Escenario 3: Juego con el bot
-[plantuml,"Diagrama de secuencia:Juego bot",png]
-----
-@startuml
-actor Usuario
-participant WebApp
-participant Game
-participant GameY
 
-Usuario -> WebApp: Inicio de juego
-WebApp -> Game: Solicitud de inicio de juego
-Game -> GameY: Pedida de datos para iniciar el juego
-GameY --> Game: Devuelta de datos para iniciar el juego
-Game --> WebApp: Devuelta del tablero
-WebApp --> Usuario: Visión del tablero
+image::06_Juego_bot.png["PlantUML del escenario de juego con el bot de yovi"]
 
-Usuario -> WebApp: Movimiento del jugador
-WebApp -> Game: Envío del movimiento del jugador
-Game -> GameY: Envío y validación del movimiento del jugador a Rust
-GameY --> Game: Devuelve el movimiento del jugador validado
-Game --> WebApp: Devuelta del movimiento del jugador
-WebApp --> Usuario: Visión del movimiento del jugador
 
-WebApp -> Game: Solicitud de movimiento del bot
-Game -> GameY: Pedida y validación de movimiento del bot a Rust
-GameY --> Game: Devuelta del movimiento del bot validado
-Game --> WebApp: Devuelta del movimiento del bot
-WebApp --> Usuario: Visión del movimiento del bot
-@enduml
-----
+
+=== Escenario 4: Gestión del historial de partidas
+
+image::06_Historial.png["PlantUML del escenario de gestión del historial de partidas de yovi"]
+
+=== Escenario 5: Gestión de amigos
+
+image::06_Solicitud_Amigo.png["PlantUML del escenario de gestión de amigos de yovi"]
+
+=== Escenario 6: Gestión de notificaciones
+
+image::06_Notificaciones.png["PlantUML del escenario de gestión de notificaciones de yovi"]

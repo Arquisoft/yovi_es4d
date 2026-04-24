@@ -18,6 +18,9 @@ ifndef::imagesdir[:imagesdir: ../images]
 | Inexperiencia con React
 | No tenemos experiencia con React, lo que puede dificultar el desarrollo de la aplicación principal para mostrar el juego yel inicio de sesión.
 
+| Inexperiencia con Gatling y test de carga
+| No tenemos experiencia con Gatling ni con la realización de tests de carga, lo que puede dificultar la evaluación del rendimiento del sistema bajo carga.
+
 | Poco conocimiento con Node.js
 | En el curso se ha visto algo de Node.js, pero no tenemos la suficiente experiencia, por lo que podría llegar a dificultar el desarrollo del proyecto.
 
@@ -33,6 +36,16 @@ ifndef::imagesdir[:imagesdir: ../images]
 | Factor del autobús
 | Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.
 
+| Problemas de despliegue
+| Los problemas de despliegue podrían afectar a la disponibilidad de la aplicación principal para mostrar el juego, lo que podría afectar al funcionamiento de la aplicación.
+
+| Factor del autobús
+| Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.
+
+| Inexperiencia con test de carga
+| No tenemos experiencia con la realización de tests de carga, lo que podría alargarnos el tiempo necesario para evaluar el rendimiento del sistema bajo carga.
+
+
 |===
 
 === Deudas técnicas
@@ -42,6 +55,13 @@ ifndef::imagesdir[:imagesdir: ../images]
 
 | Authuser y userService comparten base de datos
 | Actualmente, tanto authuser como userService comparten la misma base de datos, lo que podría generar problemas de seguridad y escalabilidad en el futuro.
+
+| Cambios manuales para la máquina virtual y el despliegue local 
+| Los URL de la máquina virtual y el despliegue local se tienen que cambiar manualmente, por lo que podría afectar la eficiencia del proceso de despliegue.
+
+| Test flaky
+| Con la existencia de test flaky, es decir, test que a veces pasan y a veces fallan, podría afectar a la confianza en los test y a la eficiencia del proceso de desarrollo.
+
 
 |===
 
