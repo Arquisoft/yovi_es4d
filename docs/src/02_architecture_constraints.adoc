@@ -61,7 +61,7 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 |El equipo de desarrollo está conformado por 4 personas.
 
 |**Reuniones**
-|Se organizará al menos una reunioón semanal durante las clases de laboratorio donde se discutirá el proyecto y posibles impedimentos. 
+|Se organizará al menos una reunión semanal durante las clases de laboratorio donde se discutirá el proyecto y posibles impedimentos. 
 
 |**Actas**
 |Tras cada reunión se escribirá un acta donde se describen las decisiones que han sido tomadas
