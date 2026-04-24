@@ -42,6 +42,10 @@ ifndef::imagesdir[:imagesdir: ../images]
 | Factor del autobús
 | Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.
 
+| Inexperiencia con test de carga
+| No tenemos experiencia con la realización de tests de carga, lo que podría alargarnos el tiempo necesario para evaluar el rendimiento del sistema bajo carga.
+
+
 |===
 
 === Deudas técnicas
@@ -54,6 +58,10 @@ ifndef::imagesdir[:imagesdir: ../images]
 
 | Cambios manuales para la máquina virtual y el despliegue local 
 | Los URL de la máquina virtual y el despliegue local se tienen que cambiar manualmente, por lo que podría afectar la eficiencia del proceso de despliegue.
+
+| Test flaky
+| Con la existencia de test flaky, es decir, test que a veces pasan y a veces fallan, podría afectar a la confianza en los test y a la eficiencia del proceso de desarrollo.
+
 
 |===
 

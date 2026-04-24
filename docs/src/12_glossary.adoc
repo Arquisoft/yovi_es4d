@@ -34,32 +34,36 @@ endif::arc42help[]
 
 [cols="e,2e" options="header"]
 |===
-|Term |Definition
+|Término |Definición
 
 | React
-|<definition-1>
+| Librería de JavaScript para construir interfaces de usuario interactivas.
 
 | Gateway
-|<definition-2>
+| Microservicio que actúa como punto de entrada y enruta las solicitudes a otros servicios.
 
 | Rust
-|<definition-2>
+| Lenguaje de programación utilizado para el motor central del juego.
 
 | Docker
-|<definition-2>
+| Plataforma para crear, desplegar y ejecutar aplicaciones en contenedores.
 
 | Azure
-|<definition-2>
+| Plataforma en la nube utilizada para desplegar y escalar los servicios.
 
-|<
-|<definition-2>
+| Internacionalización (i18n)
+| Adaptación de la aplicación para soportar múltiples idiomas y culturas.
 
-|<Term-2>
-|<definition-2>
+| Microservicio
+|Aplicación pequeña e independiente que realiza una función específica y se comunica con otros servicios mediante APIs.
 
-|<Term-2>
-|<definition-2>
+| MongoDB
+| Base de datos NoSQL utilizada para almacenar datos de usuarios y partidas.
 
-|<Term-2>
-|<definition-2>
+| JWT (JSON Web Token)
+| Estándar para la transmisión segura de información como tokens de autenticación.
+
+| Prometheus y Grafana
+| Herramientas para monitoreo y visualización de métricas.
+
 |===
