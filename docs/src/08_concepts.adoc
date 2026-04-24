@@ -70,7 +70,7 @@ El sistema almacena y recupera la información necesaria de una base de datos, e
 
 La base de datos es:
 
-image::08_Diagrama_database.png["Diagrama de la base de datos de yovi"]
+image::08_Diagrama_database.drawio.png["Diagrama de la base de datos de yovi"]
 
 === Internacionalizacion
 La aplicación será implementada en inglés y español. Se seguirán las recomendaciones i18n, para hacerla entendible a un mayor rango de usuarios.
