@@ -183,7 +183,7 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   .map(origin => origin.trim())
   .filter(Boolean)
   .reduce((origins, origin) => origins.add(origin), new Set());
-
+/*
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.has(origin)) {
@@ -193,12 +193,22 @@ app.use(cors({
     }
   },
   credentials: true
+}));*/
+app.use(cors({
+  origin: true,
+  credentials: true
 }));
 
 app.use(express.json());
 app.use(cookieParser());
 
-const metricsMiddleware = promBundle({ includeMethod: true });
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  promClient: {
+    collectDefaultMetrics: {},
+  },
+});
 app.use(metricsMiddleware);
 
 app.get('/health', (req, res) => {

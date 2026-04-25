@@ -77,7 +77,7 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   .map(origin => origin.trim())
   .filter(Boolean)
   .reduce((origins, origin) => origins.add(origin), new Set());
-
+/*
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.has(origin)) {
@@ -86,6 +86,10 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
+  credentials: true
+}));*/
+app.use(cors({
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
@@ -612,41 +616,51 @@ async function finishGameAndSave(game) {
 }
 
 /**
- * Finalizar y guardar juego
- 
+ * Finalizar y guardar juego (vÃ­a Gateway).
+ * El Gateway llama a este endpoint desde `POST /api/game/end`.
+ *
+ * @route {POST} /api/game/endAndSaveGame
+ * @param {Object} req.body
+ * @param {string} req.body.gameId - ID del juego
+ * @param {string} [req.body.userId] - ID del usuario autenticado (opcional, para validaciÃ³n)
+ * @returns {Object} Resumen del guardado
+ */
 app.post('/api/game/endAndSaveGame', async (req, res) => {
-  const { gameId } = req.body;
-  const game = games.get(gameId);
-  if (!game) return res.status(404).json({ error: 'Game not found' });
-
-  game.status = 'finished';
-  game.finishedAt = new Date();
-
   try {
-    // Guardar en MongoDB
-    const savedGame = await GameModel.findOneAndUpdate(
-      { gameId },
-      game,
-      { upsert: true, new: true }
-    );
+    const { gameId, userId } = req.body || {};
 
-    // Notificar a Rust (opcional)
-    await axios.post(`${GAMEY_BOT_URL}/v1/game/end`, { game_id: gameId });
+    if (typeof gameId !== 'string' || gameId.trim().length === 0) {
+      return res.status(400).json({ error: 'gameId requerido' });
+    }
+
+    const game = games.get(gameId);
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+
+    if (userId && game.userId && userId !== game.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    game.status = 'finished';
+    game.finishedAt = new Date();
+
+    await finishGameAndSave(game);
 
     res.json({
+      ok: true,
       gameId,
-      status: 'Game saved',
       result: {
         winner: game.winner || 'draw',
-        moves: game.moves.length,
-        duration: game.finishedAt - game.createdAt
-      }
+        moves: Array.isArray(game.moves) ? game.moves.length : 0,
+        duration: game.finishedAt - game.createdAt,
+      },
     });
   } catch (err) {
-    console.error('Error saving game:', err);
+    console.error('Error finishing game:', err);
     res.status(500).json({ error: 'Error saving game' });
   }
-});*/
+});
 
 
 /**
