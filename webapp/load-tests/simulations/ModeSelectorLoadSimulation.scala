@@ -28,7 +28,7 @@ class ModeSelectorLoadSimulation extends Simulation {
     .pause(200.milliseconds, 700.milliseconds)
     .repeat(repeatsPerUser, "idx") {
       exec(
-        http("GET /api/game/bot-modes #{idx}")
+        http("GET /api/game/bot-modes ${idx}")
           .get("/api/game/bot-modes")
           .check(status.is(200))
           .check(jsonPath("$.botModes").exists)

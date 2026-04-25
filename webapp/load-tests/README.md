@@ -5,27 +5,37 @@ This folder contains Gatling simulations for the web application.
 ## Prerequisites
 
 - Docker running locally
-- Webapp running (for example with `npm run dev`)
+- Webapp stack running (gateway reachable)
 
 ## Run available simulations
 
 From `webapp/`:
 
 ```bash
-# Flujo básico del gateway
+# Smoke (health + bot-modes)
 npm run loadtest
 
-# Carga de ModeSelector (bot-modes)
+# Load ModeSelector (bot-modes)
 npm run loadtest:mode-selector
 
-# Carga de GameBoard (login + start + move)
+# Load GameBoard (register/login + select + start + play + end)
 npm run loadtest:gameboard
 
-# Carga de GameBoard con token automático (login previo)
+# Load Friends (register/login + explore + friend request + notifications)
+npm run loadtest:friends:auto
+
+# Auto-detect BASE_URL (http vs https) and run GameBoard
+npm run loadtest:gameboard:auto
+
+# GameBoard with auto-token helper (login done outside Gatling)
 npm run loadtest:gameboard:auto-token
 ```
 
 Gateway-based simulations use `http://host.docker.internal:8000` by default.
+
+Note: `BASE_URL` must match the gateway mode. If the gateway runs with `GATEWAY_HTTPS=true`, use `https://...`.
+When using `https://...`, the simulations accept self-signed certificates automatically (see `load-tests/conf/gatling.conf`).
+If you're unsure which scheme is active, use the `*:auto` npm scripts that probe `/health` and pick the right `BASE_URL` automatically.
 
 ## Configure test parameters
 
@@ -36,35 +46,22 @@ Use environment variables and Java system properties to customize execution:
 - `rampSeconds` (Java property): ramp-up duration in seconds (default `30`)
 - `maxDurationSeconds` (Java property): max test duration in seconds
 - `repeatsPerUser` (Java property, ModeSelector simulation): number of `/bot-modes` reads per virtual user
-- `LOADTEST_USER_EMAIL` (env var, GameBoard simulation): authenticated user email
-- `LOADTEST_USER_PASSWORD` (env var, GameBoard simulation): authenticated user password
-- `LOADTEST_AUTH_TOKEN` (env var, GameBoard simulation): optional JWT token only used by helper scripts
+- `LOADTEST_USER_EMAIL` (env var, GameBoard simulation): optional existing user email (skips register step)
+- `LOADTEST_USER_PASSWORD` (env var, GameBoard simulation): optional existing user password (skips register step)
 - `BOT_MODE` (env var, GameBoard simulation): bot mode (`random_bot`, `intermediate_bot`, `hard_bot`)
 - `boardSize` (Java property, GameBoard simulation): board size (`8`, `11`, `15`, `19`)
-- `gamesPerUser` (Java property, GameBoard simulation): number of start/validate/move cycles per virtual user
+- `gamesPerUser` (Java property, GameBoard simulation): number of games per virtual user
+- `movesPerGame` (Java property, GameBoard simulation): number of (validateMove + botMove) turns per game (default `2`)
 
-Important: when running through the npm scripts, these env vars are forwarded to the Gatling Docker container (`-e ...` in `package.json` scripts).
+GameBoard simulation always performs a login (required to play). For registration, you have two options:
 
-For `loadtest:gameboard:auto-token`, set:
-- `LOADTEST_USER_EMAIL`
-- `LOADTEST_USER_PASSWORD`
-- optional `BASE_URL` (used for both login and Gatling target)
+- Default (recommended): the simulation registers random users (`/adduser`) and then logs in.
+- Reuse an existing user: set `LOADTEST_USER_EMAIL` and `LOADTEST_USER_PASSWORD` to skip the register step and avoid growing the DB.
 
-PowerShell example:
-
-```powershell
-$env:BASE_URL = "http://host.docker.internal:5173"
-docker run --rm -v "${pwd}/load-tests:/opt/gatling/user-files" -v "${pwd}/load-tests/results:/opt/gatling/results" denvazh/gatling:latest -s simulations.WebAppSmokeSimulation -Dusers=100 -DrampSeconds=60
-```
-
-GameBoard example (PowerShell):
-
-```powershell
-$env:BASE_URL = "http://host.docker.internal:8000"
-$env:LOADTEST_USER_EMAIL = "tu_usuario@correo.com"
-$env:LOADTEST_USER_PASSWORD = "tu_password"
-$env:BOT_MODE = "random_bot"
-docker run --rm -e BASE_URL -e BOT_MODE -e LOADTEST_USER_EMAIL -e LOADTEST_USER_PASSWORD -v "${pwd}/load-tests:/opt/gatling/user-files" -v "${pwd}/load-tests/results:/opt/gatling/results" denvazh/gatling:latest -s simulations.GameBoardLoadSimulation -Dusers=10 -DrampSeconds=60 -DboardSize=11 -DgamesPerUser=2
-```
+## Results
 
 Results are stored in `load-tests/results/`.
+
+Note: Gatling prints the HTML path inside the container (e.g. `/opt/gatling/results/.../index.html`).
+Because we mount that folder as a volume, the report is available on your machine at:
+`webapp/load-tests/results/<run-id>/index.html`.
