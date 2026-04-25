@@ -138,12 +138,12 @@ jobs:
         working-directory: webapp
 
       - name: Run webapp E2E tests
-        run: npx start-server-and-test "npm run dev -- --host 127.0.0.1 --strictPort" https-get://127.0.0.1:5173 "npm run test:e2e:run"
+        run: npx start-server-and-test "npm run dev -- --host 127.0.0.1 --strictPort" http-get://127.0.0.1:5173 "npm run test:e2e:run"
         working-directory: webapp
         env:
           START_SERVER_AND_TEST_INSECURE: "1"
           VITE_API_URL: https://localhost:8000
-          BASE_URL: https://127.0.0.1:5173
+          BASE_URL: http://127.0.0.1:5173
 
       - name: Stop backend stack
         if: always()
