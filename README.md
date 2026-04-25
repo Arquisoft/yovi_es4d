@@ -12,7 +12,8 @@
 [![CodeScene Average Code Health](https://codescene.io/projects/66324/status-badges/average-code-health)](https://codescene.io/projects/66324)
 [![CodeScene Hotspot Code Health](https://codescene.io/projects/66324/status-badges/hotspot-code-health)](https://codescene.io/projects/66324)
 [![CodeScene System Mastery](https://codescene.io/projects/66324/status-badges/system-mastery)](https://codescene.io/projects/66324)
-[![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/proje
+[![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/66324)
+
 This project is a template with some basic functionality for the ASW labs.
 ## Contributors
 | Name | GitHub Profile |
