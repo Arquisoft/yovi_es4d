@@ -183,19 +183,28 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   .map(origin => origin.trim())
   .filter(Boolean)
   .reduce((origins, origin) => origins.add(origin), new Set());
-/*
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
-      callback(null, true);
-    } else {
+    if (!origin) return callback(null, true);
+
+    try {
+      const url = new URL(origin);
+
+      const allowedHosts = [
+        'localhost',
+        '20.188.62.231'
+      ];
+
+      if (allowedHosts.includes(url.hostname)) {
+        return callback(null, true);
+      }
+
       callback(new Error('Not allowed by CORS'));
+    } catch (err) {
+      callback(new Error('Invalid origin'));
     }
   },
-  credentials: true
-}));*/
-app.use(cors({
-  origin: true,
   credentials: true
 }));
 
