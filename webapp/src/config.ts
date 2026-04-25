@@ -5,4 +5,14 @@ const defaultApiUrl = globalThis.window === undefined
   ? ''
   : globalThis.window.location.origin;
 
-export const API_URL = configuredApiUrl || defaultApiUrl;
+function wouldCauseMixedContent(configured: string) {
+  if (globalThis.window === undefined) return false;
+
+  const pageProtocol = globalThis.window.location.protocol;
+  return pageProtocol === 'https:' && configured.startsWith('http://');
+}
+
+export const API_URL =
+  configuredApiUrl && !wouldCauseMixedContent(configuredApiUrl)
+    ? configuredApiUrl
+    : defaultApiUrl;
