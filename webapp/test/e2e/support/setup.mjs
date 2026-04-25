@@ -7,7 +7,7 @@ class CustomWorld {
   browser = null
   context = null
   page = null
-  BASE_URL = process.env.BASE_URL || 'https://localhost:5173'
+  BASE_URL = process.env.BASE_URL || (process.env.CI ? 'http://localhost:5173' : 'https://localhost:5173')
 }
 
 setWorldConstructor(CustomWorld)

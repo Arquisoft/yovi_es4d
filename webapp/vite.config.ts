@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 
+const isCI = process.env.CI === 'true' || process.env.CI === '1';
+const enableHttps = process.env.VITE_HTTPS
+  ? process.env.VITE_HTTPS === 'true'
+  : !isCI;
+
 // Vite proxy target for the gateway.
 // The gateway runs over HTTP by default when started locally (GATEWAY_HTTPS is false unless explicitly set),
 // so we default to http://localhost:8000 to avoid TLS-to-plain-HTTP errors (EPROTO wrong version number).
@@ -30,7 +35,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    mkcert(), 
+    ...(enableHttps ? [mkcert()] : []),
   ],
 
   test: {
@@ -54,7 +59,7 @@ export default defineConfig({
   },
 
   server: {
-    https: true as any,
+    https: enableHttps as any,
     host: true,
     port: 5173,
     proxy: {
