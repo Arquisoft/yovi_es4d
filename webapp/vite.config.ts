@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import mkcert from 'vite-plugin-mkcert'
 
 // Vite proxy target for the gateway.
 // The gateway runs over HTTP by default when started locally (GATEWAY_HTTPS is false unless explicitly set),
@@ -27,11 +26,7 @@ const bypassSpaRoute = (path: string) => ({
 });
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    mkcert(), 
-  ],
+  plugins: [react(), tailwindcss()],
 
   test: {
     environment: 'jsdom',
@@ -54,7 +49,7 @@ export default defineConfig({
   },
 
   server: {
-    https: true as any,
+    https: false as any,
     host: true,
     port: 5173,
     proxy: {

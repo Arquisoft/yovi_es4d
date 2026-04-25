@@ -5,9 +5,13 @@ import assert from 'assert'
 
 const GATEWAY_URL = process.env.E2E_GATEWAY_URL || 'https://localhost:8000';
 
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
+const gatewayProtocol = new URL(GATEWAY_URL).protocol
+const httpsAgent =
+  gatewayProtocol === 'https:'
+    ? new https.Agent({
+        rejectUnauthorized: false,
+      })
+    : undefined
 
 Given('a test user exists', async function () {
   // Intenta registrar el usuario, ignora si ya existe
@@ -17,7 +21,7 @@ Given('a test user exists', async function () {
       email: 'testcucumber@example.com',
       password: 'Password123'
     }, {
-      httpsAgent,
+      ...(httpsAgent ? { httpsAgent } : {}),
     });
   } catch (e) {
     // Si ya existe, ignorar
