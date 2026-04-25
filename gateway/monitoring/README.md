@@ -12,8 +12,10 @@ docker compose --env-file .env.local up --build
 
 Then open:
 
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:9091` (anonymous admin enabled)
+- Prometheus: `http://<host>:9090`
+- Grafana: `http://<host>:9091` (anonymous admin enabled)
+
+`<host>` is typically `localhost` (local dev) or your VM public IP (e.g. `20.188.62.231`).
 
 ## Notes
 

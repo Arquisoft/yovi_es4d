@@ -155,8 +155,12 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./gateway/monitoring/prometheus/configuration:/etc/prometheus
+      - ./gateway/monitoring/prometheus:/etc/prometheus
       - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.external-url=http://${MONITORING_PUBLIC_HOST:-localhost}:9090"
     networks:
       - es4d-net
 
@@ -171,11 +175,15 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./gateway/monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./gateway/monitoring/grafana/dashboards:/etc/grafana/dashboards
     environment:
       GF_SERVER_HTTP_PORT: 9091
+      GF_SERVER_DOMAIN: ${MONITORING_PUBLIC_HOST:-localhost}
+      GF_SERVER_ROOT_URL: http://${MONITORING_PUBLIC_HOST:-localhost}:9091
       GF_AUTH_DISABLE_LOGIN_FORM: true
       GF_AUTH_ANONYMOUS_ENABLED: true
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/gateway-service-dashboard.json
     networks:
       - es4d-net
 
