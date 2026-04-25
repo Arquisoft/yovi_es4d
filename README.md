@@ -1,7 +1,7 @@
 # YOVI_es4d - Game Y at UniOvi
 
 
-[![Actions Status](https://github.com/arquisoft/yovi_es4d/workflows/CI%20for%20yovi_es4d/badge.svg)](https://github.com/arquisoft/yovi_es4d/actions)
+[![Actions Status](https://github.com/arquisoft/wichat_es4a/workflows/CI%20for%20yovi_es4d/badge.svg)](https://github.com/arquisoft/yovi_es4d/actions)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 [![Open Issues](https://img.shields.io/github/issues/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/issues)
