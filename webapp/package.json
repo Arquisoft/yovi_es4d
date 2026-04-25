@@ -16,10 +16,14 @@
     "test:e2e": "concurrently -k -s first \"npm run start:all\" \"wait-on tcp:5173 tcp:8000 tcp:8001 tcp:8002 tcp:8003 tcp:8004 && npm run test:e2e:run\"",
     "test:e2e:install-browsers": "npx playwright install",
     "start:all": "concurrently \"npm run dev\" \"npm run start:services\"",
-    "loadtest": "docker run --rm -e BASE_URL -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.WebAppSmokeSimulation",
-    "loadtest:mode-selector": "docker run --rm -e BASE_URL -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.ModeSelectorLoadSimulation",
-    "loadtest:gameboard": "docker run --rm -e BASE_URL -e BOT_MODE -e LOADTEST_USER_EMAIL -e LOADTEST_USER_PASSWORD -e LOADTEST_AUTH_TOKEN -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.GameBoardLoadSimulation",
-    "loadtest:gameboard:auto-token": "node ./load-tests/run-gameboard-with-auto-token.mjs"
+    "loadtest": "docker run --rm -e BASE_URL -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/conf:/opt/gatling/conf\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.WebAppSmokeSimulation",
+    "loadtest:mode-selector": "docker run --rm -e BASE_URL -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/conf:/opt/gatling/conf\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.ModeSelectorLoadSimulation",
+    "loadtest:gameboard": "docker run --rm -e BASE_URL -e BOT_MODE -e LOADTEST_USER_EMAIL -e LOADTEST_USER_PASSWORD -v \"%cd%/load-tests:/opt/gatling/user-files\" -v \"%cd%/load-tests/conf:/opt/gatling/conf\" -v \"%cd%/load-tests/results:/opt/gatling/results\" denvazh/gatling:latest -s simulations.GameBoardLoadSimulation",
+    "loadtest:auto": "node ./load-tests/run-gatling-auto-baseurl.mjs simulations.WebAppSmokeSimulation",
+    "loadtest:mode-selector:auto": "node ./load-tests/run-gatling-auto-baseurl.mjs simulations.ModeSelectorLoadSimulation",
+    "loadtest:gameboard:auto": "node ./load-tests/run-gatling-auto-baseurl.mjs simulations.GameBoardLoadSimulation",
+    "loadtest:gameboard:auto-token": "node ./load-tests/run-gameboard-with-auto-token.mjs",
+    "loadtest:friends:auto": "node ./load-tests/run-gatling-auto-baseurl.mjs simulations.FriendsLoadSimulation"
   },
   "dependencies": {
     "gatling": "^2.0.0",

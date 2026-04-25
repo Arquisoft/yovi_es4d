@@ -38,7 +38,7 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
   .map(origin => origin.trim())
   .filter(Boolean)
   .reduce((origins, origin) => origins.add(origin), new Set());
-
+/*
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.has(origin)) {
@@ -47,6 +47,10 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
+  credentials: true
+}));*/
+app.use(cors({
+  origin: true,
   credentials: true
 }));
 app.use(express.json());

@@ -75,15 +75,26 @@ This is the easiest way to get the project running. You need to have [Docker](ht
     From the root directory of the project, run:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This command will build the Docker images for both the `webapp` and `users` services and start them.
 
-2.**Access the application:**
-- Web application: [http://localhost](http://localhost)
-- User service API: [http://localhost:3000](http://localhost:3000)
-- Gamey API: [http://localhost:4000](http://localhost:4000)
+2.**Access the application (default compose):**
+- Web application: `https://localhost` (self-signed cert)
+- Gateway API: `https://localhost:8000`
+
+3. **Local ports + HTTP gateway (recommended for load tests):**
+
+```bash
+docker compose --env-file .env.local up --build
+```
+
+- Web application: `https://localhost:8443`
+- Gateway API: `http://localhost:8000`
+
+Load testing (Gatling): see `webapp/load-tests/README.md`.
+Monitoring (Prometheus + Grafana): see `gateway/monitoring/README.md`.
 
 ### Without Docker
 

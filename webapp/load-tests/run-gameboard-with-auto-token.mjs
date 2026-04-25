@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 const baseUrl = process.env.BASE_URL ?? "http://host.docker.internal:8000";
 const email = process.env.LOADTEST_USER_EMAIL;
 const password = process.env.LOADTEST_USER_PASSWORD;
+const insecureTls = (process.env.LOADTEST_INSECURE_TLS ?? "").toLowerCase() === "true";
 
 if (!email || !password) {
   console.error("Missing credentials. Set LOADTEST_USER_EMAIL and LOADTEST_USER_PASSWORD.");
@@ -10,6 +11,11 @@ if (!email || !password) {
 }
 
 async function getToken() {
+  if (baseUrl.startsWith("https://") && insecureTls) {
+    // Local-only helper for self-signed certificates.
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  }
+
   const response = await fetch(`${baseUrl}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,6 +48,14 @@ try {
   console.log("Token fetched successfully. Running GameBoard load test...");
   runLoadtest(token);
 } catch (error) {
+  if (baseUrl.startsWith("https://") && !insecureTls) {
+    console.error(
+      `Auto-token flow failed: ${error.message}\n` +
+      `Hint: you're using HTTPS. If the target uses a self-signed certificate, set LOADTEST_INSECURE_TLS=true.`
+    );
+    process.exit(1);
+  }
+
   console.error(`Auto-token flow failed: ${error.message}`);
   process.exit(1);
 }
