@@ -52,8 +52,9 @@
     "account": "Don't have an account?",
     "register": "Register here",
     "haveaccount": "Already have an account?",
-    "login": "Log in here"  
-  }, "registerForm": {
+    "login": "Log in here"
+  },
+  "registerForm": {
     "title": "Register",
     "username": "Username",
     "email": "Email",
@@ -73,7 +74,8 @@
     "errorPasswordContent": "Password must have at least 8 characters, one uppercase and one number, and no spaces",
     "errorUsername": "Username must be at least 3 characters",
     "emailExists": "Email already exists"
-  }, "gameOver": {
+  },
+  "gameOver": {
     "title": "Game finished",
     "winner": "Winner",
     "playAgain": "Play Again",
@@ -84,7 +86,8 @@
     "completed": "completed",
     "score": "Score:",
     "newGame": "New Game"
-  }, "gameBoard": {
+  },
+  "gameBoard": {
     "turn": "Turn:",
     "waiting": "Waiting for opponent...",
     "yourTurn": "It's your turn!",
@@ -95,7 +98,8 @@
     "won": "wins",
     "gameStart": "Starting game",
     "board": "board"
-  }, "editUser": {
+  },
+  "editUser": {
     "title": "Edit Profile",
     "email": "Email",
     "username": "Username",
@@ -110,7 +114,8 @@
     "passwordMatch": "Passwords do not match",
     "currentPasswordWrong": "Current password is incorrect",
     "newPasswordRequired": "Please enter a new password"
-  }, "historial": {
+  },
+  "historial": {
     "title": "Game History",
     "noGames": "No games played yet.",
     "game": "Game {{index}}: {{result}} against {{opponent}} on {{date}} ",
@@ -130,7 +135,8 @@
     "movesNotAvailable": "Moves not available",
     "table": "Board:",
     "cells": "cells"
-  },  "notifications": {
+  },
+  "notifications": {
     "title": "Notifications",
     "loading": "Loading notifications...",
     "empty": "You have no notifications",
@@ -151,46 +157,42 @@
     "errorSend": "Error sending request",
     "errorAccept": "Error accepting request",
     "errorReject": "Error rejecting request",
-
     "tabs": {
       "explore": "Explore",
       "friends": "My Friends",
       "requests": "Requests"
     },
-
     "search": "Search user...",
     "add": "Add",
     "accept": "Accept",
     "reject": "Reject",
-
     "emptyExplore": "No new users 😅",
     "emptyRequests": "No pending requests 👍",
-
     "page": "Page "
   },
   "back": {
     "loading": "Loading..."
-  }, "modeSelector": {
+  },
+  "modeSelector": {
     "newGame": "New Game",
     "configure": "Configure Match",
-    "chooseHow": "Choose how you want to play",
-
+    "chooseHow": "Choose whether you want to play on the classic board or on a 3D tetrahedron",
     "online": "Online",
     "playOnline": "Play Online",
-    "playOnlineDesc": "Play remotely with a friend using a room code.",
-
+    "playOnlineDesc": "The online lobby keeps the classic board for now.",
     "localTitle": "LOCAL",
     "gameMode": "Game Mode",
-
+    "multiplayerWarning": "This match will not be saved in history.",
     "player2": "Player 2 Name",
     "player2Placeholder": "Opponent name...",
     "player2Default": "Player 2",
-
+    "boardStructure": "Board Structure",
+    "startingTurn": "Starting Turn",
     "difficulty": "Difficulty",
+    "timePerTurn": "Time Per Turn",
     "boardSize": "Board Size",
-
+    "tetraLevel": "Tetrahedron Level",
     "play": "Play",
-
     "local": {
       "vsBot": {
         "label": "Vs Computer",
@@ -201,25 +203,61 @@
         "description": "Two players on the same computer."
       }
     },
-
     "bot": {
       "random": {
         "label": "Random",
-        "description": "The bot chooses cells randomly.",
+        "description": "The bot chooses nodes at random.",
         "tag": "Easy"
       },
       "intermediate": {
         "label": "Intermediate",
-        "description": "The bot evaluates the board for good moves.",
+        "description": "The bot tries to group useful connections.",
         "tag": "Medium"
       },
       "hard": {
         "label": "Hard",
-        "description": "The bot plays at maximum strength.",
+        "description": "The bot prioritizes routes that get closer to the 4 faces.",
         "tag": "Hard"
       }
     },
-
+    "variant": {
+      "classic": {
+        "label": "Classic Board",
+        "description": "The original version of Y on a triangle."
+      },
+      "tetra3d": {
+        "label": "3D Tetrahedron",
+        "description": "Connect the 4 faces of the tetrahedron to win."
+      }
+    },
+    "startingPlayer": {
+      "vsBot": {
+        "j1": {
+          "label": "You Start",
+          "description": "You make the first move."
+        },
+        "j2": {
+          "label": "Bot Starts",
+          "description": "The AI plays first."
+        }
+      },
+      "multiplayer": {
+        "j1": {
+          "label": "Player 1 Starts",
+          "description": "Player 1 makes the first move."
+        },
+        "j2": {
+          "label": "Player 2 Starts",
+          "description": "Player 2 makes the first move."
+        }
+      }
+    },
+    "timeLimits": {
+      "unlimited": "No limit",
+      "fast": "Fast",
+      "normal": "Normal",
+      "relaxed": "Relaxed"
+    },
     "board": {
       "small": {
         "label": "Small",
@@ -237,7 +275,51 @@
         "label": "Extra",
         "description": "190 cells · Expert"
       }
+    },
+    "tetraBoard": {
+      "base": {
+        "label": "Base",
+        "description": "10 nodes · Very fast"
+      },
+      "normal": {
+        "label": "Normal",
+        "description": "20 nodes · Balanced"
+      },
+      "wide": {
+        "label": "Wide",
+        "description": "35 nodes · Strategic"
+      },
+      "deep": {
+        "label": "Deep",
+        "description": "56 nodes · Complex"
+      }
+    }
+  },
+  "onlineLobby": {
+    "badge": "Online Match",
+    "title": "Play Online",
+    "subtitle": "Create a room or join with a code",
+    "createRoom": "Create Room",
+    "joinRoom": "Join Room",
+    "joinHelp": "Enter the 4-letter code your friend shared with you.",
+    "codePlaceholder": "Ex: XKQZ",
+    "join": "Join",
+    "boardSize": "Board Size",
+    "startingTurn": "Starting Turn",
+    "shareCode": "Share this code",
+    "waitingFriend": "Waiting for your friend to join...",
+    "cancel": "Cancel",
+    "joiningRoom": "Joining room",
+    "readyLoading": "Match ready! Loading...",
+    "startingPlayer": {
+      "j1": {
+        "label": "You Start",
+        "description": "You make the first move."
+      },
+      "j2": {
+        "label": "Opponent Starts",
+        "description": "The other player moves first."
+      }
     }
   }
 }
-

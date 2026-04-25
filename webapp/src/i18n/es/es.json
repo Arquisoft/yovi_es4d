@@ -5,8 +5,7 @@
     "play": "Jugar",
     "typing": "¡Hola! Somos los desarrolladores del juego yovi_es4d: Andrea 🫡, Jorge 🧊, Sara 🐦‍🔥 y Sergio ◻️. ¡Que te diviertas!",
     "goback": "Volver"
-  }
-  ,
+  },
   "menu": {
     "rules": "Reglas",
     "logout": "Cerrar sesión",
@@ -54,8 +53,8 @@
     "register": "Registrarse",
     "registerTitle": "Registrar",
     "success": "¡Usuario registrado con éxito!"
-  }
-  ,"users": {
+  },
+  "users": {
     "dashboard": "Panel de control",
     "welcome": "¡Bienvenido, {{name}}!",
     "email": "Tu correo electrónico: {{email}}",
@@ -67,7 +66,8 @@
     "register": "Regístrate aquí",
     "haveaccount": "¿Ya tienes cuenta?",
     "login": "Inicia sesión aquí"
-  }, "registerForm": {
+  },
+  "registerForm": {
     "title": "Registro",
     "username": "Nombre de usuario",
     "email": "Correo electrónico",
@@ -87,7 +87,8 @@
     "errorPasswordContent": "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y sin espacios",
     "errorUsername": "El nombre de usuario debe tener al menos 3 caracteres",
     "emailExists": "El correo electrónico ya existe"
-  }, "gameOver": {
+  },
+  "gameOver": {
     "title": "Partida finalizada",
     "winner": "Ganador",
     "playAgain": "Jugar de nuevo",
@@ -98,7 +99,8 @@
     "completed": "completado",
     "score": "Puntuación:",
     "newGame": "Nueva partida"
-  }, "gameBoard": {
+  },
+  "gameBoard": {
     "turn": "Turno:",
     "waiting": "Esperando al oponente...",
     "yourTurn": "¡Es tu turno!",
@@ -109,7 +111,8 @@
     "won": "gana",
     "gameStart": "Iniciando partida",
     "board": "tablero"
-  }, "editUser": {
+  },
+  "editUser": {
     "title": "Editar Perfil",
     "email": "Correo electrónico",
     "username": "Nombre de usuario",
@@ -124,7 +127,8 @@
     "passwordMatch": "Las contraseñas no coinciden",
     "currentPasswordWrong": "La contraseña actual no coincide",
     "newPasswordRequired": "Debes introducir una nueva contraseña"
-  }, "historial": {
+  },
+  "historial": {
     "title": "Historial de partidas",
     "noGames": "Aún no se han jugado partidas.",
     "game": "Partida {{index}}: {{result}} contra {{opponent}} el {{date}} ",
@@ -158,28 +162,25 @@
   },
   "common": {
     "back": "Volver"
-  }, "friends": {
+  },
+  "friends": {
     "title": "Amigos",
     "loadingUser": "Cargando usuario...",
     "errorLoading": "Error cargando datos",
     "errorSend": "Error enviando solicitud",
     "errorAccept": "Error aceptando solicitud",
     "errorReject": "Error rechazando solicitud",
-
     "tabs": {
       "explore": "Explorar",
       "friends": "Mis Amigos",
       "requests": "Solicitudes"
     },
-
     "search": "Buscar usuario...",
     "add": "Añadir",
     "accept": "Aceptar",
     "reject": "Rechazar",
-
     "emptyExplore": "No hay usuarios nuevos 😅",
     "emptyRequests": "No tienes solicitudes pendientes 👍",
-
     "page": "Página "
   },
   "back": {
@@ -188,24 +189,23 @@
   "modeSelector": {
     "newGame": "Nueva partida",
     "configure": "Configura la partida",
-    "chooseHow": "Elige cómo quieres jugar",
-
+    "chooseHow": "Elige si quieres jugar en el tablero clásico o en un tetraedro 3D",
     "online": "En línea",
     "playOnline": "Jugar online",
-    "playOnlineDesc": "Juega con un amigo a distancia usando un código de sala.",
-
+    "playOnlineDesc": "La sala online mantiene el tablero clásico por ahora.",
     "localTitle": "LOCAL",
     "gameMode": "Modo de juego",
-
+    "multiplayerWarning": "Esta partida no quedará guardada en el historial.",
     "player2": "Nombre del jugador 2",
     "player2Placeholder": "Nombre del rival...",
     "player2Default": "Jugador 2",
-
+    "boardStructure": "Estructura del tablero",
+    "startingTurn": "Turno inicial",
     "difficulty": "Dificultad",
+    "timePerTurn": "Tiempo por turno",
     "boardSize": "Tamaño del tablero",
-
+    "tetraLevel": "Nivel del tetraedro",
     "play": "Jugar",
-
     "local": {
       "vsBot": {
         "label": "Contra la máquina",
@@ -216,25 +216,61 @@
         "description": "Dos personas en el mismo ordenador."
       }
     },
-
     "bot": {
       "random": {
         "label": "Aleatorio",
-        "description": "El bot elige casillas al azar.",
+        "description": "El bot elige nodos al azar.",
         "tag": "Fácil"
       },
       "intermediate": {
         "label": "Intermedio",
-        "description": "El bot evalúa el tablero y busca buenas jugadas.",
+        "description": "El bot intenta agrupar conexiones útiles.",
         "tag": "Medio"
       },
       "hard": {
         "label": "Difícil",
-        "description": "El bot juega al límite de sus capacidades.",
+        "description": "El bot prioriza rutas que acerquen a las 4 caras.",
         "tag": "Difícil"
       }
     },
-
+    "variant": {
+      "classic": {
+        "label": "Tablero clásico",
+        "description": "La versión original de Y sobre triángulo."
+      },
+      "tetra3d": {
+        "label": "Tetraedro 3D",
+        "description": "Conecta las 4 caras del tetraedro para ganar."
+      }
+    },
+    "startingPlayer": {
+      "vsBot": {
+        "j1": {
+          "label": "Empiezas tú",
+          "description": "Tú haces el primer movimiento."
+        },
+        "j2": {
+          "label": "Empieza el bot",
+          "description": "La IA juega primero."
+        }
+      },
+      "multiplayer": {
+        "j1": {
+          "label": "Empieza jugador 1",
+          "description": "El jugador 1 hace el primer movimiento."
+        },
+        "j2": {
+          "label": "Empieza jugador 2",
+          "description": "El jugador 2 hace el primer movimiento."
+        }
+      }
+    },
+    "timeLimits": {
+      "unlimited": "Sin límite",
+      "fast": "Rápido",
+      "normal": "Normal",
+      "relaxed": "Relajado"
+    },
     "board": {
       "small": {
         "label": "Pequeño",
@@ -252,7 +288,51 @@
         "label": "Extra",
         "description": "190 celdas · Expertos"
       }
+    },
+    "tetraBoard": {
+      "base": {
+        "label": "Base",
+        "description": "10 nodos · Muy rápida"
+      },
+      "normal": {
+        "label": "Normal",
+        "description": "20 nodos · Equilibrada"
+      },
+      "wide": {
+        "label": "Amplia",
+        "description": "35 nodos · Estratégica"
+      },
+      "deep": {
+        "label": "Profunda",
+        "description": "56 nodos · Compleja"
+      }
+    }
+  },
+  "onlineLobby": {
+    "badge": "Partida online",
+    "title": "Jugar online",
+    "subtitle": "Crea una sala o únete con un código",
+    "createRoom": "Crear sala",
+    "joinRoom": "Unirse a sala",
+    "joinHelp": "Introduce el código de 4 letras que te ha compartido tu amigo.",
+    "codePlaceholder": "Ej: XKQZ",
+    "join": "Unirse",
+    "boardSize": "Tamaño del tablero",
+    "startingTurn": "Turno inicial",
+    "shareCode": "Comparte este código",
+    "waitingFriend": "Esperando a que tu amigo se una...",
+    "cancel": "Cancelar",
+    "joiningRoom": "Uniéndose a la sala",
+    "readyLoading": "¡Partida lista! Cargando...",
+    "startingPlayer": {
+      "j1": {
+        "label": "Empiezas tú",
+        "description": "Tú haces el primer movimiento."
+      },
+      "j2": {
+        "label": "Empieza rival",
+        "description": "El otro jugador juega primero."
+      }
     }
   }
 }
-
