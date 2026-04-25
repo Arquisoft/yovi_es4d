@@ -144,6 +144,7 @@ services:
       - es4d-net
     environment:
       WEBAPP_PUBLIC_IP: "${WEBAPP_PUBLIC_IP:-}"
+      WEBAPP_GATEWAY_SCHEME: "${WEBAPP_GATEWAY_SCHEME:-https}"
 
   prometheus:
     image: prom/prometheus
@@ -154,7 +155,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./gateway/monitoring/prometheus:/etc/prometheus
+      - ./gateway/monitoring/prometheus/configuration:/etc/prometheus
       - prometheus_data:/prometheus
     networks:
       - es4d-net
