@@ -1,8 +1,18 @@
 # YOVI_es4d - Game Y at UniOvi
 
-[![Release — Test, Build, Publish, Deploy](https://github.com/arquisoft/yovi_es4d/actions/workflows/release-deploy.yml/badge.svg)](https://github.com/arquisoft/yovi_es4d/actions/workflows/release-deploy.yml)
+
+[![Actions Status](https://github.com/arquisoft/wichat_es4a/workflows/CI%20for%20yovi_es4d/badge.svg)](https://github.com/arquisoft/yovi_es4d/actions)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
+[![Open Issues](https://img.shields.io/github/issues/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/issues)
+[![Closed Issues](https://img.shields.io/github/issues-closed/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/issues?q=is%3Aissue+is%3Aclosed)
+[![Open Pull Requests](https://img.shields.io/github/issues-pr/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/pulls)
+[![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/pulls?q=is%3Apr+is%3Aclosed)
+
+[![CodeScene Average Code Health](https://codescene.io/projects/66324/status-badges/average-code-health)](https://codescene.io/projects/66324)
+[![CodeScene Hotspot Code Health](https://codescene.io/projects/66324/status-badges/hotspot-code-health)](https://codescene.io/projects/66324)
+[![CodeScene System Mastery](https://codescene.io/projects/66324/status-badges/system-mastery)](https://codescene.io/projects/66324)
+[![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/66324)
 
 This project is a template with some basic functionality for the ASW labs.
 ## Contributors
