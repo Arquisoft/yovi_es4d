@@ -25,10 +25,13 @@ This project is a template with some basic functionality for the ASW labs.
 
 ## Project Structure
 
-The project is divided into three main components, each in its own directory:
+The project is divided into several components, each in its own directory:
 
 - `webapp/`: A frontend application built with React, Vite, and TypeScript.
-- `users/`: A backend service for managing users, built with Node.js and Express.
+- `users/authservice/`: Authentication microservice handling login and JWT token issuance.
+- `users/userservice/`: User management microservice for creating and querying user data.
+- `gateway/`: API Gateway that routes requests to the appropriate microservice and handles JWT authorization.
+- `game/`: Game service managing game sessions and state, built with Node.js and Express.
 - `gamey/`: A Rust game engine and bot service.
 - `docs/`: Architecture documentation sources following Arc42 template
 
@@ -59,6 +62,43 @@ The `users` service is a simple REST API built with [Node.js](https://nodejs.org
 - `users-service.js`: The main file for the user service. It defines an endpoint `/createuser` to handle user creation.
 - `package.json`: Contains scripts to start the service.
 - `Dockerfile`: Defines the Docker image for the user service.
+
+### Auth Service
+
+The `users/authservice` is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that handles user authentication.
+
+- `auth-service.js`: Main file. Defines endpoints for login and token generation using JWT and bcrypt for password hashing.
+- `auth-model.js`: Mongoose model for user credentials.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the auth service.
+
+### User Service
+
+The `users/userservice` is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages user data.
+
+- `user-service.js`: Main file. Defines endpoints for user creation and retrieval.
+- `user-model.js`: Mongoose model for user profiles.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the user service.
+
+### Gateway Service
+
+The `gateway` is the single entry point for all client requests, built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/).
+
+- `gateway-service.js`: Main file. Routes incoming requests to the auth, user, and game microservices. Validates JWT tokens and enforces authorization.
+- `openapi.yaml`: OpenAPI/Swagger specification for the gateway API.
+- `monitoring/`: Prometheus and Grafana configuration for metrics.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the gateway service.
+
+### Game Service
+
+The `game` service is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages game sessions and state.
+
+- `game-service.js`: Main file. Defines endpoints for creating and managing games.
+- `gameModel.js`: Mongoose model for game data.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the game service.
 
 ### Gamey
 
@@ -177,6 +217,28 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 
 - `npm start`: Starts the user service.
 - `npm test`: Runs the tests for the service.
+
+### Auth Service (`users/authservice/package.json`)
+
+- `npm start`: Starts the auth service.
+- `npm test`: Runs the tests with coverage.
+
+### User Service (`users/userservice/package.json`)
+
+- `npm start`: Starts the user service.
+- `npm test`: Runs the tests with coverage.
+
+### Gateway (`gateway/package.json`)
+
+- `npm start`: Starts the gateway service (HTTP).
+- `npm run start:https`: Starts the gateway with HTTPS enabled.
+- `npm test`: Runs the tests with coverage.
+
+### Game Service (`game/package.json`)
+
+- `npm start`: Starts the game service.
+- `npm test`: Runs the tests.
+- `npm run test:coverage`: Runs the tests with coverage report.
 
 ### Gamey (`gamey/Cargo.toml`)
 
