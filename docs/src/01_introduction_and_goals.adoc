@@ -33,7 +33,6 @@ endif::arc42help[]
 
 * RU2. El sistema registrará al usuario no registrado.
 ** RU2.1. El sistema guardará en la BBDD al usuario nuevo y todos sus datos asociados.
-** RU2.2. El sistema enviará una confirmación de que el registro del usuario no registrado se ha realizado correctamente.
 
 ===== **Identificación de usuarios**
 
@@ -48,18 +47,20 @@ endif::arc42help[]
 
 * GP1. El sistema debe permitir a un usuario registrado iniciar una nueva partida.
 ** GP1.1. El sistema solicitará los siguientes datos para iniciar una nueva partida.
-*** GP1.1.1. Solicitará el tamaño del tablero (dato obligatorio).
-*** GP1.1.2. Solicitará la estrategia del bot (dato obligatorio).
-*** GP1.1.3. Solicitará la modalidad de juego (dato obligatorio).
+*** GP1.1.1. Solicitará si la partida va a ser por conexión o no (dato obligatorio).
+*** GP1.1.2. Solicitará el tamaño del tablero (dato obligatorio).
+*** GP1.1.3. Solicitará si será contra otra persona o contra un bot (dato obligatorio).
+*** GP1.1.3.1. Solicitará la estrategia del bot (dato obligatorio en caso de haber elegido enfrentarse a un bot).
+*** GP1.1.4. Solicitará la duración máxima de un turno (dato obligatorio).
+*** GP1.1.5. Solicitará la modalidad de juego (en 2D o en 3D) (dato obligatorio).
 
 ** GP1.2. El sistema deberá registrar y actualizar el estado de la partida durante el juego.
-*** GP1.2.1. El sistema deberá permitir al usuario seleccionar quién empieza el juego.
+*** GP1.2.1. El sistema deberá permitir al usuario seleccionar quiénempieza el juego.
 *** GP1.2.2. El usuario deberá poder realizar movimientos en la partida.
 *** GP1.2.3. El usuario deberá poder consultar el estado actual de la partida.
 *** GP1.2.4. El sistema deberá verificar la validez de los movimientos realizados por el usuario.
 *** GP1.2.5. El sistema y el jugador deberán realizar movimientos en la partida.
 *** GP1.2.6. El sistema deberá detectar el final de la partida y declarar un ganador.
-*** GP1.2.7. El sistema deberá permitir al usuario deshacer el último movimiento realizado.
 
 ===== **Gestión del historial de partidas**
 
@@ -67,7 +68,7 @@ endif::arc42help[]
 ** HP1.1. El sistema deberá mostrar un gráfico con las estadísticas de las partidas jugadas.
 ** HP1.2. El sistema deberá mostrar una lista con las partidas jugadas por el usuario.
 ** HP1.3. El sistema deberá permitir al usuario consultar los detalles de una partida específica.
-** HP1.4. El sistema deberá permitir ordenar el historial por nº de movimientos y por fecha.
+** HP1.4. El sistema deberá permitir ordenar el historial por fecha.
 
 ===== **Gestión de amigos**
 
@@ -75,8 +76,7 @@ endif::arc42help[]
 ** FA1.1. El sistema deberá permitir al usuario identificado buscar al usuario objetivo y mandar una solicitud de amistad.
 ** FA1.2. El sistema deberá enviar una solicitud de amistad al usuario objetivo.
 ** FA1.3. El sistema deberá permitir al usuario objetivo aceptar o rechazar la solicitud de amistad.
-** FA1.4. El sistema deberá notificar al usuario que envió la solicitud sobre la respuesta recibida.
-** FA1.5. El sistema deberá permitir a los usuarios ver su lista de amigos.
+** FA1.4. El sistema deberá permitir a los usuarios ver su lista de amigos.
 
 ===== **Gestión de perfil**
 
@@ -89,19 +89,8 @@ endif::arc42help[]
 ===== **Gestión de notificaciones**
 
 * FN1. El sistema debe permitir a un usuario registrado e identificado recibir notificaciones sobre eventos relevantes.
-** FN1.1. El sistema deberá enviar notificaciones push al usuario cuando tenga solicitudes de amistad pendientes.
-** FN1.2. El sistema deberá enviar notificaciones push al usuario sobre invitaciones a partidas.
-
-===== **Gestión de partidas**
-
-* GP1. El sistema debe permitir a un usuario registrado iniciar una nueva partida.
-** GP1.1. El sistema solicitará los siguientes datos para iniciar una nueva partida.
-*** GP1.1.1. Solicitará el tamaño del tablero (dato obligatorio).
-*** GP1.1.2. Solicitará la estrategia del bot (dato obligatorio).
-*** GP1.1.3. Solicitará la modalidad de juego (dato obligatorio).
-** FP1.4. El sistema deberá permitir al usuario identificado cambiar su imagen de perfil.
-
-
+** FN1.1. El sistema deberá enviar notificaciones al usuario cuando tenga solicitudes de amistad pendientes.
+** FN1.2. El sistema deberá enviar notificaciones al usuario sobre invitaciones a partidas.
 
 ifdef::arc42help[]
 [role="arc42help"]
@@ -152,6 +141,9 @@ endif::arc42help[]
 
 | **Pruebas y calidad del software**
 | Se deben implementar pruebas unitarias, de integración y end-to-end que garanticen que todas las funcionalidades, reglas del juego y estrategias funcionan correctamente, además de pruebas de carga para evaluar el rendimiento bajo uso intensivo.
+
+| **Monitorización**
+| El sistema estará monitorizado, exponiendo una URL demétricas y una URL de estado (health) para comprobar entiempo real el funcionamiento y rendimiento de laaplicación.
 |===
 
 
