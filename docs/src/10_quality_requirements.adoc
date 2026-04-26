@@ -33,7 +33,7 @@ endif::arc42help[]
 ** *Fiabilidad* <<qr03,QR03>>
 *** La aplicación se comporta de forma estable.
 ** *Funcionalidad* <<qr04,QR04>>
-*** Las reglas del juego y-game y sus variantes se aplican correctamente.
+*** Las reglas del juego y-game se aplican correctamente.
 ** *Portabilidad* <<qr05,QR05>>
 *** La aplicación funciona en los navegadores web más comunes.
 
