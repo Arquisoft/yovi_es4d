@@ -485,6 +485,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_escenario_1_registro_de_usuario">6.1. Escenario 1: Registro de usuario</a></li>
 <li><a href="#_escenario_2_inicio_de_sesión">6.2. Escenario 2: Inicio de sesión</a></li>
 <li><a href="#_escenario_3_juego_con_el_bot">6.3. Escenario 3: Juego con el bot</a></li>
+<li><a href="#_escenario_4_gestión_del_historial_de_partidas">6.4. Escenario 4: Gestión del historial de partidas</a></li>
+<li><a href="#_escenario_5_gestión_de_amigos">6.5. Escenario 5: Gestión de amigos</a></li>
+<li><a href="#_escenario_6_gestión_de_notificaciones">6.6. Escenario 6: Gestión de notificaciones</a></li>
 </ul>
 </li>
 <li><a href="#section-deployment-view">7. 7. Vista de Despliegue</a>
@@ -518,7 +521,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_deudas_técnicas">11.2. Deudas técnicas</a></li>
 </ul>
 </li>
-<li><a href="#section-glossary">12. Glossary</a></li>
+<li><a href="#section-testing-report">12. Informe de Pruebas</a>
+<ul class="sectlevel2">
+<li><a href="#_test_unitarios">12.1. Test unitarios</a></li>
+<li><a href="#_test_e2e">12.2. Test E2E</a></li>
+<li><a href="#_test_de_carga">12.3. Test de carga</a></li>
+</ul>
+</li>
+<li><a href="#section-glossary">13. Glossary</a></li>
 </ul>
 </div>
 </div>
@@ -627,7 +637,10 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <p>RU1.1.1. Solicitará un nombre de usuario (dato obligatorio).</p>
 </li>
 <li>
-<p>RU1.1.2. Solicitará una contraseña (dato obligatorio).</p>
+<p>RU1.1.2. Solicitará un correo electrónico (dato obligatorio).</p>
+</li>
+<li>
+<p>RU1.1.3. Solicitará una contraseña (dato obligatorio).</p>
 </li>
 </ul>
 </div>
@@ -641,9 +654,6 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <ul>
 <li>
 <p>RU2.1. El sistema guardará en la BBDD al usuario nuevo y todos sus datos asociados.</p>
-</li>
-<li>
-<p>RU2.2. El sistema enviará una confirmación de que el registro del usuario no registrado se ha realizado correctamente.</p>
 </li>
 </ul>
 </div>
@@ -664,7 +674,7 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <div class="ulist">
 <ul>
 <li>
-<p>IU1.1.1. Solicitará un nombre de usuario (dato obligatorio).</p>
+<p>IU1.1.1. Solicitará un correo electrónico (dato obligatorio).</p>
 </li>
 <li>
 <p>IU1.1.2. Solicitará una contraseña (dato obligatorio).</p>
@@ -694,10 +704,22 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <div class="ulist">
 <ul>
 <li>
-<p>GP1.1.1. Solicitará el tamaño del tablero (dato obligatorio).</p>
+<p>GP1.1.1. Solicitará si la partida va a ser por conexión o no (dato obligatorio).</p>
 </li>
 <li>
-<p>GP1.1.2. Solicitará la estrategia del bot (dato obligatorio).</p>
+<p>GP1.1.2. Solicitará el tamaño del tablero (dato obligatorio).</p>
+</li>
+<li>
+<p>GP1.1.3. Solicitará si será contra otra persona o contra un bot (dato obligatorio).</p>
+</li>
+<li>
+<p>GP1.1.3.1. Solicitará la estrategia del bot (dato obligatorio en caso de haber elegido enfrentarse a un bot).</p>
+</li>
+<li>
+<p>GP1.1.4. Solicitará la duración máxima de un turno (dato obligatorio).</p>
+</li>
+<li>
+<p>GP1.1.5. Solicitará la modalidad de juego (en 2D o en 3D) (dato obligatorio).</p>
 </li>
 </ul>
 </div>
@@ -707,22 +729,22 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <div class="ulist">
 <ul>
 <li>
-<p>GP1.2.1. El usuario deberá poder realizar movimientos en la partida.</p>
+<p>GP1.2.1. El sistema deberá permitir al usuario seleccionar quiénempieza el juego.</p>
 </li>
 <li>
-<p>GP1.2.2. El usuario deberá poder consultar el estado actual de la partida.</p>
+<p>GP1.2.2. El usuario deberá poder realizar movimientos en la partida.</p>
 </li>
 <li>
-<p>GP1.2.3. El sistema deberá verificar la validez de los movimientos realizados por el usuario.</p>
+<p>GP1.2.3. El usuario deberá poder consultar el estado actual de la partida.</p>
 </li>
 <li>
-<p>GP1.2.4. El sistema y el jugador deberán realizar movimientos en la partida.</p>
+<p>GP1.2.4. El sistema deberá verificar la validez de los movimientos realizados por el usuario.</p>
 </li>
 <li>
-<p>GP1.2.5. El sistema deberá detectar el final de la partida y declarar un ganador.</p>
+<p>GP1.2.5. El sistema y el jugador deberán realizar movimientos en la partida.</p>
 </li>
 <li>
-<p>GP1.2.6. El sistema deberá permitir al usuario deshacer el último movimiento realizado.</p>
+<p>GP1.2.6. El sistema deberá detectar el final de la partida y declarar un ganador.</p>
 </li>
 </ul>
 </div>
@@ -742,10 +764,88 @@ For documentation of your own system you use better the <em>plain</em> version.<
 <div class="ulist">
 <ul>
 <li>
-<p>HP1.1. El sistema deberá mostrar una lista con las partidas jugadas por el usuario.</p>
+<p>HP1.1. El sistema deberá mostrar un gráfico con las estadísticas de las partidas jugadas.</p>
 </li>
 <li>
-<p>HP1.2. El sistema deberá permitir al usuario consultar los detalles de una partida específica.</p>
+<p>HP1.2. El sistema deberá mostrar una lista con las partidas jugadas por el usuario.</p>
+</li>
+<li>
+<p>HP1.3. El sistema deberá permitir al usuario consultar los detalles de una partida específica.</p>
+</li>
+<li>
+<p>HP1.4. El sistema deberá permitir ordenar el historial por fecha.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_gestión_de_amigos"><strong>Gestión de amigos</strong></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>FA1. El sistema debe permitir a un usuario registrado e identificado agregar a otro usuario como amigo.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>FA1.1. El sistema deberá permitir al usuario identificado buscar al usuario objetivo y mandar una solicitud de amistad.</p>
+</li>
+<li>
+<p>FA1.2. El sistema deberá enviar una solicitud de amistad al usuario objetivo.</p>
+</li>
+<li>
+<p>FA1.3. El sistema deberá permitir al usuario objetivo aceptar o rechazar la solicitud de amistad.</p>
+</li>
+<li>
+<p>FA1.4. El sistema deberá permitir a los usuarios ver su lista de amigos.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_gestión_de_perfil"><strong>Gestión de perfil</strong></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>FP1. El sistema debe permitir a un usuario registrado e identificado modificar su perfil.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>FP1.1. El sistema deberá permitir al usuario identificado actualizar su información personal.</p>
+</li>
+<li>
+<p>FP1.2. El sistema deberá permitir al usuario identificado cambiar su contraseña.</p>
+</li>
+<li>
+<p>FP1.3. El sistema deberá permitir al usuario identificado cambiar su nombre de usuario.</p>
+</li>
+<li>
+<p>FP1.4. El sistema deberá permitir al usuario identificado cambiar su imagen de perfil.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_gestión_de_notificaciones"><strong>Gestión de notificaciones</strong></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>FN1. El sistema debe permitir a un usuario registrado e identificado recibir notificaciones sobre eventos relevantes.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>FN1.1. El sistema deberá enviar notificaciones al usuario cuando tenga solicitudes de amistad pendientes.</p>
+</li>
+<li>
+<p>FN1.2. El sistema deberá enviar notificaciones al usuario sobre invitaciones a partidas.</p>
 </li>
 </ul>
 </div>
@@ -823,6 +923,10 @@ con la posible redundancia respecto a los documentos de requisitos.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Pruebas y calidad del software</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Se deben implementar pruebas unitarias, de integración y end-to-end que garanticen que todas las funcionalidades, reglas del juego y estrategias funcionan correctamente, además de pruebas de carga para evaluar el rendimiento bajo uso intensivo.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Monitorización</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">El sistema estará monitorizado, exponiendo una URL demétricas y una URL de estado (health) para comprobar entiempo real el funcionamiento y rendimiento de laaplicación.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1134,7 +1238,7 @@ conventions (e.g. programming or versioning guidelines, documentation or naming 
 <td class="tableblock halign-left valign-top"><p class="tableblock">El sistema debe almacenar el histórico de participación de cada usuario, incluyendo:
 - Número de partidas jugadas.
 - Partidas ganadas y perdidas.
-- Estadísticas asociadas (por ejemplo, porcentaje de victorias, movimientos promedio, etc.).</p></td>
+- Estadísticas asociadas (por ejemplo, porcentaje de victorias, etc.).</p></td>
 </tr>
 </tbody>
 </table>
@@ -1879,7 +1983,7 @@ construcción importante.</p>
 <h3 id="_escenario_1_registro_de_usuario">6.1. Escenario 1: Registro de usuario</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Registro.png" alt="Diagrama de secuencia" width="514" height="348">
+<img src="./images/06_Registro_Usuario.png" alt="PlantUML del escenario de registro de usuario de yovi">
 </div>
 </div>
 </div>
@@ -1887,7 +1991,7 @@ construcción importante.</p>
 <h3 id="_escenario_2_inicio_de_sesión">6.2. Escenario 2: Inicio de sesión</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Inicio%20de%20sesión.png" alt="Diagrama de secuencia" width="596" height="348">
+<img src="./images/06_Inicio_Sesión_usuario.png" alt="PlantUML del escenario de inicio de sesión de yovi">
 </div>
 </div>
 </div>
@@ -1895,7 +1999,31 @@ construcción importante.</p>
 <h3 id="_escenario_3_juego_con_el_bot">6.3. Escenario 3: Juego con el bot</h3>
 <div class="imageblock">
 <div class="content">
-<img src="./images/Diagrama%20de%20secuencia:Juego%20bot.png" alt="Diagrama de secuencia" width="849" height="699">
+<img src="./images/06_Juego_bot.png" alt="PlantUML del escenario de juego con el bot de yovi">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_escenario_4_gestión_del_historial_de_partidas">6.4. Escenario 4: Gestión del historial de partidas</h3>
+<div class="imageblock">
+<div class="content">
+<img src="./images/06_Historial.png" alt="PlantUML del escenario de gestión del historial de partidas de yovi">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_escenario_5_gestión_de_amigos">6.5. Escenario 5: Gestión de amigos</h3>
+<div class="imageblock">
+<div class="content">
+<img src="./images/06_Solicitud_Amigo.png" alt="PlantUML del escenario de gestión de amigos de yovi">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_escenario_6_gestión_de_notificaciones">6.6. Escenario 6: Gestión de notificaciones</h3>
+<div class="imageblock">
+<div class="content">
+<img src="./images/06_Notificaciones.png" alt="PlantUML del escenario de gestión de notificaciones de yovi">
 </div>
 </div>
 <div style="page-break-after: always;"></div>
@@ -2160,19 +2288,23 @@ Por lo tanto, son una contribución importante para lograr las cualidades intern
 <h3 id="_usabilidad_2">8.1. Usabilidad</h3>
 <div class="paragraph">
 <p>Usabilidad es la facilidad con la que un usuario puede interactuar con un sitio o aplicación, logrando sus objetivos de manera eficiente, efectiva y satisfactoria.
-La aplicación web será intuitiva, el tablero mostrará en todo momento el estado del juego, se podrán consultar las reglas del juego durante una partida. La aplicación será también accesible para la mayor cantidad de usuarios posible.</p>
+La aplicación web prioriza una interacción clara e intuitiva: navegación sencillaentre pantallas, feedback inmediato ante errores/acciones (p. ej., mensajes devalidación) y visualización constante del estado de la partida. El usuario puede acceder a funcionalidades como jugar, consultar historial, gestionar amigos yeditar su perfil con un flujo coherente</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_autenticación">8.2. Autenticación</h3>
 <div class="paragraph">
-<p>El sistema ha de poder validad la identidad de los usuarios antes de permitir el acceso a funcionalidades de la aplicación. Los datos personales han de estar protegidos de cualquier acceso no autorizado. Lo0s datos personales incluyen las credenciales de los usarios; nombre, correo asociado y contraseña encriptada.</p>
+<p>El sistema valida la identidad del usuario antes de permitir el acceso a las funcionalidades protegidas (p. ej. historial, amigos, perfil y gestión de partidasvía API). La autenticación se realiza mediante token JWT almacenado en cookie (sesión) y las contraseñas se almacenan con hash seguro usando bcrypt (no seguardan en claro). Los endpoints del gateway que requieren sesión verifican el token antes de reenviar la petición a los microservicios correspondientes.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_persistencia">8.3. Persistencia</h3>
 <div class="paragraph">
-<p>El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema. En la base se guardarán los datos de las credenciales de los usuarios.</p>
+<p>La información se persiste en MongoDB y solo es accesible desde los servicios backend. Se almacenan, como mínimo:
+Usuarios (perfil, credenciales hasheadas, avatar, fechas).
+Partidas (estado, movimientos, ganador, fechas, parámetros comomodo/tamaño/variante).
+Amistades y solicitudes (relaciones y estado de la solicitud).
+Notificaciones (tipo, usuario destino, relacionado, estado de lectura). El modelo mostrado puede considerarse un resumen; algunos servicios pueden añadir campos adicionales según las necesidades del juego.</p>
 </div>
 <div class="paragraph">
 <p>La base de datos es:</p>
@@ -2186,14 +2318,15 @@ La aplicación web será intuitiva, el tablero mostrará en todo momento el esta
 <div class="sect2">
 <h3 id="_internacionalizacion">8.4. Internacionalizacion</h3>
 <div class="paragraph">
-<p>La aplicación será implementada en inglés y español. Se seguirán las recomendaciones i18n, para hacerla entendible a un mayor rango de usuarios.</p>
+<p>La interfaz se ofrece en español e inglés usando un sistema i18n centralizadoen el frontend, evitando textos “hardcodeados” y permitiendo ampliar idiomas en el futuro sin cambios estructurales.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_microservicio">8.5. Microservicio</h3>
 <div class="paragraph">
 <p>Una aplicación pequeña e independiente que hace una sola función específica y se comunica con otros servicios, normalmente por APIs.
-Se puede desplegar, escalar y mantener sin depender del resto del sistema.</p>
+Se puede desplegar, escalar y mantener sin depender del resto del sistema.
+La solución se organiza en servicios pequeños y especializados (p. ej. gateway, usuarios/autenticación, partidas, amigos/notificaciones y motor de juego). La comunicación entre servicios se realiza mediante HTTP/JSON, permitiendo evolucionar y desplegar cada componente de forma independiente. Además, elsistema expone un endpoint público de juego para bots (p. ej. /play) independiente del flujo autenticado de la aplicación.</p>
 </div>
 <div style="page-break-after: always;"></div>
 <div id="section-design-decisions" class="sidebarblock arc42help">
@@ -2268,8 +2401,8 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Control de versiones</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Git</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hemos escogido Git para el control de versiones dado que es ampliamente utilizado en la industria, además de que ha sido empleado por todo el equipo lo que nos permite trabajar de manera cómoda y más eficiente.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Git + Github</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hemos escogido Git para el control de versiones dado que es ampliamente utilizado en la industria, además de que ha sido empleado por todo el equipo lo que nos permite trabajar de manera cómoda y más eficiente. Colaboración y trazabilidad delcódigo; automatización dechecks/despliegue mediante pipelines.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Base de datos</p></td>
@@ -2278,7 +2411,7 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Backend</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Node.js</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node.js + Express</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Alto rendimiento en I/O, ecosistema amplio y buena integración con frontend en JavaScript.</p></td>
 </tr>
 <tr>
@@ -2310,6 +2443,11 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Frameword de Estilo</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Tailwind</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Hemos decidido utilizar Tailwind porque presenta un estilo moderno que es muy sencillo de implementar y utilizar en las plantillas del frontend.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Autenticación</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JWT en cookie+ brcypt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sesiones seguras y protección decredenciales (hash, no almacenamiento enclaro).</p></td>
 </tr>
 </tbody>
 </table>
@@ -2382,7 +2520,7 @@ Allí encontrarás enlaces y ejemplos sobre ADR.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Las reglas del juego y-game y sus variantes se aplican correctamente.</p>
+<p>Las reglas del juego y-game se aplican correctamente.</p>
 </li>
 </ul>
 </div>
@@ -2548,8 +2686,8 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <td class="tableblock halign-left valign-top"><p class="tableblock">No tenemos experiencia con Rust, lo que puede dificultar el desarrollo del bot, como la del tablero de juego y los moviemientos.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Inexperiencia con React</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No tenemos experiencia con React, lo que puede dificultar el desarrollo de la aplicación principal para mostrar el juego yel inicio de sesión.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Inexperiencia con Gatling y test de carga</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No tenemos experiencia con Gatling ni con la realización de tests de carga, lo que puede dificultar la evaluación del rendimiento del sistema bajo carga.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Poco conocimiento con Node.js</p></td>
@@ -2571,6 +2709,14 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <td class="tableblock halign-left valign-top"><p class="tableblock">Factor del autobús</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Problemas de despliegue</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Los problemas de despliegue podrían afectar a la disponibilidad de la aplicación principal para mostrar el juego, lo que podría afectar al funcionamiento de la aplicación.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Inexperiencia con test de carga</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No tenemos experiencia con la realización de tests de carga, lo que podría alargarnos el tiempo necesario para evaluar el rendimiento del sistema bajo carga.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -2591,6 +2737,14 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Authuser y userService comparten base de datos</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Actualmente, tanto authuser como userService comparten la misma base de datos, lo que podría generar problemas de seguridad y escalabilidad en el futuro.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cambios manuales para la máquina virtual y el despliegue local</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Los URL de la máquina virtual y el despliegue local se tienen que cambiar manualmente, por lo que podría afectar la eficiencia del proceso de despliegue.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Test flaky</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Con la existencia de test flaky, es decir, test que a veces pasan y a veces fallan, podría afectar a la confianza en los test y a la eficiencia del proceso de desarrollo.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2622,7 +2776,72 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 </div>
 </div>
 <div class="sect1">
-<h2 id="section-glossary">12. Glossary</h2>
+<h2 id="section-testing-report">12. Informe de Pruebas</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_test_unitarios">12.1. Test unitarios</h3>
+<div class="paragraph">
+<p>Cada componente tiene sus correspondientes pruebas unitarias que verfican que funciona correctamente, proporcionando seguridad, fiabilidad y consistencia al proyecto realizado. Se han realizado pruebas unitarias tanto de front como de back, utilizando las herramientas Jest y JUnit respectivamente. Estas pruebas se ejecutan automáticamente en cada commit mediante GitHub Actions, lo que garantiza que cualquier cambio en el código no rompa funcionalidades existentes.</p>
+</div>
+<div class="paragraph">
+<p><strong>Cobertura de código</strong></p>
+</div>
+<div class="paragraph">
+<p>Para la cobertura de código utilizamos la herramienta SonarQube. Esta herramienta ofrece una métrica que indica qué porcentaje del código fuente ha sido ejecutado por las pruebas automatizadas (unitarias, de integración, etc.). Es un indicador clave de la calidad del software y de cuán bien está siendo probado.
+Para este proyecto nos piden un 80% de cobertura de código y menos de un 3% de duplicación. En la siguiente imagen vemos como cumplimos con estos dos parámetros:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/sonarqube.png" alt="Imagen SonarQube" width="600">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_test_e2e">12.2. Test E2E</h3>
+<div class="paragraph">
+<p>Los tests end-to-end (E2E) se utilizan para verificar que toda la aplicación funciona correctamente desde la perspectiva del usuario final. Simulan escenarios reales de uso, interactuando con la interfaz tal como lo haría un usuario, para asegurar que todos los componentes del sistema (frontend, backend, base de datos, etc.) funcionan como se espera. Estos tests son cruciales para detectar problemas de integración y garantizar que la experiencia del usuario sea fluida y sin errores. Para llevar a cabo estas pruebas hemos utilizado la herramienta Cypress, que nos ha permitido automatizar escenarios de prueba complejos y validar el comportamiento de la aplicación en diferentes situaciones.</p>
+</div>
+<div class="paragraph">
+<p>En nuestro proyecto hemos incorporado los siguientes casos de prueba E2E:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Cambio de contraseña: </strong>
+Verifica el correcto funcionamiento del formulario de cambio de contraseña, incluyendo los casos de éxito y los principales errores de validación, como contraseñas no coincidentes, contraseñas que no cumplen con los requisitos de seguridad y la gestión de errores del servidor.</p>
+</li>
+<li>
+<p><strong>Simulación de un juego: </strong>
+Verifica que el usuario pueda configurar e iniciar una partida con distintas opciones, como el número de jugadores (humano vs humano o humano vs bot), el nivel de dificultad y el tipo de juego. Además, se comprueba que la partida se desarrolle correctamente, incluyendo la interacción con la interfaz, la actualización del estado del juego y la gestión de eventos durante la partida.</p>
+</li>
+<li>
+<p><strong>Inicio de sesión: </strong>
+Comprueba que el sistema gestione correctamente intentos de inicio de sesión con credenciales inválidas, incluyendo la visualización de mensajes de error y la limitación de intentos fallidos por motivos de seguridad.</p>
+</li>
+<li>
+<p><strong>Registro de usuario: </strong>
+Verifica que un nuevo usuario pueda completar el formulario de registro correctamente y que el sistema gestione adecuadamente errores comunes como contraseñas inválidas, contraseñas no coincidentes y nombres de usuario ya registrados.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_test_de_carga">12.3. Test de carga</h3>
+<div class="paragraph">
+<p>Los tests de carga miden el rendimiento antes de la carga normal o de carga máxima. Para llevar a cabo estas pruebas hemos utilizado la herramienta Gatling. Para ello hemos probado diferentes escenarios de carga, como el inicio de sesión simultáneo de múltiples usuarios, la creación de partidas y la simulación de partidas en curso. Estas pruebas nos han permitido identificar posibles cuellos de botella en el rendimiento y optimizar la aplicación para manejar un mayor número de usuarios concurrentes sin degradar la experiencia del usuario. Tambien se ha probado con carga de usuario baja (25 usuarios) y carga de usuario alta (250 usuarios) para comprobar el rendimiento del sistema en diferentes condiciones.</p>
+</div>
+<div class="paragraph">
+<p>Toda la información sobre las pruebas realizadas en nuestro trabajo aparece en el este enlace:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/Arquisoft/yovi_es4d/wiki/Informe-de-pruebas-de-carga-(Gatling)-%E2%80%94-24-04-2026">Informe de pruebas de carga (Wiki)</a></p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="section-glossary">13. Glossary</h2>
 <div class="sectionbody">
 <div class="sidebarblock arc42help">
 <div class="content">
@@ -2656,7 +2875,7 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 </div>
 <div class="paragraph">
 <div class="title">Further Information</div>
-<p>See <a href="https://docs.arc42.org/section-12/">Glossary</a> in the arc42 documentation.</p>
+<p>See <a href="https://docs.arc42.org/section-13/">Glossary</a> in the arc42 documentation.</p>
 </div>
 </div>
 </div>
@@ -2667,18 +2886,50 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">Term</th>
-<th class="tableblock halign-left valign-top">Definition</th>
+<th class="tableblock halign-left valign-top">Término</th>
+<th class="tableblock halign-left valign-top">Definición</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Term-1&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;definition-1&gt;</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>React</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Librería de JavaScript para construir interfaces de usuario interactivas.</em></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;Term-2&gt;</em></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>&lt;definition-2&gt;</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Gateway</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Microservicio que actúa como punto de entrada y enruta las solicitudes a otros servicios.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Rust</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Lenguaje de programación utilizado para el motor central del juego.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Docker</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Plataforma para crear, desplegar y ejecutar aplicaciones en contenedores.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Azure</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Plataforma en la nube utilizada para desplegar y escalar los servicios.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Internacionalización (i18n)</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Adaptación de la aplicación para soportar múltiples idiomas y culturas.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Microservicio</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Aplicación pequeña e independiente que realiza una función específica y se comunica con otros servicios mediante APIs.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>MongoDB</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Base de datos NoSQL utilizada para almacenar datos de usuarios y partidas.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>JWT (JSON Web Token)</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Estándar para la transmisión segura de información como tokens de autenticación.</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Prometheus y Grafana</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Herramientas para monitoreo y visualización de métricas.</em></p></td>
 </tr>
 </tbody>
 </table>
@@ -2688,7 +2939,7 @@ Ejemplo: Se implementa funcionalidad adicional o cambian los requisitos de un at
 <div id="footer">
 <div id="footer-text">
 Version 8.2 EN<br>
-Last updated 2026-03-14 18:45:43 +0100
+Last updated 2026-04-26 15:06:45 +0200
 </div>
 </div>
 </body>
