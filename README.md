@@ -32,6 +32,7 @@ The project is divided into several components, each in its own directory:
 - `users/userservice/`: User management microservice for creating and querying user data.
 - `gateway/`: API Gateway that routes requests to the appropriate microservice and handles JWT authorization.
 - `game/`: Game service managing game sessions and state, built with Node.js and Express.
+- `friends/`: Friends service managing friend requests and notifications.
 - `gamey/`: A Rust game engine and bot service.
 - `docs/`: Architecture documentation sources following Arc42 template
 
@@ -99,6 +100,17 @@ The `game` service is a REST API built with [Node.js](https://nodejs.org/) and [
 - `gameModel.js`: Mongoose model for game data.
 - `package.json`: Contains scripts to start and test the service.
 - `Dockerfile`: Defines the Docker image for the game service.
+
+### Friends Service
+
+The `friends` service is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages friend relationships and notifications between users.
+
+- `friend-service.js`: Main file. Defines endpoints for sending, accepting, and rejecting friend requests.
+- `models/friendRequest.js`: Mongoose model for friend requests.
+- `models/notification.js`: Mongoose model for user notifications.
+- `middlewares/auth.js`: JWT authentication middleware.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the friends service.
 
 ### Gamey
 
@@ -239,6 +251,11 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 - `npm start`: Starts the game service.
 - `npm test`: Runs the tests.
 - `npm run test:coverage`: Runs the tests with coverage report.
+
+### Friends Service (`friends/package.json`)
+
+- `npm start`: Starts the friends service.
+- `npm test`: Runs the tests with coverage.
 
 ### Gamey (`gamey/Cargo.toml`)
 
