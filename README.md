@@ -137,6 +137,7 @@ This command will build the Docker images for both the `webapp` and `users` serv
 2.**Access the application (default compose):**
 - Web application: `https://localhost` (self-signed cert)
 - Gateway API: `https://localhost:8000`
+- API Documentation (Swagger UI): `https://localhost:8000/api-doc/`
 
 3. **Local ports + HTTP gateway (recommended for load tests):**
 
@@ -146,6 +147,7 @@ docker compose --env-file .env.local up --build
 
 - Web application: `https://localhost:8443`
 - Gateway API: `http://localhost:8000`
+- API Documentation (Swagger UI): `http://localhost:8000/api-doc/`
 
 Load testing (Gatling): see `webapp/load-tests/README.md`.
 Monitoring (Prometheus + Grafana): see `gateway/monitoring/README.md`.
