@@ -63,12 +63,15 @@ Users can create a new account with a username, email, and password, or log in t
 
 ### Game Setup & Gameplay
 
-Before starting a game, players choose the board size, game mode (2D or 3D), victory condition, turn time limit, and opponent (human or bot). The board is then rendered in real time with move validation powered by the Rust engine.
+Before starting a game, players choose the board size, game mode (2D or 3D), victory condition, turn time limit, and opponent (human or bot). The board is then rendered in real time with move validation powered by the Rust engine. The 3D tetrahedron mode offers a unique spatial variant of the game.
 
 <p align="center">
   <img src="images/captura_configurar_tablero.png" width="48%" alt="Configure board"/>
   &nbsp;
   <img src="images/captura_jugando_tablero.png" width="48%" alt="Playing"/>
+</p>
+<p align="center">
+  <img src="images/captura_game_tetraedro.png" width="48%" alt="3D tetrahedron mode"/>
 </p>
 
 ### Friends & Game History
