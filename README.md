@@ -56,14 +56,6 @@ The `webapp` is a single-page application (SPA) created with [Vite](https://vite
 - `vite.config.ts`: Configuration file for Vite.
 - `Dockerfile`: Defines the Docker image for the webapp.
 
-### Users Service
-
-The `users` service is a simple REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/).
-
-- `users-service.js`: The main file for the user service. It defines an endpoint `/createuser` to handle user creation.
-- `package.json`: Contains scripts to start the service.
-- `Dockerfile`: Defines the Docker image for the user service.
-
 ### Auth Service
 
 The `users/authservice` is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that handles user authentication.
@@ -224,11 +216,6 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 - `npm test`: Runs the unit tests.
 - `npm run test:e2e`: Runs the end-to-end tests.
 - `npm run start:all`: A convenience script to start both the `webapp` and the `users` service concurrently.
-
-### Users (`users/package.json`)
-
-- `npm start`: Starts the user service.
-- `npm test`: Runs the tests for the service.
 
 ### Auth Service (`users/authservice/package.json`)
 
