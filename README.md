@@ -156,6 +156,17 @@ Monitoring (Prometheus + Grafana): see `gateway/monitoring/README.md`.
 
 To run the project locally without Docker, you will need to run each component in a separate terminal.
 
+#### Quick start (Windows only)
+
+On Windows, you can launch all microservices at once using the provided batch script from the root directory:
+
+```bat
+launch_services.bat
+```
+
+This opens a separate terminal window for each service (webapp, gateway, game, gamey, authservice, userservice, and friends) and installs dependencies automatically.
+
+
 #### Prerequisites
 
 * [Node.js](https://nodejs.org/) and npm installed.
