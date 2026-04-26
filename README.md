@@ -49,6 +49,38 @@ Each Node.js component has its own `package.json` file with the necessary script
 - **Notifications**: Users receive in-app notifications for pending friend requests and game invitations.
 - **GameY Engine**: A Rust-based game engine that validates moves, enforces game rules, and provides bot strategies for different board configurations.
 
+## Screenshots
+
+### Login & Register
+
+Users can create a new account with a username, email, and password, or log in to an existing one.
+
+<p align="center">
+  <img src="images/captura_login.png" width="48%" alt="Login"/>
+  &nbsp;
+  <img src="images/captura_register.png" width="48%" alt="Register"/>
+</p>
+
+### Game Setup & Gameplay
+
+Before starting a game, players choose the board size, game mode (2D or 3D), victory condition, turn time limit, and opponent (human or bot). The board is then rendered in real time with move validation powered by the Rust engine.
+
+<p align="center">
+  <img src="images/captura_configurar_tablero.png" width="48%" alt="Configure board"/>
+  &nbsp;
+  <img src="images/captura_jugando_tablero.png" width="48%" alt="Playing"/>
+</p>
+
+### Friends & Game History
+
+Players can send and accept friend requests to build their network. All past games are recorded and accessible from the history page, with statistics and per-game details.
+
+<p align="center">
+  <img src="images/captura_conectar_amigos.png" width="48%" alt="Connect friends"/>
+  &nbsp;
+  <img src="images/captura_historial_partidas.png" width="48%" alt="Game history"/>
+</p>
+
 ## Components
 
 ### Webapp
