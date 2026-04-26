@@ -266,7 +266,7 @@ jobs:
               - name: Prometheus
                 type: prometheus
                 access: proxy
-                url: http://prometheus:9090
+                url: http://prometheus:9090/prometheus
                 isDefault: true
                 editable: true
             EOF
@@ -410,6 +410,9 @@ jobs:
                 depends_on:
                   gateway:
                     condition: service_started
+                command:
+                  - "--config.file=/etc/prometheus/prometheus.yml"
+                  - "--web.route-prefix=/prometheus"
                 ports:
                   - "9090:9090"
                 volumes:
@@ -431,6 +434,8 @@ jobs:
                   - ./gateway/monitoring/grafana/provisioning:/etc/grafana/provisioning
                 environment:
                   GF_SERVER_HTTP_PORT: 9091
+                  GF_SERVER_ROOT_URL: "https://\${WEBAPP_PUBLIC_IP}/grafana/"
+                  GF_SERVER_SERVE_FROM_SUB_PATH: "true"
                   GF_AUTH_DISABLE_LOGIN_FORM: true
                   GF_AUTH_ANONYMOUS_ENABLED: true
                   GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
@@ -450,6 +455,7 @@ jobs:
             cat > .env <<EOF
             TOKEN_SECRET_KEY=${{ secrets.TOKEN_SECRET_KEY }}
             WEBAPP_PUBLIC_IP=${{ secrets.WEBAPP_PUBLIC_IP }}
+            WEBAPP_EXTERNAL_URL=https://${{ secrets.WEBAPP_PUBLIC_IP }}
             EOF
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin

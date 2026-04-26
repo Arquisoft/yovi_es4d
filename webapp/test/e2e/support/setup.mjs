@@ -7,7 +7,29 @@ class CustomWorld {
   browser = null
   context = null
   page = null
-  BASE_URL = process.env.BASE_URL || 'http://localhost:5173'
+  BASE_URL = (() => {
+    const raw = process.env.BASE_URL?.trim()
+    const fallback = 'http://localhost:5173'
+    const value = raw || fallback
+
+    // Vite dev server runs over HTTP in this repo. If someone has BASE_URL pinned to
+    // https://localhost:5173, Playwright will fail with ERR_SSL_PROTOCOL_ERROR.
+    try {
+      const parsed = new URL(value)
+      if (
+        parsed.protocol === 'https:' &&
+        parsed.port === '5173' &&
+        (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
+      ) {
+        parsed.protocol = 'http:'
+        return parsed.toString().replace(/\/$/, '')
+      }
+    } catch {
+      // Ignore and use the raw value.
+    }
+
+    return value.replace(/\/$/, '')
+  })()
 }
 
 setWorldConstructor(CustomWorld)

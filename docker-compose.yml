@@ -152,6 +152,9 @@ services:
     depends_on:
       gateway:
         condition: service_started
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.route-prefix=/prometheus"
     ports:
       - "9090:9090"
     volumes:
@@ -173,6 +176,8 @@ services:
       - ./gateway/monitoring/grafana/provisioning:/etc/grafana/provisioning
     environment:
       GF_SERVER_HTTP_PORT: 9091
+      GF_SERVER_ROOT_URL: "${WEBAPP_EXTERNAL_URL:-https://localhost}/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_AUTH_DISABLE_LOGIN_FORM: true
       GF_AUTH_ANONYMOUS_ENABLED: true
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
