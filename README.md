@@ -14,7 +14,7 @@
 [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/66324)
 
 
-This project is a template with some basic functionality for the ASW labs.
+YOVI is a web application for playing the Game Y, developed as part of the ASW course at the University of Oviedo.
 ## Contributors
 | Name | GitHub Profile |
 |--------------|--------|
@@ -36,13 +36,18 @@ The project is divided into several components, each in its own directory:
 - `gamey/`: A Rust game engine and bot service.
 - `docs/`: Architecture documentation sources following Arc42 template
 
-Each component has its own `package.json` file with the necessary scripts to run and test the application.
+Each Node.js component has its own `package.json` file with the necessary scripts to run and test the application. The `gamey` component uses Cargo instead.
 
 ## Basic Features
 
-- **User Registration**: The web application provides a simple form to register new users.
-- **User Service**: The user service receives the registration request, simulates some processing, and returns a welcome message.
-- **GameY**: A basic Game engine which only chooses a random piece.
+- **User Registration**: Users can register with a username, email, and password.
+- **User Authentication**: Registered users can log in and out securely using JWT-based authentication.
+- **Game Management**: Users can start a new game choosing the board size, game mode (2D or 3D), victory condition (connection or not), turn time limit, and whether to play against another person or a bot (with selectable bot strategy).
+- **Game History**: Users can consult their game history, view per-game details, see statistics charts, and sort games by date.
+- **Friend System**: Users can send, accept, and reject friend requests and view their friends list.
+- **Profile Management**: Users can update their personal information, username, password, and profile picture.
+- **Notifications**: Users receive in-app notifications for pending friend requests and game invitations.
+- **GameY Engine**: A Rust-based game engine that validates moves, enforces game rules, and provides bot strategies for different board configurations.
 
 ## Components
 
@@ -50,8 +55,11 @@ Each component has its own `package.json` file with the necessary scripts to run
 
 The `webapp` is a single-page application (SPA) created with [Vite](https://vitejs.dev/) and [React](https://reactjs.org/).
 
-- `src/App.tsx`: The main component of the application.
-- `src/RegisterForm.tsx`: The component that renders the user registration form.
+- `src/App.tsx`: Root component and routing setup.
+- `src/pages/`: Page-level components (login, register, game history, friends, profile).
+- `src/components/`: Reusable UI components (game board, sidebar, notifications, etc.).
+- `src/services/`: API client functions for communicating with the gateway.
+- `src/context/`: React context providers for global state.
 - `package.json`: Contains scripts to run, build, and test the webapp.
 - `vite.config.ts`: Configuration file for Vite.
 - `Dockerfile`: Defines the Docker image for the webapp.
@@ -132,7 +140,7 @@ This is the easiest way to get the project running. You need to have [Docker](ht
 docker compose up --build
 ```
 
-This command will build the Docker images for both the `webapp` and `users` services and start them.
+This command will build and start all services: webapp, gateway, authservice, userservice, game, gamey, friends, and MongoDB.
 
 2.**Access the application (default compose):**
 - Web application: `https://localhost` (self-signed cert)
@@ -173,10 +181,10 @@ This opens a separate terminal window for each service (webapp, gateway, game, g
 
 #### 1. Running the User Service
 
-Navigate to the `users` directory:
+Navigate to the `users/userservice` directory:
 
 ```bash
-cd users
+cd users/userservice
 ```
 
 Install dependencies:
@@ -191,7 +199,7 @@ Run the service:
 npm start
 ```
 
-The user service will be available at `http://localhost:3000`.
+The user service will be available at `http://localhost:8001`.
 
 #### 2. Running the Web Application
 
@@ -217,7 +225,14 @@ The web application will be available at `http://localhost:5173`.
 
 #### 3. Running the GameY application
 
-At this moment the GameY application is not needed but once it is needed you should also start it from the command line.
+Navigate to the `gamey` directory and run:
+
+```bash
+cd gamey
+cargo run
+```
+
+The GameY engine will be available at `http://localhost:4000`.
 
 ## Available Scripts
 
@@ -228,7 +243,7 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 - `npm run dev`: Starts the development server for the webapp.
 - `npm test`: Runs the unit tests.
 - `npm run test:e2e`: Runs the end-to-end tests.
-- `npm run start:all`: A convenience script to start both the `webapp` and the `users` service concurrently.
+- `npm run start:all`: A convenience script to start the webapp and all backend microservices concurrently.
 
 ### Auth Service (`users/authservice/package.json`)
 
