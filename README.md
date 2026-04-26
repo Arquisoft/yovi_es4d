@@ -74,14 +74,17 @@ Before starting a game, players choose the board size, game mode (2D or 3D), vic
   <img src="images/captura_game_tetraedro.png" width="48%" alt="3D tetrahedron mode"/>
 </p>
 
-### Friends & Game History
+### Friends, Game History & Profile
 
-Players can send and accept friend requests to build their network. All past games are recorded and accessible from the history page, with statistics and per-game details.
+Players can send and accept friend requests to build their network. All past games are recorded and accessible from the history page, with statistics and per-game details. Users can also edit their profile information at any time.
 
 <p align="center">
   <img src="images/captura_conectar_amigos.png" width="48%" alt="Connect friends"/>
   &nbsp;
   <img src="images/captura_historial_partidas.png" width="48%" alt="Game history"/>
+</p>
+<p align="center">
+  <img src="images/captura_editar_perfil.png" width="48%" alt="Edit profile"/>
 </p>
 
 ## Components
