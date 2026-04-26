@@ -120,5 +120,5 @@ Esta sección se describen las restricciones técnicas, funcionales y de alcance
 | El sistema debe almacenar el histórico de participación de cada usuario, incluyendo:
 - Número de partidas jugadas.
 - Partidas ganadas y perdidas.
-- Estadísticas asociadas (por ejemplo, porcentaje de victorias, movimientos promedio, etc.).
+- Estadísticas asociadas (por ejemplo, porcentaje de victorias, etc.).
 |===
