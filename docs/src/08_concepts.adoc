@@ -60,21 +60,26 @@ endif::arc42help[]
 
 === Usabilidad
 Usabilidad es la facilidad con la que un usuario puede interactuar con un sitio o aplicación, logrando sus objetivos de manera eficiente, efectiva y satisfactoria.
-La aplicación web será intuitiva, el tablero mostrará en todo momento el estado del juego, se podrán consultar las reglas del juego durante una partida. La aplicación será también accesible para la mayor cantidad de usuarios posible.
+La aplicación web prioriza una interacción clara e intuitiva: navegación sencillaentre pantallas, feedback inmediato ante errores/acciones (p. ej., mensajes devalidación) y visualización constante del estado de la partida. El usuario puedeacceder a funcionalidades como jugar, consultar historial, gestionar amigos yeditar su perfil con un flujo coherente
 
 === Autenticación
-El sistema ha de poder validad la identidad de los usuarios antes de permitir el acceso a funcionalidades de la aplicación. Los datos personales han de estar protegidos de cualquier acceso no autorizado. Lo0s datos personales incluyen las credenciales de los usarios; nombre, correo asociado y contraseña encriptada.
+El sistema valida la identidad del usuario antes de permitir el acceso a lasfuncionalidades protegidas (p. ej. historial, amigos, perfil y gestión de partidasvía API). La autenticación se realiza mediante token JWT almacenado en cookie(sesión) y las contraseñas se almacenan con hash seguro usando bcrypt (no seguardan en claro). Los endpoints del gateway que requieren sesión verifican eltoken antes de reenviar la petición a los microservicios correspondientes.
 
 === Persistencia
-El sistema almacena y recupera la información necesaria de una base de datos, esta base de datos solo debe de ser accesible por el sistema. En la base se guardarán los datos de las credenciales de los usuarios.
+La información se persiste en MongoDB y solo es accesible desde los serviciosbackend. Se almacenan, como mínimo:
+Usuarios (perfil, credenciales hasheadas, avatar, fechas).
+Partidas (estado, movimientos, ganador, fechas, parámetros comomodo/tamaño/variante).
+Amistades y solicitudes (relaciones y estado de la solicitud).
+Notificaciones (tipo, usuario destino, relacionado, estado de lectura).Elmodelo mostrado puede considerarse un resumen; algunos serviciospueden añadir campos adicionales según las necesidades del juego.
 
 La base de datos es:
 
-image::08_Diagrama_database.png["Diagrama de la base de datos de yovi"]
+image::08_Diagrama_database.drawio.png["Diagrama de la base de datos de yovi"]
 
 === Internacionalizacion
-La aplicación será implementada en inglés y español. Se seguirán las recomendaciones i18n, para hacerla entendible a un mayor rango de usuarios.
+La interfaz se ofrece en español e inglés usando un sistema i18n centralizadoen el frontend, evitando textos “hardcodeados” y permitiendo ampliar idiomasen el futuro sin cambios estructurales.
 
 === Microservicio
 Una aplicación pequeña e independiente que hace una sola función específica y se comunica con otros servicios, normalmente por APIs.
 Se puede desplegar, escalar y mantener sin depender del resto del sistema.
+La solución se organiza en servicios pequeños y especializados (p. ej. gateway,usuarios/autenticación, partidas, amigos/notificaciones y motor de juego). Lacomunicación entre servicios se realiza mediante HTTP/JSON, permitiendoevolucionar y desplegar cada componente de forma independiente. Además, elsistema expone un endpoint público de juego para bots (p. ej. /play)independiente del flujo autenticado de la aplicación.
