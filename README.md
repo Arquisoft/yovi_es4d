@@ -14,7 +14,7 @@
 [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/66324)
 
 
-This project is a template with some basic functionality for the ASW labs.
+YOVI is a web application for playing the Game Y, developed as part of the ASW course at the University of Oviedo.
 ## Contributors
 | Name | GitHub Profile |
 |--------------|--------|
@@ -25,20 +25,67 @@ This project is a template with some basic functionality for the ASW labs.
 
 ## Project Structure
 
-The project is divided into three main components, each in its own directory:
+The project is divided into several components, each in its own directory:
 
 - `webapp/`: A frontend application built with React, Vite, and TypeScript.
-- `users/`: A backend service for managing users, built with Node.js and Express.
+- `users/authservice/`: Authentication microservice handling login and JWT token issuance.
+- `users/userservice/`: User management microservice for creating and querying user data.
+- `gateway/`: API Gateway that routes requests to the appropriate microservice and handles JWT authorization.
+- `game/`: Game service managing game sessions and state, built with Node.js and Express.
+- `friends/`: Friends service managing friend requests and notifications.
 - `gamey/`: A Rust game engine and bot service.
 - `docs/`: Architecture documentation sources following Arc42 template
 
-Each component has its own `package.json` file with the necessary scripts to run and test the application.
+Each Node.js component has its own `package.json` file with the necessary scripts to run and test the application. The `gamey` component uses Cargo instead.
 
 ## Basic Features
 
-- **User Registration**: The web application provides a simple form to register new users.
-- **User Service**: The user service receives the registration request, simulates some processing, and returns a welcome message.
-- **GameY**: A basic Game engine which only chooses a random piece.
+- **User Registration**: Users can register with a username, email, and password.
+- **User Authentication**: Registered users can log in and out securely using JWT-based authentication.
+- **Game Management**: Users can start a new game choosing the board size, game mode (2D or 3D), victory condition (connection or not), turn time limit, and whether to play against another person or a bot (with selectable bot strategy).
+- **Game History**: Users can consult their game history, view per-game details, see statistics charts, and sort games by date.
+- **Friend System**: Users can send, accept, and reject friend requests and view their friends list.
+- **Profile Management**: Users can update their personal information, username, password, and profile picture.
+- **Notifications**: Users receive in-app notifications for pending friend requests and game invitations.
+- **GameY Engine**: A Rust-based game engine that validates moves, enforces game rules, and provides bot strategies for different board configurations.
+
+## Screenshots
+
+### Login & Register
+
+Users can create a new account with a username, email, and password, or log in to an existing one.
+
+<p align="center">
+  <img src="images/captura_login.png" width="48%" alt="Login"/>
+  &nbsp;
+  <img src="images/captura_register.png" width="48%" alt="Register"/>
+</p>
+
+### Game Setup & Gameplay
+
+Before starting a game, players choose the board size, game mode (2D or 3D), victory condition, turn time limit, and opponent (human or bot). The board is then rendered in real time with move validation powered by the Rust engine. The 3D tetrahedron mode offers a unique spatial variant of the game.
+
+<p align="center">
+  <img src="images/captura_configurar_tablero.png" width="48%" alt="Configure board"/>
+  &nbsp;
+  <img src="images/captura_jugando_tablero.png" width="48%" alt="Playing"/>
+</p>
+<p align="center">
+  <img src="images/captura_game_tetraedro.png" width="48%" alt="3D tetrahedron mode"/>
+</p>
+
+### Friends, Game History & Profile
+
+Players can send and accept friend requests to build their network. All past games are recorded and accessible from the history page, with statistics and per-game details. Users can also edit their profile information at any time.
+
+<p align="center">
+  <img src="images/captura_conectar_amigos.png" width="48%" alt="Connect friends"/>
+  &nbsp;
+  <img src="images/captura_historial_partidas.png" width="48%" alt="Game history"/>
+</p>
+<p align="center">
+  <img src="images/captura_editar_perfil.png" width="48%" alt="Edit profile"/>
+</p>
 
 ## Components
 
@@ -46,19 +93,62 @@ Each component has its own `package.json` file with the necessary scripts to run
 
 The `webapp` is a single-page application (SPA) created with [Vite](https://vitejs.dev/) and [React](https://reactjs.org/).
 
-- `src/App.tsx`: The main component of the application.
-- `src/RegisterForm.tsx`: The component that renders the user registration form.
+- `src/App.tsx`: Root component and routing setup.
+- `src/pages/`: Page-level components (login, register, game history, friends, profile).
+- `src/components/`: Reusable UI components (game board, sidebar, notifications, etc.).
+- `src/services/`: API client functions for communicating with the gateway.
+- `src/context/`: React context providers for global state.
 - `package.json`: Contains scripts to run, build, and test the webapp.
 - `vite.config.ts`: Configuration file for Vite.
 - `Dockerfile`: Defines the Docker image for the webapp.
 
-### Users Service
+### Auth Service
 
-The `users` service is a simple REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/).
+The `users/authservice` is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that handles user authentication.
 
-- `users-service.js`: The main file for the user service. It defines an endpoint `/createuser` to handle user creation.
-- `package.json`: Contains scripts to start the service.
+- `auth-service.js`: Main file. Defines endpoints for login and token generation using JWT and bcrypt for password hashing.
+- `auth-model.js`: Mongoose model for user credentials.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the auth service.
+
+### User Service
+
+The `users/userservice` is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages user data.
+
+- `user-service.js`: Main file. Defines endpoints for user creation and retrieval.
+- `user-model.js`: Mongoose model for user profiles.
+- `package.json`: Contains scripts to start and test the service.
 - `Dockerfile`: Defines the Docker image for the user service.
+
+### Gateway Service
+
+The `gateway` is the single entry point for all client requests, built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/).
+
+- `gateway-service.js`: Main file. Routes incoming requests to the auth, user, and game microservices. Validates JWT tokens and enforces authorization.
+- `openapi.yaml`: OpenAPI/Swagger specification for the gateway API.
+- `monitoring/`: Prometheus and Grafana configuration for metrics.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the gateway service.
+
+### Game Service
+
+The `game` service is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages game sessions and state.
+
+- `game-service.js`: Main file. Defines endpoints for creating and managing games.
+- `gameModel.js`: Mongoose model for game data.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the game service.
+
+### Friends Service
+
+The `friends` service is a REST API built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/) that manages friend relationships and notifications between users.
+
+- `friend-service.js`: Main file. Defines endpoints for sending, accepting, and rejecting friend requests.
+- `models/friendRequest.js`: Mongoose model for friend requests.
+- `models/notification.js`: Mongoose model for user notifications.
+- `middlewares/auth.js`: JWT authentication middleware.
+- `package.json`: Contains scripts to start and test the service.
+- `Dockerfile`: Defines the Docker image for the friends service.
 
 ### Gamey
 
@@ -88,11 +178,12 @@ This is the easiest way to get the project running. You need to have [Docker](ht
 docker compose up --build
 ```
 
-This command will build the Docker images for both the `webapp` and `users` services and start them.
+This command will build and start all services: webapp, gateway, authservice, userservice, game, gamey, friends, and MongoDB.
 
 2.**Access the application (default compose):**
 - Web application: `https://localhost` (self-signed cert)
 - Gateway API: `https://localhost:8000`
+- API Documentation (Swagger UI): `https://localhost:8000/api-doc/`
 
 3. **Local ports + HTTP gateway (recommended for load tests):**
 
@@ -102,6 +193,7 @@ docker compose --env-file .env.local up --build
 
 - Web application: `https://localhost:8443`
 - Gateway API: `http://localhost:8000`
+- API Documentation (Swagger UI): `http://localhost:8000/api-doc/`
 
 Load testing (Gatling): see `webapp/load-tests/README.md`.
 Monitoring (Prometheus + Grafana): see `gateway/monitoring/README.md`.
@@ -110,16 +202,27 @@ Monitoring (Prometheus + Grafana): see `gateway/monitoring/README.md`.
 
 To run the project locally without Docker, you will need to run each component in a separate terminal.
 
+#### Quick start (Windows only)
+
+On Windows, you can launch all microservices at once using the provided batch script from the root directory:
+
+```bat
+launch_services.bat
+```
+
+This opens a separate terminal window for each service (webapp, gateway, game, gamey, authservice, userservice, and friends) and installs dependencies automatically.
+
+
 #### Prerequisites
 
 * [Node.js](https://nodejs.org/) and npm installed.
 
 #### 1. Running the User Service
 
-Navigate to the `users` directory:
+Navigate to the `users/userservice` directory:
 
 ```bash
-cd users
+cd users/userservice
 ```
 
 Install dependencies:
@@ -134,7 +237,7 @@ Run the service:
 npm start
 ```
 
-The user service will be available at `http://localhost:3000`.
+The user service will be available at `http://localhost:8001`.
 
 #### 2. Running the Web Application
 
@@ -160,7 +263,14 @@ The web application will be available at `http://localhost:5173`.
 
 #### 3. Running the GameY application
 
-At this moment the GameY application is not needed but once it is needed you should also start it from the command line.
+Navigate to the `gamey` directory and run:
+
+```bash
+cd gamey
+cargo run
+```
+
+The GameY engine will be available at `http://localhost:4000`.
 
 ## Available Scripts
 
@@ -171,12 +281,34 @@ Each component has its own set of scripts defined in its `package.json`. Here ar
 - `npm run dev`: Starts the development server for the webapp.
 - `npm test`: Runs the unit tests.
 - `npm run test:e2e`: Runs the end-to-end tests.
-- `npm run start:all`: A convenience script to start both the `webapp` and the `users` service concurrently.
+- `npm run start:all`: A convenience script to start the webapp and all backend microservices concurrently.
 
-### Users (`users/package.json`)
+### Auth Service (`users/authservice/package.json`)
+
+- `npm start`: Starts the auth service.
+- `npm test`: Runs the tests with coverage.
+
+### User Service (`users/userservice/package.json`)
 
 - `npm start`: Starts the user service.
-- `npm test`: Runs the tests for the service.
+- `npm test`: Runs the tests with coverage.
+
+### Gateway (`gateway/package.json`)
+
+- `npm start`: Starts the gateway service (HTTP).
+- `npm run start:https`: Starts the gateway with HTTPS enabled.
+- `npm test`: Runs the tests with coverage.
+
+### Game Service (`game/package.json`)
+
+- `npm start`: Starts the game service.
+- `npm test`: Runs the tests.
+- `npm run test:coverage`: Runs the tests with coverage report.
+
+### Friends Service (`friends/package.json`)
+
+- `npm start`: Starts the friends service.
+- `npm test`: Runs the tests with coverage.
 
 ### Gamey (`gamey/Cargo.toml`)
 
