@@ -15,9 +15,6 @@ ifndef::imagesdir[:imagesdir: ../images]
 | Inexperiencia con Rust
 | No tenemos experiencia con Rust, lo que puede dificultar el desarrollo del bot, como la del tablero de juego y los moviemientos.
 
-| Inexperiencia con React
-| No tenemos experiencia con React, lo que puede dificultar el desarrollo de la aplicación principal para mostrar el juego yel inicio de sesión.
-
 | Inexperiencia con Gatling y test de carga
 | No tenemos experiencia con Gatling ni con la realización de tests de carga, lo que puede dificultar la evaluación del rendimiento del sistema bajo carga.
 
@@ -38,9 +35,6 @@ ifndef::imagesdir[:imagesdir: ../images]
 
 | Problemas de despliegue
 | Los problemas de despliegue podrían afectar a la disponibilidad de la aplicación principal para mostrar el juego, lo que podría afectar al funcionamiento de la aplicación.
-
-| Factor del autobús
-| Si un miembro del grupo se ve afectado por una enfermedad o accidente, podría afectar al desarrollo del proyecto en la realización de las tareas asignadas.
 
 | Inexperiencia con test de carga
 | No tenemos experiencia con la realización de tests de carga, lo que podría alargarnos el tiempo necesario para evaluar el rendimiento del sistema bajo carga.
