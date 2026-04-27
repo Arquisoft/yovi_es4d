@@ -50,7 +50,11 @@ Each Node.js component has its own `package.json` file with the necessary script
 
 ## Demo
 
-<video src="https://github.com/Arquisoft/yovi_es4d/raw/master/videos/yovi_es4d_demo.mp4" controls width="100%"></video>
+A short demonstration of the application showcasing its main features.
+
+<a href="https://github.com/Arquisoft/yovi_es4d/raw/master/videos/yovi_es4d_demo.mp4">
+  <img src="https://img.shields.io/badge/▶_Ver_Demo-blue?style=for-the-badge" alt="Ver Demo"/>
+</a>
 
 ## Screenshots
 
