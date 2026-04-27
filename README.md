@@ -1,6 +1,5 @@
 # YOVI_es4d - Game Y at UniOvi
 
-[![Release — Test, Build, Publish, Deploy](https://github.com/arquisoft/yovi_es4d/actions/workflows/release-deploy.yml/badge.svg)](https://github.com/arquisoft/yovi_es4d/actions/workflows/release-deploy.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Arquisoft_yovi_es4d&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Arquisoft_yovi_es4d)
 [![Open Issues](https://img.shields.io/github/issues/arquisoft/yovi_es4d)](https://github.com/arquisoft/yovi_es4d/issues)
@@ -48,6 +47,10 @@ Each Node.js component has its own `package.json` file with the necessary script
 - **Profile Management**: Users can update their personal information, username, password, and profile picture.
 - **Notifications**: Users receive in-app notifications for pending friend requests and game invitations.
 - **GameY Engine**: A Rust-based game engine that validates moves, enforces game rules, and provides bot strategies for different board configurations.
+
+## Demo
+
+<video src="https://github.com/Arquisoft/yovi_es4d/raw/master/videos/yovi_es4d_demo.mp4" controls width="100%"></video>
 
 ## Screenshots
 
